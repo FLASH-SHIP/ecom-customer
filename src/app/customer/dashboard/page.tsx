@@ -1,13 +1,14 @@
 "use client";
 
-import { FileText, LayoutDashboard, Mail, User } from "lucide-react";
+import { AtSign, FileText, LayoutDashboard, Mail, User } from "lucide-react";
 import NextLink from "next/link";
 import { useState } from "react";
+import { getAccessToken } from "../../../lib/auth";
 import { trpc } from "../../../lib/trpc";
 
 const QUICK_LINKS = [
   {
-    href: "/member/profile",
+    href: "/customer/profile",
     icon: User,
     title: "Hồ sơ cá nhân",
     desc: "Cập nhật thông tin của bạn",
@@ -22,12 +23,10 @@ const QUICK_LINKS = [
   },
 ];
 
-export default function MemberDashboardPage() {
-  const [token] = useState<string | null>(() =>
-    typeof window !== "undefined" ? localStorage.getItem("memberAccessToken") : null,
-  );
+export default function CustomerDashboardPage() {
+  const [token] = useState<string | null>(() => getAccessToken());
 
-  const { data: profile, isLoading } = trpc.member.auth.me.useQuery(
+  const { data: profile, isLoading } = trpc.customer.auth.me.useQuery(
     { accessToken: token ?? "" },
     { enabled: !!token },
   );
@@ -76,16 +75,21 @@ export default function MemberDashboardPage() {
     );
   }
 
+  const displayName = profile.name ?? profile.email ?? "Khách hàng";
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 md:py-16">
       {/* Welcome */}
       <div className="mb-10 flex items-center gap-4">
         <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#7C3AED] text-2xl font-bold text-white">
-          {(profile.name ?? profile.email).charAt(0).toUpperCase()}
+          {displayName.charAt(0).toUpperCase()}
         </div>
         <div>
-          <h1 className="text-2xl font-extrabold">Xin chào, {profile.name ?? "Thành viên"}!</h1>
-          <p className="text-sm text-muted-foreground">Chào mừng bạn quay trở lại.</p>
+          <h1 className="text-2xl font-extrabold">Xin chào, {displayName}!</h1>
+          <p className="text-sm text-muted-foreground">
+            <AtSign className="mr-1 inline h-3.5 w-3.5" />
+            {profile.username}
+          </p>
         </div>
       </div>
 
@@ -97,6 +101,15 @@ export default function MemberDashboardPage() {
             <span className="text-sm text-muted-foreground">Email</span>
           </div>
           <p className="break-all font-semibold">{profile.email}</p>
+          {profile.emailVerified ? (
+            <span className="mt-1 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+              Đã xác minh
+            </span>
+          ) : (
+            <span className="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+              Chưa xác minh
+            </span>
+          )}
         </div>
 
         <div className="rounded-xl border border-border p-4">
