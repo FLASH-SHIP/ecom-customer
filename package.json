@@ -10,8 +10,7 @@
     "lint": "biome check",
     "format": "biome format --write",
     "clean": "rm -rf .next .turbo",
-    "generate-template": "node scripts/generate-template.js",
-    "yalc:link:all": "npx yalc add @flash-ship/ecom-ui && npx yalc add @flash-ship/ecom-trpc && npx yalc add @flash-ship/ecom-i18n && npx yalc add @flash-ship/ecom-lib"
+    "generate-template": "node scripts/generate-template.js"
   },
   "dependencies": {
     "@flash-ship/ecom-i18n": "portal:../ecom-shared-packages/packages/i18n",
