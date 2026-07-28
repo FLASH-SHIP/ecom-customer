@@ -1,21 +1,21 @@
 "use client";
 
-import { translate } from "@ecom/i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
 import { ThemeToggle } from "@ecom/shared/components/ThemeToggle";
-import { Button } from "@ecom/ui/components/button";
+import { Button } from "@flash-ship/ecom-ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@ecom/ui/components/dropdown-menu";
-import { SidebarToggleIcon } from "@ecom/ui/components/icon-component/SidebarToggleIcon";
-import { UserAvatarIcon } from "@ecom/ui/components/icon-component/UserAvatarIcon";
-import { WalletSolidIcon } from "@ecom/ui/components/icon-component/WalletSolidIcon";
-import { MenuIcon } from "@ecom/ui/components/icons";
-import { cn } from "@ecom/ui/lib/utils";
+} from "@flash-ship/ecom-ui/components/dropdown-menu";
+import { SidebarToggleIcon } from "@flash-ship/ecom-ui/components/icon-component/SidebarToggleIcon";
+import { UserAvatarIcon } from "@flash-ship/ecom-ui/components/icon-component/UserAvatarIcon";
+import { WalletSolidIcon } from "@flash-ship/ecom-ui/components/icon-component/WalletSolidIcon";
+import { MenuIcon } from "@flash-ship/ecom-ui/components/icons";
+import { cn } from "@flash-ship/ecom-ui/lib/utils";
 import { Bell, ChevronDown, LogOut, PanelLeft, User as UserIcon } from "lucide-react";
 import NextImage from "next/image";
 import NextLink from "next/link";

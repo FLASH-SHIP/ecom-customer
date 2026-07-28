@@ -1,25 +1,25 @@
 "use client";
 
-import { translate } from "@ecom/i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
-import { Button } from "@ecom/ui/components/button";
+import { Button } from "@flash-ship/ecom-ui/components/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@ecom/ui/components/dialog";
-import { ImportFileIcon, PlusCircleIcon, TopupIcon } from "@ecom/ui/components/icons";
-import { Input } from "@ecom/ui/components/input";
-import { Label } from "@ecom/ui/components/label";
+} from "@flash-ship/ecom-ui/components/dialog";
+import { ImportFileIcon, PlusCircleIcon, TopupIcon } from "@flash-ship/ecom-ui/components/icons";
+import { Input } from "@flash-ship/ecom-ui/components/input";
+import { Label } from "@flash-ship/ecom-ui/components/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@ecom/ui/components/select";
+} from "@flash-ship/ecom-ui/components/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
 import { FileText, LayoutDashboard, User } from "lucide-react";

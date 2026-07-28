@@ -1,14 +1,14 @@
 "use client";
 
 import { trpc } from "@customer/lib/trpc";
-import { translate } from "@ecom/i18n";
-import { getPostalCodeRuleInfo } from "@ecom/lib/addressValidator";
+import { translate } from "@flash-ship/ecom-i18n";
+import { getPostalCodeRuleInfo } from "@flash-ship/ecom-lib/addressValidator";
 import { useI18n } from "@ecom/shared/@i18n";
-import { ShippingMethod } from "@ecom/types";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@ecom/ui/components/field";
-import { Input } from "@ecom/ui/components/input";
-import { SearchableSelect } from "@ecom/ui/components/searchable-select";
-import { cn } from "@ecom/ui/lib/utils";
+import { ShippingMethod } from "@flash-ship/ecom-types";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@flash-ship/ecom-ui/components/field";
+import { Input } from "@flash-ship/ecom-ui/components/input";
+import { SearchableSelect } from "@flash-ship/ecom-ui/components/searchable-select";
+import { cn } from "@flash-ship/ecom-ui/lib/utils";
 import { useEffect, useMemo, useState } from "react";
 import {
   type Control,

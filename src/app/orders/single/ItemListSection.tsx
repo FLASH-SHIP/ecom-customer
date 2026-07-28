@@ -1,19 +1,19 @@
 "use client";
 
-import { translate } from "@ecom/i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
-import { Button } from "@ecom/ui/components/button";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@ecom/ui/components/field";
-import { TrashIcon } from "@ecom/ui/components/icons";
-import { Input } from "@ecom/ui/components/input";
+import { Button } from "@flash-ship/ecom-ui/components/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@flash-ship/ecom-ui/components/field";
+import { TrashIcon } from "@flash-ship/ecom-ui/components/icons";
+import { Input } from "@flash-ship/ecom-ui/components/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@ecom/ui/components/select";
-import { cn } from "@ecom/ui/lib/utils";
+} from "@flash-ship/ecom-ui/components/select";
+import { cn } from "@flash-ship/ecom-ui/lib/utils";
 import { Plus, Trash2 } from "lucide-react";
 import type { Control, FieldErrors, FieldValues, UseFormRegister } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";

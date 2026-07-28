@@ -1,5 +1,5 @@
-import { Button } from "@ecom/ui/components/button";
-import { Card } from "@ecom/ui/components/card";
+import { Button } from "@flash-ship/ecom-ui/components/button";
+import { Card } from "@flash-ship/ecom-ui/components/card";
 import { X } from "lucide-react";
 import type React from "react";
 import { AuthLanguageSelector } from "./AuthLanguageSelector";

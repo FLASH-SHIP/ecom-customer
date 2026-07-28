@@ -1,5 +1,5 @@
-import { TelegramIcon } from "@ecom/ui/components/icon-component/TelegramIcon";
-import { WhatsappIcon } from "@ecom/ui/components/icon-component/WhatsappIcon";
+import { TelegramIcon } from "@flash-ship/ecom-ui/components/icon-component/TelegramIcon";
+import { WhatsappIcon } from "@flash-ship/ecom-ui/components/icon-component/WhatsappIcon";
 
 export function AuthSupportInfo() {
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { trpc } from "@customer/lib/trpc";
-import { Button } from "@ecom/ui/components/button";
+import { Button } from "@flash-ship/ecom-ui/components/button";
 import { RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { Dropzone } from "./components/Dropzone";

@@ -2,29 +2,29 @@
 
 import TagOrderStatus from "@customer/app/orders/components/TagOrderStatus";
 import { OrderStatus } from "@customer/app/orders/constants/enums";
-import { PaginationBase } from "@ecom/ui";
-import { TableBase } from "@ecom/ui";
+import { PaginationBase } from "@flash-ship/ecom-ui";
+import { TableBase } from "@flash-ship/ecom-ui";
 import { trpc } from "@customer/lib/trpc";
-import { translate } from "@ecom/i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
-import { getShippingMethodLabel, getShippingOriginLabel } from "@ecom/types";
-import { Badge } from "@ecom/ui/components/badge";
-import { Button } from "@ecom/ui/components/button";
-import { Card } from "@ecom/ui/components/card";
+import { getShippingMethodLabel, getShippingOriginLabel } from "@flash-ship/ecom-types";
+import { Badge } from "@flash-ship/ecom-ui/components/badge";
+import { Button } from "@flash-ship/ecom-ui/components/button";
+import { Card } from "@flash-ship/ecom-ui/components/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@ecom/ui/components/dialog";
+} from "@flash-ship/ecom-ui/components/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@ecom/ui/components/dropdown-menu";
-import { ThreeDotsVerticalIcon } from "@ecom/ui/components/icons";
+} from "@flash-ship/ecom-ui/components/dropdown-menu";
+import { ThreeDotsVerticalIcon } from "@flash-ship/ecom-ui/components/icons";
 import { format, subDays } from "date-fns";
 import NextLink from "next/link";
 import { useState } from "react";

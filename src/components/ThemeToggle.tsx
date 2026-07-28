@@ -2,7 +2,7 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@ecom/ui";
+import { Button } from "@flash-ship/ecom-ui";
 
 interface ThemeToggleProps {
   className?: string;

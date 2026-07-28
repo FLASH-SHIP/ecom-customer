@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@ecom/ui/components/card";
+import { Card, CardContent } from "@flash-ship/ecom-ui/components/card";
 import { HelpCircle } from "lucide-react";
 
 interface NotesPanelProps {

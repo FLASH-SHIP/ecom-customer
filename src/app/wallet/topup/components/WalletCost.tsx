@@ -1,9 +1,9 @@
 "use client";
 
-import { translate } from "@ecom/i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
-import { Card, CardContent } from "@ecom/ui/components/card";
-import { Select } from "@ecom/ui/components/select";
+import { Card, CardContent } from "@flash-ship/ecom-ui/components/card";
+import { Select } from "@flash-ship/ecom-ui/components/select";
 import * as React from "react";
 
 export default function WalletCost() {

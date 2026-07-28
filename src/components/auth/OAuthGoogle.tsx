@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@ecom/ui/components/button";
-import { GoogleIcon } from "@ecom/ui/components/icon-component/GoogleIcon";
+import { Button } from "@flash-ship/ecom-ui/components/button";
+import { GoogleIcon } from "@flash-ship/ecom-ui/components/icon-component/GoogleIcon";
 import { signIn } from "next-auth/react";
 
 export default function OAuthGoogle() {

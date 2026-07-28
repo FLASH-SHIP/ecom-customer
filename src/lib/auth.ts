@@ -1,5 +1,5 @@
 import { env } from "@customer/env";
-import type { CustomerAuthResponse } from "@ecom/types";
+import type { CustomerAuthResponse } from "@flash-ship/ecom-types";
 import NextAuth, { type NextAuthResult } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";

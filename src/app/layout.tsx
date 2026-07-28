@@ -1,4 +1,4 @@
-import { defaultLocale, locales } from "@ecom/i18n";
+import { defaultLocale, locales } from "@flash-ship/ecom-i18n";
 import { I18nProvider } from "@ecom/shared/@i18n";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";

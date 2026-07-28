@@ -1,6 +1,6 @@
 "use client";
 
-import { translate } from "@ecom/i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
 import {
   getShippingMethodLabel,
@@ -9,17 +9,17 @@ import {
   SHIPPING_ORIGIN_OPTIONS,
   ShippingMethod,
   ShippingOrigin,
-} from "@ecom/types";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@ecom/ui/components/field";
-import { Input } from "@ecom/ui/components/input";
+} from "@flash-ship/ecom-types";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@flash-ship/ecom-ui/components/field";
+import { Input } from "@flash-ship/ecom-ui/components/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@ecom/ui/components/select";
-import { cn } from "@ecom/ui/lib/utils";
+} from "@flash-ship/ecom-ui/components/select";
+import { cn } from "@flash-ship/ecom-ui/lib/utils";
 import type { Control, FieldErrors, UseFormRegister } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import type { OrderFormValues } from "./page";

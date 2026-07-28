@@ -1,18 +1,18 @@
 "use client";
 
 import { trpc } from "@customer/lib/trpc";
-import { translate } from "@ecom/i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import {
   validatePostalCode,
   validateReceiverEmail,
   validateReceiverName,
   validateReceiverPhone,
   validateReceiverState,
-} from "@ecom/lib/addressValidator";
+} from "@flash-ship/ecom-lib/addressValidator";
 import { useI18n } from "@ecom/shared/@i18n";
-import { ShippingMethod, ShippingOrigin } from "@ecom/types";
-import { Button } from "@ecom/ui/components/button";
-import { Checkbox } from "@ecom/ui/components/checkbox";
+import { ShippingMethod, ShippingOrigin } from "@flash-ship/ecom-types";
+import { Button } from "@flash-ship/ecom-ui/components/button";
+import { Checkbox } from "@flash-ship/ecom-ui/components/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";

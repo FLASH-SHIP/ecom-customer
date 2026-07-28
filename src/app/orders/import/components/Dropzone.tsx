@@ -1,7 +1,7 @@
-import { Button } from "@ecom/ui/components/button";
-import { Card, CardContent } from "@ecom/ui/components/card";
-import { Checkbox } from "@ecom/ui/components/checkbox";
-import { cn } from "@ecom/ui/lib/utils";
+import { Button } from "@flash-ship/ecom-ui/components/button";
+import { Card, CardContent } from "@flash-ship/ecom-ui/components/card";
+import { Checkbox } from "@flash-ship/ecom-ui/components/checkbox";
+import { cn } from "@flash-ship/ecom-ui/lib/utils";
 import { Download, FileText, Upload, X } from "lucide-react";
 import type React from "react";
 import { useState } from "react";

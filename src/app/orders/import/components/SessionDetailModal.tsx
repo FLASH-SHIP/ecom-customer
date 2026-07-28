@@ -1,5 +1,5 @@
-import { Button } from "@ecom/ui/components/button";
-import { Card } from "@ecom/ui/components/card";
+import { Button } from "@flash-ship/ecom-ui/components/button";
+import { Card } from "@flash-ship/ecom-ui/components/card";
 import { Download, Loader2, X } from "lucide-react";
 import { useToast } from "../../../../components/toast-provider";
 import type { OrderImportError } from "../utils/import-parser";

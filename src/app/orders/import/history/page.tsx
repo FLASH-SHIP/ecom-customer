@@ -1,16 +1,16 @@
 "use client";
 
 import { trpc } from "@customer/lib/trpc";
-import { translate } from "@ecom/i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
 import { useTimezoneOffset } from "@ecom/shared/hooks/useTimezoneOffset";
-import { Button } from "@ecom/ui/components/button";
-import { Card } from "@ecom/ui/components/card";
-import type { DataTableColumn } from "@ecom/ui/components/data-table";
-import { DataTable } from "@ecom/ui/components/data-table";
-import { DateRangePicker } from "@ecom/ui/components/date-range-picker";
-import { Input } from "@ecom/ui/components/input";
-import { cn } from "@ecom/ui/lib/utils";
+import { Button } from "@flash-ship/ecom-ui/components/button";
+import { Card } from "@flash-ship/ecom-ui/components/card";
+import type { DataTableColumn } from "@flash-ship/ecom-ui/components/data-table";
+import { DataTable } from "@flash-ship/ecom-ui/components/data-table";
+import { DateRangePicker } from "@flash-ship/ecom-ui/components/date-range-picker";
+import { Input } from "@flash-ship/ecom-ui/components/input";
+import { cn } from "@flash-ship/ecom-ui/lib/utils";
 import { AlertCircle, Download, Loader2, RefreshCw, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";

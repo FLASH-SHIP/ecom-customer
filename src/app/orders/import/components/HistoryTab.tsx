@@ -1,6 +1,6 @@
-import { Button } from "@ecom/ui/components/button";
-import { Card } from "@ecom/ui/components/card";
-import { cn } from "@ecom/ui/lib/utils";
+import { Button } from "@flash-ship/ecom-ui/components/button";
+import { Card } from "@flash-ship/ecom-ui/components/card";
+import { cn } from "@flash-ship/ecom-ui/lib/utils";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 interface HistoryItem {

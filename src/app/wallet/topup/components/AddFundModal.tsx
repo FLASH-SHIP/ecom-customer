@@ -1,11 +1,11 @@
 "use client";
 
-import { DatePicker } from "@ecom/ui";
-import { translate } from "@ecom/i18n";
+import { DatePicker } from "@flash-ship/ecom-ui";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
-import { Button } from "@ecom/ui/components/button";
-import { Input } from "@ecom/ui/components/input";
-import { BaseModal, BaseModalContent } from "@ecom/ui/components/modals/base-modal";
+import { Button } from "@flash-ship/ecom-ui/components/button";
+import { Input } from "@flash-ship/ecom-ui/components/input";
+import { BaseModal, BaseModalContent } from "@flash-ship/ecom-ui/components/modals/base-modal";
 import {
   AlertCircle,
   Check,

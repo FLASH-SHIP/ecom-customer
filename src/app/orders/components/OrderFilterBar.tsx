@@ -4,19 +4,19 @@ import {
   getOrderStatusOptions,
   getShippingMethodOptions,
 } from "@customer/app/orders/constants/constants";
-import { translate } from "@ecom/i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
-import { Button } from "@ecom/ui/components/button";
-import { DateRangePicker } from "@ecom/ui/components/date-range-picker";
-import { ExportFileIcon } from "@ecom/ui/components/icons";
-import { Input } from "@ecom/ui/components/input";
+import { Button } from "@flash-ship/ecom-ui/components/button";
+import { DateRangePicker } from "@flash-ship/ecom-ui/components/date-range-picker";
+import { ExportFileIcon } from "@flash-ship/ecom-ui/components/icons";
+import { Input } from "@flash-ship/ecom-ui/components/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@ecom/ui/components/select";
+} from "@flash-ship/ecom-ui/components/select";
 import { format, subDays } from "date-fns";
 import debounce from "lodash/debounce";
 import { Search, X } from "lucide-react";

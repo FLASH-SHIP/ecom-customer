@@ -1,22 +1,22 @@
 "use client";
 
-import { translate } from "@ecom/i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { type LanguageType, useI18n } from "@ecom/shared/@i18n";
-import { Button } from "@ecom/ui/components/button";
+import { Button } from "@flash-ship/ecom-ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@ecom/ui/components/dropdown-menu";
-import { CirclePlusIcon } from "@ecom/ui/components/icon-component/CirclePlusIcon";
-import { CloseIcon } from "@ecom/ui/components/icon-component/CloseIcon";
-import { FileInputIcon } from "@ecom/ui/components/icon-component/FileInputIcon";
-import { LayoutDashboardIcon } from "@ecom/ui/components/icon-component/LayoutDashboardIcon";
-import { NotepadTextIcon } from "@ecom/ui/components/icon-component/NotepadTextIcon";
-import { PrinterIcon } from "@ecom/ui/components/icon-component/PrinterIcon";
-import { ServerCogIcon } from "@ecom/ui/components/icon-component/ServerCogIcon";
-import { cn } from "@ecom/ui/lib/utils";
+} from "@flash-ship/ecom-ui/components/dropdown-menu";
+import { CirclePlusIcon } from "@flash-ship/ecom-ui/components/icon-component/CirclePlusIcon";
+import { CloseIcon } from "@flash-ship/ecom-ui/components/icon-component/CloseIcon";
+import { FileInputIcon } from "@flash-ship/ecom-ui/components/icon-component/FileInputIcon";
+import { LayoutDashboardIcon } from "@flash-ship/ecom-ui/components/icon-component/LayoutDashboardIcon";
+import { NotepadTextIcon } from "@flash-ship/ecom-ui/components/icon-component/NotepadTextIcon";
+import { PrinterIcon } from "@flash-ship/ecom-ui/components/icon-component/PrinterIcon";
+import { ServerCogIcon } from "@flash-ship/ecom-ui/components/icon-component/ServerCogIcon";
+import { cn } from "@flash-ship/ecom-ui/lib/utils";
 import { ChevronDown } from "lucide-react";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";

@@ -4,9 +4,9 @@ You are a senior Ecom engineer working in the Customer Portal web application re
 
 ## Do
 
-- In React Server Components (`layout.tsx`, `page.tsx`), import `defaultLocale` and `locales` directly from `@ecom/i18n` to ensure Turbopack RSC compatibility.
-- Consume shared UI components from `@ecom/ui` and `@ecom/ui/domain`.
-- Consume Customer API endpoints via `@ecom/trpc-contract/customer`.
+- In React Server Components (`layout.tsx`, `page.tsx`), import `defaultLocale` and `locales` directly from `@flash-ship/ecom-i18n` to ensure Turbopack RSC compatibility.
+- Consume shared UI components from `@flash-ship/ecom-ui` and `@flash-ship/ecom-ui/domain`.
+- Consume Customer API endpoints via `@flash-ship/ecom-trpc/customer`.
 - Ensure `globals.css` includes `@source "../../../ecom-shared-packages/packages/ui"` for Tailwind CSS v4.
 - Use `import type { X }` for TypeScript type imports.
 - Run `yarn type-check` before pushing.
@@ -14,8 +14,8 @@ You are a senior Ecom engineer working in the Customer Portal web application re
 ## Don't
 
 - Never import client-only `SUPPORTED_LOCALES` from `./lib/i18n` inside Server Components (`layout.tsx`).
-- Never create local `locales/` directories — all translations belong in `@ecom/i18n`.
-- Never duplicate UI components locally if they exist in `@ecom/ui`.
+- Never create local `locales/` directories — all translations belong in `@flash-ship/ecom-i18n`.
+- Never duplicate UI components locally if they exist in `@flash-ship/ecom-ui`.
 - Never use `as any` type casting.
 
 ## Commands

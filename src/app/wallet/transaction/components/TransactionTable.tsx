@@ -1,11 +1,11 @@
 "use client";
 
-import { PaginationBase } from "@ecom/ui";
-import { TableBase } from "@ecom/ui";
-import { translate } from "@ecom/i18n";
+import { PaginationBase } from "@flash-ship/ecom-ui";
+import { TableBase } from "@flash-ship/ecom-ui";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
-import { Badge } from "@ecom/ui/components/badge";
-import { Card } from "@ecom/ui/components/card";
+import { Badge } from "@flash-ship/ecom-ui/components/badge";
+import { Card } from "@flash-ship/ecom-ui/components/card";
 import { useState } from "react";
 
 export interface TransactionItem {

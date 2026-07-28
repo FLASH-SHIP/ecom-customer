@@ -1,19 +1,19 @@
 "use client";
 
-import { PaginationBase } from "@ecom/ui";
-import { TableBase } from "@ecom/ui";
-import { translate } from "@ecom/i18n";
+import { PaginationBase } from "@flash-ship/ecom-ui";
+import { TableBase } from "@flash-ship/ecom-ui";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
-import { Badge } from "@ecom/ui/components/badge";
-import { Button } from "@ecom/ui/components/button";
-import { Card } from "@ecom/ui/components/card";
+import { Badge } from "@flash-ship/ecom-ui/components/badge";
+import { Button } from "@flash-ship/ecom-ui/components/button";
+import { Card } from "@flash-ship/ecom-ui/components/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@ecom/ui/components/dropdown-menu";
-import { ThreeDotsVerticalIcon } from "@ecom/ui/components/icons";
+} from "@flash-ship/ecom-ui/components/dropdown-menu";
+import { ThreeDotsVerticalIcon } from "@flash-ship/ecom-ui/components/icons";
 import { useState } from "react";
 
 export interface TopupItem {

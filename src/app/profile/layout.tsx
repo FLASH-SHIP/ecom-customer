@@ -1,10 +1,10 @@
 "use client";
 
 import { trpc } from "@customer/lib/trpc";
-import { translate } from "@ecom/i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
-import { Breadcrumb } from "@ecom/ui/components/breadcrumb";
-import { cn } from "@ecom/ui/lib/utils";
+import { Breadcrumb } from "@flash-ship/ecom-ui/components/breadcrumb";
+import { cn } from "@flash-ship/ecom-ui/lib/utils";
 import { Lock, User } from "lucide-react";
 import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";

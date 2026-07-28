@@ -1,10 +1,10 @@
 "use client";
 
-import { PaginationBase } from "@ecom/ui";
-import { TableBase } from "@ecom/ui";
-import { translate } from "@ecom/i18n";
+import { PaginationBase } from "@flash-ship/ecom-ui";
+import { TableBase } from "@flash-ship/ecom-ui";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
-import { Card } from "@ecom/ui/components/card";
+import { Card } from "@flash-ship/ecom-ui/components/card";
 import { useState } from "react";
 
 export interface EndingBalanceItem {

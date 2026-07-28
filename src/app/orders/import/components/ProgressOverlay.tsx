@@ -1,4 +1,4 @@
-import { Card } from "@ecom/ui/components/card";
+import { Card } from "@flash-ship/ecom-ui/components/card";
 import { Loader2 } from "lucide-react";
 
 interface ProgressOverlayProps {

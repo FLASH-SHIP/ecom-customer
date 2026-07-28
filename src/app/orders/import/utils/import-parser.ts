@@ -1,4 +1,4 @@
-import { ShippingMethod, ShippingOrigin } from "@ecom/types";
+import { ShippingMethod, ShippingOrigin } from "@flash-ship/ecom-types";
 
 export interface ExcelRow {
   [key: string]: unknown;

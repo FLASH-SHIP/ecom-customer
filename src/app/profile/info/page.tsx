@@ -1,19 +1,19 @@
 "use client";
 
-import { PhoneInput } from "@ecom/ui/domain";
+import { PhoneInput } from "@flash-ship/ecom-ui/domain";
 import { trpc } from "@customer/lib/trpc";
-import { translate } from "@ecom/i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
-import { DatePicker } from "@ecom/ui/components/date-picker";
-import { Input } from "@ecom/ui/components/input";
+import { DatePicker } from "@flash-ship/ecom-ui/components/date-picker";
+import { Input } from "@flash-ship/ecom-ui/components/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@ecom/ui/components/select";
-import { Textarea } from "@ecom/ui/components/textarea";
+} from "@flash-ship/ecom-ui/components/select";
+import { Textarea } from "@flash-ship/ecom-ui/components/textarea";
 import { AlertCircle, AtSign, CheckCircle } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";

@@ -1,5 +1,5 @@
 import { trpc } from "@customer/lib/trpc";
-import { translate } from "@ecom/i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
 import { useBeforeUnload } from "@ecom/shared/hooks/useBeforeUnload";
 import { useRef, useState } from "react";

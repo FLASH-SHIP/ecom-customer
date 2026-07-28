@@ -1,6 +1,6 @@
 "use client";
 
-import { translate } from "@ecom/i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import NextLink from "next/link";

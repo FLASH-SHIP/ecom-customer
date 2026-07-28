@@ -1,6 +1,6 @@
 "use client";
 
-import { translate as baseTranslate } from "@ecom/i18n";
+import { translate as baseTranslate } from "@flash-ship/ecom-i18n";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 export const SUPPORTED_LOCALES = ["vi", "en"] as const;
