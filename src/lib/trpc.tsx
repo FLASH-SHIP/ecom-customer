@@ -1,7 +1,7 @@
 "use client";
 
 import { env } from "@customer/env";
-import type { AppRouter } from "@flash-ship/ecom-trpc";
+import type { AppRouter } from "@flash-ship/ecom-trpc-types";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
