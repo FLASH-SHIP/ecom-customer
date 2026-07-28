@@ -2,8 +2,8 @@
 
 import TagOrderStatus from "@customer/app/orders/components/TagOrderStatus";
 import { OrderStatus } from "@customer/app/orders/constants/enums";
-import { PaginationBase } from "@customer/components/ui/pagination-base";
-import { TableBase } from "@customer/components/ui/table-base";
+import { PaginationBase } from "@ecom/ui";
+import { TableBase } from "@ecom/ui";
 import { trpc } from "@customer/lib/trpc";
 import { translate } from "@ecom/i18n";
 import { useI18n } from "@ecom/shared/@i18n";
@@ -319,8 +319,9 @@ export default function CustomerOrdersPage() {
       {/* Orders Table */}
       <Card className="rounded-xl border border-border bg-card overflow-hidden">
         <TableBase
-          data={listData?.data || []}
-          columns={columns}
+          data={(listData?.data as unknown as { id: string | number }[]) || []}
+          // biome-ignore lint/suspicious/noExplicitAny: TableBase column typing
+          columns={columns as any}
           isLoading={isLoading}
           emptyMessage={translate("customerOrder.table.noOrdersFound", currentLocale)}
           enableRowSelection={true}

@@ -1,6 +1,6 @@
 "use client";
 
-import { PhoneInput } from "@customer/components/ui/PhoneInput";
+import { PhoneInput } from "@ecom/ui/domain";
 import { trpc } from "@customer/lib/trpc";
 import { translate } from "@ecom/i18n";
 import { useI18n } from "@ecom/shared/@i18n";

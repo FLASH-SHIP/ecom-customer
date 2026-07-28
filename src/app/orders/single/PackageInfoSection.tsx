@@ -1,6 +1,6 @@
 "use client";
 
-import { SearchableSelect } from "@customer/components/ui/searchable-select";
+import { SearchableSelect } from "@ecom/ui";
 import { trpc } from "@customer/lib/trpc";
 import { translate } from "@ecom/i18n";
 import { useI18n } from "@ecom/shared/@i18n";

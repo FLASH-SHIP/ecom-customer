@@ -1,6 +1,6 @@
 "use client";
 
-import { DateRangePicker } from "@customer/components/ui/date-range-picker";
+import { DateRangePicker } from "@ecom/ui";
 import { translate } from "@ecom/i18n";
 import { useI18n } from "@ecom/shared/@i18n";
 import { Button } from "@ecom/ui/components/button";

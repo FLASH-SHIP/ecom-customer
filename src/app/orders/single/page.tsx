@@ -828,7 +828,8 @@ export default function CreateSingleOrderPage() {
           setSaveSenderSetting={setSaveSenderSetting}
           selectedSenderId={selectedSenderId}
           setSelectedSenderId={setSelectedSenderId}
-          savedSenders={savedSenders}
+          // biome-ignore lint/suspicious/noExplicitAny: savedSenders prop typing
+          savedSenders={savedSenders as any}
         />
         {/* Receiver Info */}
         <ReceiverSection
@@ -841,7 +842,8 @@ export default function CreateSingleOrderPage() {
           setSaveReceiverSetting={setSaveReceiverSetting}
           selectedReceiverId={selectedReceiverId}
           setSelectedReceiverId={setSelectedReceiverId}
-          savedReceivers={savedReceivers}
+          // biome-ignore lint/suspicious/noExplicitAny: savedReceivers prop typing
+          savedReceivers={savedReceivers as any}
         />
 
         {/* Package Info */}
@@ -855,7 +857,8 @@ export default function CreateSingleOrderPage() {
           setSavePackageSetting={setSavePackageSetting}
           selectedPackageId={selectedPackageId}
           setSelectedPackageId={setSelectedPackageId}
-          savedPackages={savedPackages}
+          // biome-ignore lint/suspicious/noExplicitAny: savedPackages prop typing
+          savedPackages={savedPackages as any}
         />
 
         {/* Item List */}

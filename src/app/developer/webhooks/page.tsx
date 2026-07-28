@@ -96,12 +96,12 @@ export default function WebhooksPage() {
   };
 
   interface WebhookLogDetail {
-    id: string | number;
-    event: string;
-    statusCode: number | null;
-    createdAt: Date | string;
-    payload: unknown;
-    response: string | null;
+    id?: string | number;
+    event?: string;
+    statusCode?: number | null;
+    createdAt?: Date | string;
+    payload?: unknown;
+    response?: string | null;
   }
 
   const [activeLog, setActiveLog] = useState<WebhookLogDetail | null>(null);

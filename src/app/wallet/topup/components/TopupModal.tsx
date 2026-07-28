@@ -2,10 +2,7 @@
 
 import { translate } from "@ecom/i18n";
 import { useI18n } from "@ecom/shared/@i18n";
-import {
-  BaseModal,
-  BaseModalContent,
-} from "@ecom/ui/components/modals/base-modal";
+import { BaseModal, BaseModalContent } from "@ecom/ui/components/modals/base-modal";
 import React from "react";
 
 export interface TopupModalProps {
@@ -14,11 +11,7 @@ export interface TopupModalProps {
   onSelectPaymentMethod?: (methodId: string) => void;
 }
 
-export function TopupModal({
-  open,
-  onOpenChange,
-  onSelectPaymentMethod,
-}: TopupModalProps) {
+export function TopupModal({ open, onOpenChange, onSelectPaymentMethod }: TopupModalProps) {
   const { languageId: currentLocale } = useI18n();
 
   const handleSelect = (methodId: string) => {
@@ -49,10 +42,8 @@ export function TopupModal({
         <div className="flex flex-col py-2">
           {/* Subheading */}
           <p className="text-sm font-normal text-slate-500 dark:text-slate-400 mb-5">
-            {translate(
-              "customerWallet.topupModal.pleaseSelectPaymentMethod",
-              currentLocale,
-            ) || "Please select payment method:"}
+            {translate("customerWallet.topupModal.pleaseSelectPaymentMethod", currentLocale) ||
+              "Please select payment method:"}
           </p>
 
           {/* Payment Methods Grid */}
@@ -74,13 +65,7 @@ export function TopupModal({
                     fill="none"
                   />
                   <defs>
-                    <linearGradient
-                      id="payoneer-grad"
-                      x1="0%"
-                      y1="0%"
-                      x2="100%"
-                      y2="100%"
-                    >
+                    <linearGradient id="payoneer-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#FF3B30" />
                       <stop offset="25%" stopColor="#FF9500" />
                       <stop offset="50%" stopColor="#34C759" />

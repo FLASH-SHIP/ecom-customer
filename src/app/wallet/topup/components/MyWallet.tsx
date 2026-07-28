@@ -8,10 +8,7 @@ import * as React from "react";
 import { AddFundModal } from "./AddFundModal";
 import { TopupModal } from "./TopupModal";
 
-const PAYMENT_METHOD_MAP: Record<
-  string,
-  { name: string; logo?: React.ReactNode }
-> = {
+const PAYMENT_METHOD_MAP: Record<string, { name: string; logo?: React.ReactNode }> = {
   payoneer: {
     name: "Payoneer",
     logo: (
@@ -25,13 +22,7 @@ const PAYMENT_METHOD_MAP: Record<
           fill="none"
         />
         <defs>
-          <linearGradient
-            id="payoneer-grad-modal"
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="100%"
-          >
+          <linearGradient id="payoneer-grad-modal" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#FF3B30" />
             <stop offset="25%" stopColor="#FF9500" />
             <stop offset="50%" stopColor="#34C759" />
@@ -44,23 +35,15 @@ const PAYMENT_METHOD_MAP: Record<
   },
   lianlian: {
     name: "LianLian Global",
-    logo: (
-      <span className="text-xs font-extrabold text-[#1B64F2]">LianLian</span>
-    ),
+    logo: <span className="text-xs font-extrabold text-[#1B64F2]">LianLian</span>,
   },
   pingpong: {
     name: "pingpong",
-    logo: (
-      <span className="text-xs font-extrabold text-[#00A3E0]">pingpong</span>
-    ),
+    logo: <span className="text-xs font-extrabold text-[#00A3E0]">pingpong</span>,
   },
   worldfirst: {
     name: "WORLDFIRST",
-    logo: (
-      <span className="text-[10px] font-extrabold text-[#E4002B]">
-        WORLDFIRST
-      </span>
-    ),
+    logo: <span className="text-[10px] font-extrabold text-[#E4002B]">WORLDFIRST</span>,
   },
   airwallex: {
     name: "Airwallex",
@@ -120,12 +103,12 @@ export default function MyWallet() {
             </h2>
           </div>
 
-        {/* Main Balance Value */}
-        <div>
-          <span className="text-sm lg:text-base xl:text-lg 2xl:text-xl font-medium text-foreground tracking-tight">
-            $99,955,180.61
-          </span>
-        </div>
+          {/* Main Balance Value */}
+          <div>
+            <span className="text-sm lg:text-base xl:text-lg 2xl:text-xl font-medium text-foreground tracking-tight">
+              $99,955,180.61
+            </span>
+          </div>
 
           {/* Bottom Row: Waiting to confirm + Top-up Button */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -133,9 +116,7 @@ export default function MyWallet() {
               <span className="text-sm 2xl:text-base font-medium">
                 {translate("customerWallet.waitingConfirmTopup", currentLocale)}{" "}
               </span>
-              <span className="text-amber-500 font-semibold">
-                $261,000,077.00
-              </span>
+              <span className="text-amber-500 font-semibold">$261,000,077.00</span>
             </div>
             <Button
               size="sm"

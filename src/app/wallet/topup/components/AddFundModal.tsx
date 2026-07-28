@@ -1,14 +1,11 @@
 "use client";
 
-import { DatePicker } from "@customer/components/ui/date-picker";
+import { DatePicker } from "@ecom/ui";
 import { translate } from "@ecom/i18n";
 import { useI18n } from "@ecom/shared/@i18n";
 import { Button } from "@ecom/ui/components/button";
 import { Input } from "@ecom/ui/components/input";
-import {
-  BaseModal,
-  BaseModalContent,
-} from "@ecom/ui/components/modals/base-modal";
+import { BaseModal, BaseModalContent } from "@ecom/ui/components/modals/base-modal";
 import {
   AlertCircle,
   Check,
@@ -49,9 +46,7 @@ export function AddFundModal({
 }: AddFundModalProps) {
   const { languageId: currentLocale } = useI18n();
 
-  const isPayoneer =
-    methodId === "payoneer" ||
-    methodName?.toLowerCase().includes("payoneer");
+  const isPayoneer = methodId === "payoneer" || methodName?.toLowerCase().includes("payoneer");
 
   // Form State
   const [wireDate, setWireDate] = useState<string>("");
@@ -162,10 +157,8 @@ export function AddFundModal({
 
       if (!isValidType) {
         setErrorMessage(
-          translate(
-            "customerWallet.addFundModal.requiredFormat",
-            currentLocale,
-          ) || "Required to upload:*png, *jpg, *jpeg",
+          translate("customerWallet.addFundModal.requiredFormat", currentLocale) ||
+            "Required to upload:*png, *jpg, *jpeg",
         );
         return;
       }
@@ -226,8 +219,7 @@ export function AddFundModal({
     <div className="flex items-center gap-2.5">
       {methodLogo || defaultLogo}
       <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-        {translate("customerWallet.addFundModal.titleVia", currentLocale) ||
-          "Top-up via"}{" "}
+        {translate("customerWallet.addFundModal.titleVia", currentLocale) || "Top-up via"}{" "}
         {methodName}
       </span>
     </div>
@@ -248,8 +240,7 @@ export function AddFundModal({
         onClick={handleSubmit}
         className="px-6 py-2 h-10 rounded-lg font-semibold bg-[#00B4D8] hover:bg-[#0096B4] text-white shadow-sm cursor-pointer transition-all"
       >
-        {translate("customerWallet.addFundModal.submit", currentLocale) ||
-          "Submit"}
+        {translate("customerWallet.addFundModal.submit", currentLocale) || "Submit"}
       </Button>
     </>
   );
@@ -279,16 +270,11 @@ export function AddFundModal({
               <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div className="flex flex-col gap-0.5">
                 <span className="text-xs font-bold text-amber-800 dark:text-amber-300">
-                  {translate(
-                    "customerWallet.addFundModal.pleaseBeAware",
-                    currentLocale,
-                  ) || "Please be aware"}
+                  {translate("customerWallet.addFundModal.pleaseBeAware", currentLocale) ||
+                    "Please be aware"}
                 </span>
                 <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
-                  {translate(
-                    "customerWallet.addFundModal.alertMessage",
-                    currentLocale,
-                  ) ||
+                  {translate("customerWallet.addFundModal.alertMessage", currentLocale) ||
                     "Wire transactions may take up to 2 days to be processed and credited to your account."}
                 </p>
               </div>
@@ -307,16 +293,10 @@ export function AddFundModal({
 
             <div className="flex flex-col gap-1 pb-4">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                {translate(
-                  "customerWallet.addFundModal.step1Title",
-                  currentLocale,
-                ) || "Send fund"}
+                {translate("customerWallet.addFundModal.step1Title", currentLocale) || "Send fund"}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {translate(
-                  "customerWallet.addFundModal.step1Desc",
-                  currentLocale,
-                ) ||
+                {translate("customerWallet.addFundModal.step1Desc", currentLocale) ||
                   "Please use the wire info below to send the funding amount."}
               </p>
 
@@ -341,10 +321,8 @@ export function AddFundModal({
                     {/* Bank Name */}
                     <div className="grid grid-cols-12 items-center gap-2">
                       <span className="col-span-4 text-slate-500 dark:text-slate-400 font-medium">
-                        {translate(
-                          "customerWallet.addFundModal.bankNameLabel",
-                          currentLocale,
-                        ) || "Bank Name:"}
+                        {translate("customerWallet.addFundModal.bankNameLabel", currentLocale) ||
+                          "Bank Name:"}
                       </span>
                       <span className="col-span-8 font-bold text-[#1B64F2] leading-tight">
                         Bank for Investment and Development of Vietnam
@@ -360,9 +338,7 @@ export function AddFundModal({
                         ) || "Account Number:"}
                       </span>
                       <div className="col-span-8 border border-dashed border-slate-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 flex items-center justify-between bg-white dark:bg-zinc-900">
-                        <span className="font-bold text-[#1B64F2]">
-                          8833161232
-                        </span>
+                        <span className="font-bold text-[#1B64F2]">8833161232</span>
                         <button
                           type="button"
                           onClick={() => handleCopy("8833161232", "accNum")}
@@ -381,15 +357,11 @@ export function AddFundModal({
                     {/* Description */}
                     <div className="grid grid-cols-12 items-center gap-2">
                       <span className="col-span-4 text-slate-500 dark:text-slate-400 font-medium">
-                        {translate(
-                          "customerWallet.addFundModal.descriptionLabel",
-                          currentLocale,
-                        ) || "Description:"}
+                        {translate("customerWallet.addFundModal.descriptionLabel", currentLocale) ||
+                          "Description:"}
                       </span>
                       <div className="col-span-8 border border-dashed border-slate-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 flex items-center justify-between bg-white dark:bg-zinc-900">
-                        <span className="font-bold text-[#1B64F2]">
-                          SellerID
-                        </span>
+                        <span className="font-bold text-[#1B64F2]">SellerID</span>
                         <button
                           type="button"
                           onClick={() => handleCopy("SellerID", "desc")}
@@ -418,10 +390,8 @@ export function AddFundModal({
                 <div className="mt-3 border border-slate-200 dark:border-zinc-800 rounded-xl p-3.5 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      {translate(
-                        "customerWallet.addFundModal.accountLabel",
-                        currentLocale,
-                      ) || "Account:"}
+                      {translate("customerWallet.addFundModal.accountLabel", currentLocale) ||
+                        "Account:"}
                     </span>
                     <span className="text-sm font-bold text-[#1B64F2] select-all">
                       {accountEmail}
@@ -454,16 +424,11 @@ export function AddFundModal({
             <div className="flex flex-col gap-4">
               <div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  {translate(
-                    "customerWallet.addFundModal.step2Title",
-                    currentLocale,
-                  ) || "Submit Wire Transaction Detail"}
+                  {translate("customerWallet.addFundModal.step2Title", currentLocale) ||
+                    "Submit Wire Transaction Detail"}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {translate(
-                    "customerWallet.addFundModal.step2Desc",
-                    currentLocale,
-                  ) ||
+                  {translate("customerWallet.addFundModal.step2Desc", currentLocale) ||
                     "Fill out wire date and amount and upload an image of your wire transfer confirmation."}
                 </p>
               </div>
@@ -475,10 +440,8 @@ export function AddFundModal({
                   {/* Full Width Row: Wire date */}
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      {translate(
-                        "customerWallet.addFundModal.wireDateLabel",
-                        currentLocale,
-                      ) || "Wire date"}{" "}
+                      {translate("customerWallet.addFundModal.wireDateLabel", currentLocale) ||
+                        "Wire date"}{" "}
                       <span className="text-rose-500">*</span>
                     </label>
                     <DatePicker
@@ -492,13 +455,9 @@ export function AddFundModal({
                     <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
                       <Info className="w-4 h-4 text-[#1B64F2] shrink-0" />
                       <span>
-                        {translate(
-                          "customerWallet.addFundModal.exchangeRateText",
-                          currentLocale,
-                        ) || "Exchange rate:"}{" "}
-                        <strong className="text-[#1B64F2] font-bold">
-                          25.000 VND = 1 USD
-                        </strong>{" "}
+                        {translate("customerWallet.addFundModal.exchangeRateText", currentLocale) ||
+                          "Exchange rate:"}{" "}
+                        <strong className="text-[#1B64F2] font-bold">25.000 VND = 1 USD</strong>{" "}
                         <span className="text-slate-400">
                           {translate(
                             "customerWallet.addFundModal.exchangeRateNote",
@@ -551,10 +510,8 @@ export function AddFundModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      {translate(
-                        "customerWallet.addFundModal.wireDateLabel",
-                        currentLocale,
-                      ) || "Wire date"}{" "}
+                      {translate("customerWallet.addFundModal.wireDateLabel", currentLocale) ||
+                        "Wire date"}{" "}
                       <span className="text-rose-500">*</span>
                     </label>
                     <DatePicker
@@ -567,10 +524,8 @@ export function AddFundModal({
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      {translate(
-                        "customerWallet.addFundModal.wireAmountUsdLabel",
-                        currentLocale,
-                      ) || "Wire amount (USD)"}{" "}
+                      {translate("customerWallet.addFundModal.wireAmountUsdLabel", currentLocale) ||
+                        "Wire amount (USD)"}{" "}
                       <span className="text-rose-500">*</span>
                     </label>
                     <Input
@@ -587,18 +542,14 @@ export function AddFundModal({
               {/* Upload Image Section */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  {translate(
-                    "customerWallet.addFundModal.wireConfirmationLabel",
-                    currentLocale,
-                  ) || "Wire transfer confirmation"}{" "}
+                  {translate("customerWallet.addFundModal.wireConfirmationLabel", currentLocale) ||
+                    "Wire transfer confirmation"}{" "}
                   <span className="text-rose-500">*</span>
                 </label>
 
                 {/* Error Banner */}
                 {errorMessage && (
-                  <p className="text-xs font-medium text-rose-500 mt-0.5">
-                    {errorMessage}
-                  </p>
+                  <p className="text-xs font-medium text-rose-500 mt-0.5">{errorMessage}</p>
                 )}
 
                 {/* Upload Container */}
@@ -614,28 +565,19 @@ export function AddFundModal({
                       <ImageIcon className="w-6 h-6" />
                     </div>
                     <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-                      {translate(
-                        "customerWallet.addFundModal.dragAndDrop",
-                        currentLocale,
-                      ) || "Drag & drop or"}{" "}
+                      {translate("customerWallet.addFundModal.dragAndDrop", currentLocale) ||
+                        "Drag & drop or"}{" "}
                       <span className="text-[#1B64F2] font-semibold underline">
-                        {translate(
-                          "customerWallet.addFundModal.browse",
-                          currentLocale,
-                        ) || "Browse"}
+                        {translate("customerWallet.addFundModal.browse", currentLocale) || "Browse"}
                       </span>
                     </div>
                     <span className="text-[11px] text-slate-400">
-                      {translate(
-                        "customerWallet.addFundModal.uploadLimit",
-                        currentLocale,
-                      ) || "Upload up to 10 files"}
+                      {translate("customerWallet.addFundModal.uploadLimit", currentLocale) ||
+                        "Upload up to 10 files"}
                     </span>
                     <span className="text-[11px] text-slate-400 font-medium">
-                      {translate(
-                        "customerWallet.addFundModal.requiredFormat",
-                        currentLocale,
-                      ) || "Required to upload:*png, *jpg, *jpeg"}
+                      {translate("customerWallet.addFundModal.requiredFormat", currentLocale) ||
+                        "Required to upload:*png, *jpg, *jpeg"}
                     </span>
                   </div>
                 ) : (

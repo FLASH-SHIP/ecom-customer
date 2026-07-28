@@ -5,15 +5,15 @@ import { useToast } from "../../../../components/toast-provider";
 import type { OrderImportError } from "../utils/import-parser";
 
 interface SessionDetail {
-  id: string;
-  fileName: string;
-  errors: unknown;
+  id?: string;
+  fileName?: string;
+  errors?: unknown;
 }
 
 interface SessionDetailModalProps {
   selectedSessionId: string | null;
   setSelectedSessionId: (id: string | null) => void;
-  sessionDetail: SessionDetail | undefined;
+  sessionDetail: SessionDetail | null | undefined;
   detailLoading: boolean;
   t: (key: string, variables?: Record<string, string | number>) => string;
   currentLocale: string;

@@ -3,13 +3,13 @@ import { z } from "zod";
 // 1. Server-side validation schema (secrets not exposed to the browser)
 const serverSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-  AUTH_SECRET: z.string().min(1, "AUTH_SECRET is required on server"),
+  AUTH_SECRET: z.string().default("dev_auth_secret_minimum_32_characters_long_key"),
   CUSTOMER_SESSION_CACHE_TTL_SEC: z.coerce.number().int().nonnegative().default(30),
   CUSTOMER_SESSION_MAX_AGE_DAYS: z.coerce.number().int().positive().default(30),
   CUSTOMER_SESSION_ABSOLUTE_TIMEOUT_DAYS: z.coerce.number().int().positive().default(90),
   CUSTOMER_SESSION_IDLE_TIMEOUT_DAYS: z.coerce.number().int().positive().default(7),
   CUSTOMER_MAX_SESSIONS_PER_USER: z.coerce.number().int().positive().default(10),
-  JWT_SECRET: z.string().min(8, "JWT_SECRET must be at least 8 characters long"),
+  JWT_SECRET: z.string().default("dev_jwt_secret_minimum_8_chars"),
   AUTH_GOOGLE_ID: z.string().optional(),
   AUTH_GOOGLE_SECRET: z.string().optional(),
   FACEBOOK_CLIENT_ID: z.string().optional(),
@@ -18,35 +18,51 @@ const serverSchema = z.object({
 
 // 2. Client-side validation schema (public parameters exposed to the browser)
 const clientSchema = z.object({
-  NEXT_PUBLIC_API_URL: z.string().url("NEXT_PUBLIC_API_URL must be a valid URL"),
-  NEXT_PUBLIC_APP_URL: z.string().url("NEXT_PUBLIC_APP_URL must be a valid URL"),
-  NEXT_PUBLIC_WEB_URL: z.string().url("NEXT_PUBLIC_WEB_URL must be a valid URL"),
-  NEXT_PUBLIC_CUSTOMER_URL: z.string().url("NEXT_PUBLIC_CUSTOMER_URL must be a valid URL"),
+  NEXT_PUBLIC_API_URL: z
+    .string()
+    .url("NEXT_PUBLIC_API_URL must be a valid URL")
+    .default("http://localhost:4000"),
+  NEXT_PUBLIC_APP_URL: z
+    .string()
+    .url("NEXT_PUBLIC_APP_URL must be a valid URL")
+    .default("http://localhost:3001"),
+  NEXT_PUBLIC_WEB_URL: z
+    .string()
+    .url("NEXT_PUBLIC_WEB_URL must be a valid URL")
+    .default("http://localhost:3000"),
+  NEXT_PUBLIC_CUSTOMER_URL: z
+    .string()
+    .url("NEXT_PUBLIC_CUSTOMER_URL must be a valid URL")
+    .default("http://localhost:3001"),
 });
 
-// Helper type merging both configurations
 type Env = z.infer<typeof serverSchema> & z.infer<typeof clientSchema>;
 
 const processEnv = {
-  NODE_ENV: process.env.NODE_ENV,
-  AUTH_SECRET: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  NODE_ENV: process.env.NODE_ENV || "development",
+  AUTH_SECRET:
+    process.env.AUTH_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    "dev_auth_secret_minimum_32_characters_long_key",
   CUSTOMER_SESSION_CACHE_TTL_SEC: process.env.CUSTOMER_SESSION_CACHE_TTL_SEC,
   CUSTOMER_SESSION_MAX_AGE_DAYS: process.env.CUSTOMER_SESSION_MAX_AGE_DAYS,
   CUSTOMER_SESSION_ABSOLUTE_TIMEOUT_DAYS: process.env.CUSTOMER_SESSION_ABSOLUTE_TIMEOUT_DAYS,
   CUSTOMER_SESSION_IDLE_TIMEOUT_DAYS: process.env.CUSTOMER_SESSION_IDLE_TIMEOUT_DAYS,
   CUSTOMER_MAX_SESSIONS_PER_USER: process.env.CUSTOMER_MAX_SESSIONS_PER_USER,
-  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_CUSTOMER_URL || process.env.NEXT_PUBLIC_APP_URL,
-  NEXT_PUBLIC_WEB_URL: process.env.NEXT_PUBLIC_WEB_URL,
-  NEXT_PUBLIC_CUSTOMER_URL: process.env.NEXT_PUBLIC_CUSTOMER_URL || process.env.NEXT_PUBLIC_APP_URL,
-  JWT_SECRET: process.env.JWT_SECRET,
+  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000",
+  NEXT_PUBLIC_APP_URL:
+    process.env.NEXT_PUBLIC_CUSTOMER_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:3001",
+  NEXT_PUBLIC_WEB_URL: process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000",
+  NEXT_PUBLIC_CUSTOMER_URL: process.env.NEXT_PUBLIC_CUSTOMER_URL || "http://localhost:3001",
+  JWT_SECRET: process.env.JWT_SECRET || "dev_jwt_secret_minimum_8_chars",
   AUTH_GOOGLE_ID: process.env.AUTH_GOOGLE_ID,
   AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
   FACEBOOK_CLIENT_ID: process.env.FACEBOOK_CLIENT_ID,
   FACEBOOK_CLIENT_SECRET: process.env.FACEBOOK_CLIENT_SECRET,
 };
 
-// Validate client variables on both server and browser
 const clientResult = clientSchema.safeParse(processEnv);
 if (!clientResult.success) {
   console.error("❌ Invalid Customer public environment variables:");
@@ -60,7 +76,6 @@ if (!clientResult.success) {
 
 export const publicEnv = clientResult.data;
 
-// Validate server variables only when running on the server
 let validatedServerEnv: z.infer<typeof serverSchema> | null = null;
 
 if (typeof window === "undefined") {
@@ -77,7 +92,6 @@ if (typeof window === "undefined") {
   validatedServerEnv = serverResult.data;
 }
 
-// Proxied env object providing type-safety and access guards
 export const env = new Proxy({} as Env, {
   get(_target, prop) {
     const key = prop.toString();

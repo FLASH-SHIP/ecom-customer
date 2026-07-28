@@ -1,7 +1,7 @@
 "use client";
 
-import { PaginationBase } from "@customer/components/ui/pagination-base";
-import { TableBase } from "@customer/components/ui/table-base";
+import { PaginationBase } from "@ecom/ui";
+import { TableBase } from "@ecom/ui";
 import { translate } from "@ecom/i18n";
 import { useI18n } from "@ecom/shared/@i18n";
 import { Badge } from "@ecom/ui/components/badge";

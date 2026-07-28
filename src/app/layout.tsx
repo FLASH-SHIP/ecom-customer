@@ -1,3 +1,4 @@
+import { defaultLocale, locales } from "@ecom/i18n";
 import { I18nProvider } from "@ecom/shared/@i18n";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -6,7 +7,6 @@ import { SessionProvider } from "next-auth/react";
 import { CustomerLayout } from "../components/CustomerLayout";
 import { ToastProvider } from "../components/toast-provider";
 import { CustomerThemeProvider } from "../lib/CustomerThemeProvider";
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "../lib/i18n";
 import { TRPCProvider } from "../lib/trpc";
 import "./globals.css";
 
@@ -25,17 +25,6 @@ export const metadata: Metadata = {
   },
   description: "Discover articles, guides, and resources on Ecom Express.",
   metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
-  // Khai báo favicon cho các thiết bị và kích thước
-  icons: {
-    icon: [
-      { url: "/favicons/favicon.ico" },
-      { url: "/favicons/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicons/favicon-96x96.png", sizes: "96x96", type: "image/png" },
-    ],
-    apple: [{ url: "/favicons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
-  },
-  // Khai báo file manifest cho Android/PWA
-  manifest: "/favicons/site.webmanifest",
 };
 
 export default async function RootLayout({
@@ -46,7 +35,7 @@ export default async function RootLayout({
   const cookieStore = await cookies();
   const locale = cookieStore.get("NEXT_LOCALE")?.value;
   const lang =
-    locale && (SUPPORTED_LOCALES as readonly string[]).includes(locale) ? locale : DEFAULT_LOCALE;
+    locale && (locales as readonly string[]).includes(locale) ? locale : defaultLocale;
 
   return (
     <html lang={lang} className={inter.variable}>

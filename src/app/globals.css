@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@source "../../../../packages/ui/components";
+@source "../../../ecom-shared-packages/packages/ui";
 @custom-variant dark (&:where(.dark, .dark *));
 @plugin "@tailwindcss/typography";
 

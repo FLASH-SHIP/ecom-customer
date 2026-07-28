@@ -103,10 +103,11 @@ export default function RegisterPage() {
     onSuccess: async (_, variables) => {
       localStorage.removeItem("customer_register_otp_sent_at");
       try {
+        const params = variables as { email: string; password: string };
         await signIn("credentials", {
           redirect: false,
-          identifier: variables.email,
-          password: variables.password,
+          identifier: params.email,
+          password: params.password,
         });
         router.push("/dashboard");
       } catch (err) {

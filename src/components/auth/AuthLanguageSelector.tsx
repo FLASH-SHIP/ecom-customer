@@ -12,7 +12,11 @@ function getFlagEmoji(countryCode: string | null | undefined): string {
   return String.fromCodePoint(...codePoints);
 }
 
-export function AuthLanguageSelector() {
+interface AuthLanguageSelectorProps {
+  className?: string;
+}
+
+export function AuthLanguageSelector({ className = "" }: AuthLanguageSelectorProps) {
   const _pathname = usePathname();
   const [langOpen, setLangOpen] = useState(false);
 
