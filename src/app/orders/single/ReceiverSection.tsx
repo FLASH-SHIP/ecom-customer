@@ -366,9 +366,9 @@ export function ReceiverSection({
                           field.onChange(val);
                           setValueParent("receiverCityName", val);
                         }}
-                        options={Array.from(new Set(usCitiesList.map((c) => c.name))).map((cityName) => ({
-                          value: cityName,
-                          label: cityName,
+                        options={Array.from(new Set(usCitiesList.map((c: { name: string }) => c.name))).map((cityName) => ({
+                          value: String(cityName),
+                          label: String(cityName),
                         }))}
                         placeholder={
                           selectedStateId
