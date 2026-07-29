@@ -44,7 +44,7 @@ export function BasicInfoSection({ control, register, errors }: BasicInfoSection
 
       {/* Body */}
       <div className="p-4 flex flex-col gap-4 bg-[#FDFFFF]">
-        <FieldGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <FieldGroup className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Shipping Origin */}
           <Field>
             <FieldLabel>
@@ -136,24 +136,6 @@ export function BasicInfoSection({ control, register, errors }: BasicInfoSection
               )}
             />
             <FieldError errors={[errors.sellerOrderId]} />
-          </Field>
-
-          {/* Total Packets (display only) */}
-          <Field>
-            <FieldLabel htmlFor="totalPackets">
-              {translate("customerOrder.single.totalPackets", currentLocale)}{" "}
-              <span className="text-destructive">*</span>
-            </FieldLabel>
-            <Input
-              id="totalPackets"
-              type="number"
-              min={1}
-              value={1}
-              disabled={true}
-              readOnly
-              placeholder={translate("customerOrder.placeholder.enterTotalPackets", currentLocale)}
-              className={cn("w-full bg-background/50")}
-            />
           </Field>
 
           {/* Hidden inputs for auto-calculated values */}
