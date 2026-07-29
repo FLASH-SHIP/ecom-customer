@@ -6,7 +6,7 @@ import { useI18n } from "@ecom/shared/@i18n";
 import { Checkbox } from "@flash-ship/ecom-ui/components/checkbox";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@flash-ship/ecom-ui/components/field";
 import { Input } from "@flash-ship/ecom-ui/components/input";
-import { SearchableSelect } from "@flash-ship/ecom-ui/components/searchable-select";
+import { SearchableSelect } from "@customer/components/ui/searchable-select";
 import {
   Select,
   SelectContent,
