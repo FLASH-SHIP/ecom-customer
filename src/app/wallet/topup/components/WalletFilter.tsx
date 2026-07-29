@@ -1,5 +1,6 @@
 "use client";
 
+import { trpc } from "@customer/lib/trpc";
 import { DateRangePicker } from "@flash-ship/ecom-ui";
 import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
@@ -42,6 +43,8 @@ export default function WalletFilter({
   isExporting = false,
 }: WalletFilterProps) {
   const { languageId: currentLocale } = useI18n();
+
+  const { data: paymentMethods } = trpc.customer.topup.getPaymentMethods.useQuery();
 
   // Default date range: 7 days (today and 6 past days)
   const defaultToDate = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
@@ -117,15 +120,25 @@ export default function WalletFilter({
               <SelectItem value="ALL">
                 {translate("customerWallet.filter.allPaymentMethods", currentLocale)}
               </SelectItem>
-              <SelectItem value="paypal">
-                {translate("customerWallet.filter.paypal", currentLocale)}
-              </SelectItem>
-              <SelectItem value="bank">
-                {translate("customerWallet.filter.bankTransfer", currentLocale)}
-              </SelectItem>
-              <SelectItem value="card">
-                {translate("customerWallet.filter.creditCard", currentLocale)}
-              </SelectItem>
+              {paymentMethods && paymentMethods.length > 0 ? (
+                paymentMethods.map((pm) => (
+                  <SelectItem key={pm.id} value={String(pm.id)}>
+                    {pm.name}
+                  </SelectItem>
+                ))
+              ) : (
+                <>
+                  <SelectItem value="paypal">
+                    {translate("customerWallet.filter.paypal", currentLocale)}
+                  </SelectItem>
+                  <SelectItem value="bank">
+                    {translate("customerWallet.filter.bankTransfer", currentLocale)}
+                  </SelectItem>
+                  <SelectItem value="card">
+                    {translate("customerWallet.filter.creditCard", currentLocale)}
+                  </SelectItem>
+                </>
+              )}
             </SelectContent>
           </Select>
           {paymentMethod && paymentMethod !== "ALL" && (
