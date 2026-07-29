@@ -1,7 +1,6 @@
 "use client";
 
-import { PaginationBase } from "@flash-ship/ecom-ui";
-import { TableBase } from "@flash-ship/ecom-ui";
+import { PaginationBase, TableBase } from "@flash-ship/ecom-ui";
 import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
 import { Badge } from "@flash-ship/ecom-ui/components/badge";
@@ -14,87 +13,80 @@ import {
   DropdownMenuTrigger,
 } from "@flash-ship/ecom-ui/components/dropdown-menu";
 import { ThreeDotsVerticalIcon } from "@flash-ship/ecom-ui/components/icons";
-import { useState } from "react";
+import { format } from "date-fns";
 
 export interface TopupItem {
   id: string;
+  transactionCode: string;
   orderCode: string;
   submissionDate: string;
   wireDate: string;
   paymentMethod: string;
   wireTransferConfirmation: string;
-  status: "WAITING" | "CONFIRM" | "REJECT";
-  wireAmount: string;
-  wireAmountApproved: string;
+  status: string;
+  wireAmount: number | string;
+  wireAmountApproved: number | string;
 }
 
-const MOCK_TOPUP_DATA = {
-  data: [
-    {
-      id: "1",
-      orderCode: "TOP-2026072501",
-      submissionDate: "25/07/2026 15:30",
-      wireDate: "25/07/2026",
-      paymentMethod: "Bank Transfer",
-      wireTransferConfirmation: "CONF-9812405",
-      status: "WAITING" as const,
-      wireAmount: "$261,000,077.00",
-      wireAmountApproved: "$0.00",
-    },
-    {
-      id: "2",
-      orderCode: "TOP-2026072002",
-      submissionDate: "20/07/2026 10:15",
-      wireDate: "20/07/2026",
-      paymentMethod: "Credit Card",
-      wireTransferConfirmation: "CONF-7712390",
-      status: "CONFIRM" as const,
-      wireAmount: "$50,000.00",
-      wireAmountApproved: "$50,000.00",
-    },
-    {
-      id: "3",
-      orderCode: "TOP-2026071203",
-      submissionDate: "12/07/2026 14:22",
-      wireDate: "12/07/2026",
-      paymentMethod: "Bank Transfer",
-      wireTransferConfirmation: "CONF-6512891",
-      status: "CONFIRM" as const,
-      wireAmount: "$100,000.00",
-      wireAmountApproved: "$100,000.00",
-    },
-    {
-      id: "4",
-      orderCode: "TOP-2026070504",
-      submissionDate: "05/07/2026 09:10",
-      wireDate: "05/07/2026",
-      paymentMethod: "Paypal",
-      wireTransferConfirmation: "CONF-4412092",
-      status: "REJECT" as const,
-      wireAmount: "$15,000.00",
-      wireAmountApproved: "$0.00",
-    },
-  ],
-  meta: {
-    total: 4,
-    page: 1,
-    perPage: 10,
-  },
-};
+export interface TopupTableProps {
+  data?: TopupItem[];
+  meta?: {
+    total: number;
+    page: number;
+    pageSize: number;
+  };
+  isLoading?: boolean;
+  page?: number;
+  perPage?: number;
+  onPageChange?: (page: number) => void;
+  onPerPageChange?: (perPage: number) => void;
+  onEdit?: (item: TopupItem) => void;
+  onCancel?: (item: TopupItem) => void;
+}
 
-export default function TopupTable() {
+export default function TopupTable({
+  data = [],
+  meta = { total: 0, page: 1, pageSize: 10 },
+  isLoading = false,
+  page = 1,
+  perPage = 10,
+  onPageChange,
+  onPerPageChange,
+  onEdit,
+  onCancel,
+}: TopupTableProps) {
   const { languageId: currentLocale } = useI18n();
-  const isLoading = false;
-
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
-  const listData = MOCK_TOPUP_DATA;
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+    onPageChange?.(newPage);
   };
 
-  type OrderType = (typeof MOCK_TOPUP_DATA)["data"][number];
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "-";
+    try {
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return dateStr;
+      return format(d, "dd/MM/yyyy HH:mm");
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatShortDate = (dateStr?: string) => {
+    if (!dateStr) return "-";
+    try {
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return dateStr;
+      return format(d, "dd/MM/yyyy");
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatCurrency = (amount: number | string) => {
+    const num = Number(amount) || 0;
+    return `$${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
   const columns = [
     {
@@ -103,48 +95,57 @@ export default function TopupTable() {
       fixed: "left" as const,
       headerClassName: "text-center",
       className: "text-center font-medium text-muted-foreground",
-      cell: (order: OrderType) => {
-        const index = listData.data.findIndex((item) => item.id === order.id);
-        const rowNumber = (page - 1) * perPage + index + 1;
+      cell: (order: TopupItem) => {
+        const index = data.findIndex((item) => item.id === order.id);
+        const rowNumber = (page - 1) * perPage + (index >= 0 ? index : 0) + 1;
         return <div>{rowNumber}</div>;
       },
     },
     {
       header: translate("customerWallet.table.submissionDate", currentLocale) || "Submission Date",
       width: 170,
-      cell: (order: OrderType) => <div>{order.submissionDate}</div>,
+      cell: (order: TopupItem) => <div>{formatDate(order.submissionDate)}</div>,
     },
     {
       header: translate("customerWallet.table.wireDate", currentLocale) || "Wire Date",
       width: 135,
-      cell: (order: OrderType) => <div>{order.wireDate}</div>,
+      cell: (order: TopupItem) => <div>{formatShortDate(order.wireDate)}</div>,
     },
     {
       header: translate("customerWallet.table.paymentMethod", currentLocale) || "Payment Method",
       width: 160,
-      cell: (order: OrderType) => <div>{order.paymentMethod}</div>,
+      cell: (order: TopupItem) => <div>{order.paymentMethod}</div>,
     },
     {
       header:
         translate("customerWallet.table.wireTransferConfirmation", currentLocale) ||
         "Wire transfer confirmation",
       width: 160,
+      cell: (order: TopupItem) => <div>{order.wireTransferConfirmation || order.transactionCode}</div>,
     },
     {
       header: translate("customerWallet.table.status", currentLocale) || "Status",
       width: 135,
-      cell: (order: OrderType) => {
-        if (order.status === "CONFIRM") {
+      cell: (order: TopupItem) => {
+        const upperStatus = (order.status || "").toUpperCase();
+        if (upperStatus === "CONFIRM" || upperStatus === "CONFIRMED" || upperStatus === "APPROVED") {
           return (
             <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border-emerald-200 font-medium">
               {translate("customerWallet.status.confirm", currentLocale) || "Confirmed"}
             </Badge>
           );
         }
-        if (order.status === "WAITING") {
+        if (upperStatus === "WAITING") {
           return (
             <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border-amber-200 font-medium">
               {translate("customerWallet.status.waiting", currentLocale) || "Waiting"}
+            </Badge>
+          );
+        }
+        if (upperStatus === "CANCELLED" || upperStatus === "CANCEL") {
+          return (
+            <Badge className="bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border-zinc-200 font-medium">
+              {translate("customerWallet.status.cancel", currentLocale) || "Cancelled"}
             </Badge>
           );
         }
@@ -158,73 +159,80 @@ export default function TopupTable() {
     {
       header: translate("customerWallet.table.wireAmount", currentLocale) || "Wire Amount",
       width: 160,
-      cell: (order: OrderType) => (
-        <span className="font-bold text-foreground">{order.wireAmount}</span>
+      cell: (order: TopupItem) => (
+        <span className="font-bold text-foreground">{formatCurrency(order.wireAmount)}</span>
       ),
     },
     {
       header: translate("customerWallet.table.approvedAmount", currentLocale) || "Approved Amount",
       width: 160,
-      cell: (order: OrderType) => (
+      cell: (order: TopupItem) => (
         <span className="font-bold text-emerald-600 dark:text-emerald-400">
-          {order.wireAmountApproved}
+          {formatCurrency(order.wireAmountApproved)}
         </span>
       ),
     },
     {
-      header: translate("customerWallet.table.action", currentLocale),
+      header: translate("customerWallet.table.action", currentLocale) || "Action",
       width: 80,
       fixed: "right" as const,
       headerClassName: "text-center",
       className: "text-center",
-      cell: () => (
-        // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: wrapper div to stop row click propagation
-        <div onClick={(e) => e.stopPropagation()}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hover:bg-accent text-primary h-8 w-8 rounded-lg cursor-pointer outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=open]:ring-0 data-[state=open]:outline-none"
-                title="Actions"
+      cell: (order: TopupItem) => {
+        // Chỉ hiển thị nút 3 chấm khi trạng thái là WAITING
+        const upperStatus = (order.status || "").toUpperCase();
+        if (upperStatus !== "WAITING") {
+          return <div />;
+        }
+
+        return (
+          // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: stop row click
+          <div onClick={(e) => e.stopPropagation()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="hover:bg-accent text-primary h-8 w-8 rounded-lg cursor-pointer outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=open]:ring-0 data-[state=open]:outline-none"
+                  title="Actions"
+                >
+                  <ThreeDotsVerticalIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-36 bg-white dark:bg-zinc-900 border border-border shadow-md rounded-lg p-1 z-30"
               >
-                <ThreeDotsVerticalIcon />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-36 bg-white dark:bg-zinc-900 border border-border shadow-md rounded-lg p-1 z-30"
-            >
-              <DropdownMenuItem
-                disabled={true}
-                className="px-3 py-2 text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Handle Get Label action
-                }}
-              >
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={true}
-                className="px-3 py-2 text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-              >
-                Cancel
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
+                <DropdownMenuItem
+                  className="px-3 py-2 text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit?.(order);
+                  }}
+                >
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCancel?.(order);
+                  }}
+                >
+                  Cancel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        );
+      },
     },
   ];
 
   return (
     <Card className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
       <TableBase
-        data={listData.data}
+        data={data}
         columns={columns}
         isLoading={isLoading}
         emptyMessage={
@@ -235,15 +243,14 @@ export default function TopupTable() {
       />
 
       {/* Pagination Controls */}
-      {listData && listData.meta.total > 0 && (
+      {meta && meta.total > 0 && (
         <PaginationBase
           currentPage={page}
-          totalItems={listData.meta.total}
+          totalItems={meta.total}
           perPage={perPage}
           onPageChange={handlePageChange}
           onPerPageChange={(val) => {
-            setPerPage(val);
-            setPage(1);
+            onPerPageChange?.(val);
           }}
           renderRangeText={(from, to, total) => (
             <>

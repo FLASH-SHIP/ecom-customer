@@ -1,5 +1,6 @@
 "use client";
 
+import { trpc } from "@customer/lib/trpc";
 import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
 import { Button } from "@flash-ship/ecom-ui/components/button";
@@ -68,6 +69,16 @@ const PAYMENT_METHOD_MAP: Record<string, { name: string; logo?: React.ReactNode 
 export default function MyWallet() {
   const { languageId: currentLocale } = useI18n();
 
+  const { data: walletSummary, isLoading } = trpc.customer.topup.getWalletSummary.useQuery();
+
+  const formattedBalance = walletSummary
+    ? `$${walletSummary.accountBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : "$0.00";
+
+  const formattedWaiting = walletSummary
+    ? `$${walletSummary.waitingConfirmTopup.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : "$0.00";
+
   const [openTopupModal, setOpenTopupModal] = React.useState(false);
   const [openAddFundModal, setOpenAddFundModal] = React.useState(false);
   const [selectedMethodId, setSelectedMethodId] = React.useState<string>("payoneer");
@@ -106,7 +117,7 @@ export default function MyWallet() {
           {/* Main Balance Value */}
           <div>
             <span className="text-sm lg:text-base xl:text-lg 2xl:text-xl font-medium text-foreground tracking-tight">
-              $99,955,180.61
+              {isLoading ? "..." : formattedBalance}
             </span>
           </div>
 
@@ -116,7 +127,7 @@ export default function MyWallet() {
               <span className="text-sm 2xl:text-base font-medium">
                 {translate("customerWallet.waitingConfirmTopup", currentLocale)}{" "}
               </span>
-              <span className="text-amber-500 font-semibold">$261,000,077.00</span>
+              <span className="text-amber-500 font-semibold">{isLoading ? "..." : formattedWaiting}</span>
             </div>
             <Button
               size="sm"

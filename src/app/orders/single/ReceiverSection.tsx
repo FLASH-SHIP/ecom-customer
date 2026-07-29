@@ -7,7 +7,7 @@ import { useI18n } from "@ecom/shared/@i18n";
 import { ShippingMethod } from "@flash-ship/ecom-types";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@flash-ship/ecom-ui/components/field";
 import { Input } from "@flash-ship/ecom-ui/components/input";
-import { SearchableSelect } from "@flash-ship/ecom-ui/components/searchable-select";
+import { SearchableSelect } from "@customer/components/ui/searchable-select";
 import { cn } from "@flash-ship/ecom-ui/lib/utils";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -366,9 +366,9 @@ export function ReceiverSection({
                           field.onChange(val);
                           setValueParent("receiverCityName", val);
                         }}
-                        options={usCitiesList.map((c) => ({
-                          value: c.name,
-                          label: c.name,
+                        options={Array.from(new Set(usCitiesList.map((c) => c.name))).map((cityName) => ({
+                          value: cityName,
+                          label: cityName,
                         }))}
                         placeholder={
                           selectedStateId

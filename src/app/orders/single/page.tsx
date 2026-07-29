@@ -15,7 +15,7 @@ import { Button } from "@flash-ship/ecom-ui/components/button";
 import { Checkbox } from "@flash-ship/ecom-ui/components/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "../../../components/toast-provider";
@@ -31,136 +31,179 @@ import { ReceiverSection } from "./ReceiverSection";
 import { SenderSection } from "./SenderSection";
 import { useOrderStore } from "./useOrderStore";
 
-const orderFormSchema = z
-  .object({
-    shippingMethod: z.nativeEnum(ShippingMethod),
-    shippingOrigin: z.nativeEnum(ShippingOrigin),
-    detailDescription: z.string().min(1, "Vui lòng nhập mô tả hàng hóa."),
-    declaredValue: z
-      .string()
-      .min(1, "Vui lòng nhập giá trị hàng hóa.")
-      .refine(
-        (val) => !Number.isNaN(Number(val)) && Number(val) > 0,
-        "Trị giá hàng hóa phải lớn hơn 0.",
-      ),
-    sellerOrderId: z.string().optional(),
+function getOrderFormSchema(locale: string) {
+  return z
+    .object({
+      shippingMethod: z.nativeEnum(ShippingMethod),
+      shippingOrigin: z.nativeEnum(ShippingOrigin),
+      detailDescription: z
+        .string()
+        .min(1, translate("customerOrder.validation.detailDescriptionRequired", locale)),
+      declaredValue: z
+        .string()
+        .min(1, translate("customerOrder.validation.declaredValueRequired", locale))
+        .refine(
+          (val) => !Number.isNaN(Number(val)) && Number(val) > 0,
+          translate("customerOrder.validation.declaredValueMin", locale),
+        ),
+      sellerOrderId: z
+        .string()
+        .min(1, translate("customerOrder.validation.sellerOrderIdRequired", locale)),
 
-    // Sender Info
-    senderName: z.string().min(1, "Vui lòng nhập tên người gửi."),
-    senderPhone: z.string().min(1, "Vui lòng nhập số điện thoại người gửi."),
-    senderEmail: z.string().email("Email người gửi không hợp lệ.").or(z.literal("")),
-    senderAddress: z.string().min(1, "Vui lòng nhập địa chỉ người gửi."),
-    senderCity: z.string().min(1, "Vui lòng chọn tỉnh/thành phố người gửi."),
-    senderCityName: z.string().optional(),
-    senderWard: z.string().optional(),
-    senderWardName: z.string().optional(),
-    senderZipCode: z.string().min(1, "Vui lòng nhập mã zip người gửi."),
-    senderCountry: z.string().min(1, "Vui lòng chọn quốc gia người gửi."),
+      // Sender Info
+      senderName: z
+        .string()
+        .min(1, translate("customerOrder.validation.senderNameRequired", locale)),
+      senderPhone: z
+        .string()
+        .min(1, translate("customerOrder.validation.senderPhoneRequired", locale)),
+      senderEmail: z
+        .string()
+        .email(translate("customerOrder.validation.senderEmailInvalid", locale))
+        .or(z.literal("")),
+      senderAddress: z
+        .string()
+        .min(1, translate("customerOrder.validation.senderAddressRequired", locale)),
+      senderCity: z
+        .string()
+        .min(1, translate("customerOrder.validation.senderCityRequired", locale)),
+      senderCityName: z.string().optional(),
+      senderWard: z.string().optional(),
+      senderWardName: z.string().optional(),
+      senderZipCode: z
+        .string()
+        .min(1, translate("customerOrder.validation.senderZipCodeRequired", locale)),
+      senderCountry: z
+        .string()
+        .min(1, translate("customerOrder.validation.senderCountryRequired", locale)),
 
-    // Receiver Info
-    receiverName: z
-      .string()
-      .min(1, "Vui lòng nhập tên người nhận.")
-      .max(100, "Tên người nhận không được vượt quá 100 ký tự.")
-      .refine(
-        (val) => validateReceiverName(val).valid,
-        "Tên người nhận không được chứa ký tự đặc biệt.",
-      ),
-    receiverPhone: z
-      .string()
-      .optional()
-      .refine(
-        (val) => !val || validateReceiverPhone(val).valid,
-        "Số điện thoại người nhận không được vượt quá 15 ký tự.",
-      ),
-    receiverEmail: z
-      .string()
-      .optional()
-      .refine(
-        (val) => !val || validateReceiverEmail(val).valid,
-        "Email người nhận không đúng định dạng chuẩn.",
-      ),
-    receiverAddress1: z
-      .string()
-      .min(1, "Vui lòng nhập địa chỉ người nhận.")
-      .max(150, "Địa chỉ 1 không được vượt quá 150 ký tự."),
-    receiverAddress2: z
-      .string()
-      .optional()
-      .refine((val) => !val || val.length <= 150, "Địa chỉ 2 không được vượt quá 150 ký tự."),
-    receiverCity: z.string().min(1, "Vui lòng nhập thành phố người nhận."),
-    receiverCityName: z.string().optional(),
-    receiverState: z.string().min(1, "Vui lòng nhập bang/tỉnh người nhận."),
-    receiverStateName: z.string().optional(),
-    receiverZipCode: z.string().min(1, "Vui lòng nhập mã zip người nhận."),
-    receiverCountry: z.string().min(1, "Vui lòng chọn quốc gia người nhận."),
+      // Receiver Info
+      receiverName: z
+        .string()
+        .min(1, translate("customerOrder.validation.receiverNameRequired", locale))
+        .max(100, translate("customerOrder.validation.receiverNameMax", locale))
+        .refine(
+          (val) => validateReceiverName(val).valid,
+          translate("customerOrder.validation.receiverNameInvalid", locale),
+        ),
+      receiverPhone: z
+        .string()
+        .optional()
+        .refine(
+          (val) => !val || validateReceiverPhone(val).valid,
+          translate("customerOrder.validation.receiverPhoneMax", locale),
+        ),
+      receiverEmail: z
+        .string()
+        .optional()
+        .refine(
+          (val) => !val || validateReceiverEmail(val).valid,
+          translate("customerOrder.validation.receiverEmailInvalid", locale),
+        ),
+      receiverAddress1: z
+        .string()
+        .min(1, translate("customerOrder.validation.receiverAddress1Required", locale))
+        .max(150, translate("customerOrder.validation.receiverAddress1Max", locale)),
+      receiverAddress2: z
+        .string()
+        .optional()
+        .refine(
+          (val) => !val || val.length <= 150,
+          translate("customerOrder.validation.receiverAddress2Max", locale),
+        ),
+      receiverCity: z
+        .string()
+        .min(1, translate("customerOrder.validation.receiverCityRequired", locale)),
+      receiverCityName: z.string().optional(),
+      receiverState: z
+        .string()
+        .min(1, translate("customerOrder.validation.receiverStateRequired", locale)),
+      receiverStateName: z.string().optional(),
+      receiverZipCode: z
+        .string()
+        .min(1, translate("customerOrder.validation.receiverZipCodeRequired", locale)),
+      receiverCountry: z
+        .string()
+        .min(1, translate("customerOrder.validation.receiverCountryRequired", locale)),
 
-    // Package Info
-    packingTypeId: z.number({ message: "Vui lòng chọn loại đóng gói." }).int().positive(),
-    length: z.string().optional(),
-    width: z.string().optional(),
-    height: z.string().optional(),
-    weight: z
-      .string()
-      .min(1, "Vui lòng nhập cân nặng gói hàng.")
-      .refine(
-        (val) => !Number.isNaN(Number(val)) && Number(val) > 0,
-        "Cân nặng gói hàng phải lớn hơn 0.",
-      ),
-    packageName: z.string().min(1, "Vui lòng nhập tên gói hàng."),
-    products: z
-      .array(
-        z.object({
-          description: z.string().min(1, "Vui lòng nhập mô tả sản phẩm."),
-          quantity: z
-            .string()
-            .min(1, "Vui lòng nhập số lượng.")
-            .refine(
-              (val) =>
-                !Number.isNaN(Number(val)) && Number.isInteger(Number(val)) && Number(val) > 0,
-              "Số lượng phải là số nguyên dương.",
-            ),
-          value: z
-            .string()
-            .min(1, "Vui lòng nhập giá trị.")
-            .refine(
-              (val) => !Number.isNaN(Number(val)) && Number(val) > 0,
-              "Trị giá phải lớn hơn 0.",
-            ),
-          hsCodePrefix: z.string(),
-          hsCodeNumber: z.string().optional(),
-          originCountry: z.string().min(1, "Vui lòng chọn xuất xứ."),
-          weight: z
-            .string()
-            .optional()
-            .refine(
-              (val) => !val || (!Number.isNaN(Number(val)) && Number(val) > 0),
-              "Cân nặng phải lớn hơn 0.",
-            ),
-          sku: z.string().optional(),
-        }),
-      )
-      .min(1, "Vui lòng khai báo ít nhất 1 sản phẩm."),
-  })
-  .superRefine((data, ctx) => {
-    const stateVal = validateReceiverState(data.receiverCountry, data.receiverState);
-    if (!stateVal.valid) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["receiverState"],
-        message: stateVal.message,
-      });
-    }
-    if (!validatePostalCode(data.receiverCountry, data.receiverZipCode)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["receiverZipCode"],
-        message: `Mã Postcode/Zipcode không đúng định dạng cho quốc gia ${data.receiverCountry}`,
-      });
-    }
-  });
+      // Package Info
+      packingTypeId: z
+        .number({ message: translate("customerOrder.validation.packingTypeIdRequired", locale) })
+        .int()
+        .positive(),
+      length: z.string().optional(),
+      width: z.string().optional(),
+      height: z.string().optional(),
+      weight: z
+        .string()
+        .min(1, translate("customerOrder.validation.packageWeightRequired", locale))
+        .refine(
+          (val) => !Number.isNaN(Number(val)) && Number(val) > 0,
+          translate("customerOrder.validation.packageWeightMin", locale),
+        ),
+      packageName: z
+        .string()
+        .min(1, translate("customerOrder.validation.packageNameRequired", locale)),
+      products: z
+        .array(
+          z.object({
+            description: z
+              .string()
+              .min(1, translate("customerOrder.validation.productDescriptionRequired", locale)),
+            quantity: z
+              .string()
+              .min(1, translate("customerOrder.validation.productQuantityRequired", locale))
+              .refine(
+                (val) =>
+                  !Number.isNaN(Number(val)) && Number.isInteger(Number(val)) && Number(val) > 0,
+                translate("customerOrder.validation.productQuantityPositive", locale),
+              ),
+            value: z
+              .string()
+              .min(1, translate("customerOrder.validation.productValueRequired", locale))
+              .refine(
+                (val) => !Number.isNaN(Number(val)) && Number(val) > 0,
+                translate("customerOrder.validation.productValueMin", locale),
+              ),
+            hsCodePrefix: z.string(),
+            hsCodeNumber: z.string().optional(),
+            originCountry: z
+              .string()
+              .min(1, translate("customerOrder.validation.productOriginCountryRequired", locale)),
+            weight: z
+              .string()
+              .optional()
+              .refine(
+                (val) => !val || (!Number.isNaN(Number(val)) && Number(val) > 0),
+                translate("customerOrder.validation.productWeightMin", locale),
+              ),
+            sku: z.string().optional(),
+          }),
+        )
+        .min(1, translate("customerOrder.validation.productsMin", locale)),
+    })
+    .superRefine((data, ctx) => {
+      const stateVal = validateReceiverState(data.receiverCountry, data.receiverState);
+      if (!stateVal.valid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["receiverState"],
+          message: stateVal.message,
+        });
+      }
+      if (!validatePostalCode(data.receiverCountry, data.receiverZipCode)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["receiverZipCode"],
+          message: translate("customerOrder.validation.zipCodeInvalidFormat", locale, {
+            country: data.receiverCountry,
+          }),
+        });
+      }
+    });
+}
 
-export type OrderFormValues = z.infer<typeof orderFormSchema>;
+export type OrderFormValues = z.infer<ReturnType<typeof getOrderFormSchema>>;
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: single order creation form complexity
 export default function CreateSingleOrderPage() {
@@ -168,6 +211,8 @@ export default function CreateSingleOrderPage() {
   const router = useRouter();
   const trpcContext = trpc.useUtils();
   const { toast } = useToast();
+
+  const formSchema = useMemo(() => getOrderFormSchema(currentLocale), [currentLocale]);
 
   const [isHydrated, setIsHydrated] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -195,7 +240,7 @@ export default function CreateSingleOrderPage() {
     formState: { errors },
   } = useForm<OrderFormValues>({
     mode: "onChange",
-    resolver: zodResolver(orderFormSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       shippingMethod: ShippingMethod.EPACKET,
       shippingOrigin: ShippingOrigin.HAN,
@@ -403,14 +448,16 @@ export default function CreateSingleOrderPage() {
       window.scrollTo(0, 0);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      triggerError(errMsg || "Không thể tính toán cước phí. Vui lòng kiểm tra lại bảng giá.");
+      triggerError(
+        errMsg || translate("customerOrder.validation.calculateFreightFailed", currentLocale),
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const onInvalid = () => {
-    triggerError("Vui lòng kiểm tra và điền đầy đủ thông tin các trường bắt buộc.");
+    triggerError(translate("customerOrder.validation.checkRequiredFields", currentLocale));
   };
 
   // create order mutation
@@ -611,13 +658,15 @@ export default function CreateSingleOrderPage() {
       }
 
       clearStore();
-      toast("Created order successfully", "success");
+      toast(translate("customerOrder.validation.createOrderSuccess", currentLocale), "success");
       // Refresh context cache and navigate back to list
       trpcContext.customer.orders.list.invalidate();
       router.push("/orders");
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      triggerError(errMsg || "Tạo đơn hàng thất bại. Vui lòng thử lại.");
+      triggerError(
+        errMsg || translate("customerOrder.validation.createOrderFailed", currentLocale),
+      );
     } finally {
       setLoading(false);
     }
