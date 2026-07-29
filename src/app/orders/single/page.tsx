@@ -1,6 +1,7 @@
 "use client";
 
 import { trpc } from "@customer/lib/trpc";
+import { useI18n } from "@ecom/shared/@i18n";
 import { translate } from "@flash-ship/ecom-i18n";
 import {
   validatePostalCode,
@@ -9,7 +10,6 @@ import {
   validateReceiverPhone,
   validateReceiverState,
 } from "@flash-ship/ecom-lib/addressValidator";
-import { useI18n } from "@ecom/shared/@i18n";
 import { ShippingMethod, ShippingOrigin } from "@flash-ship/ecom-types";
 import { Button } from "@flash-ship/ecom-ui/components/button";
 import { Checkbox } from "@flash-ship/ecom-ui/components/checkbox";
@@ -368,7 +368,6 @@ export default function CreateSingleOrderPage() {
           }
         } else {
           // Prefill from localStorage defaults if no draft session exists
-          const defaultReceiver = localStorage.getItem("default_receiver_info");
           const defaultPackage = localStorage.getItem("default_package_info");
           const newDefaults = JSON.parse(storeValuesString);
 
@@ -405,7 +404,7 @@ export default function CreateSingleOrderPage() {
       // Countries are locked — force sender country after any restore
       setValue("senderCountry", "VN");
     }
-  }, [isHydrated, reset, storeValuesString, setValue, savedReceivers, savedPackages]);
+  }, [isHydrated, reset, storeValuesString, setValue, savedPackages]);
 
   // handle step 1 "Get Rates"
   const handleGetRates = async () => {
@@ -496,7 +495,6 @@ export default function CreateSingleOrderPage() {
       receiverCity,
       receiverCityName,
       receiverState,
-      receiverStateName,
       receiverAddress1,
       receiverAddress2,
       receiverCountry,
