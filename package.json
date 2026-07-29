@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "NEXTAUTH_URL=http://localhost:3001 AUTH_URL=http://localhost:3001 next dev --turbopack --port 3001",
-    "prebuild": "yarn workspace @flash-ship/ecom-trpc-types build",
     "build": "next build",
     "start": "next start",
     "type-check": "tsc --noEmit",
