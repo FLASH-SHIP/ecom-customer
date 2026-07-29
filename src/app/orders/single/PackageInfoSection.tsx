@@ -1,6 +1,6 @@
 "use client";
 
-import { SearchableSelect } from "@flash-ship/ecom-ui";
+import { SearchableSelect } from "@customer/components/ui/searchable-select";
 import { trpc } from "@customer/lib/trpc";
 import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
