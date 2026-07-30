@@ -14,13 +14,6 @@ import {
 import { ImportFileIcon, PlusCircleIcon, TopupIcon } from "@flash-ship/ecom-ui/components/icons";
 import { Input } from "@flash-ship/ecom-ui/components/input";
 import { Label } from "@flash-ship/ecom-ui/components/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@flash-ship/ecom-ui/components/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
 import { FileText, LayoutDashboard, User } from "lucide-react";
@@ -32,6 +25,7 @@ import { z } from "zod";
 import { trpc } from "../../lib/trpc";
 
 import { noSpecialCharsNameRegex, usernameRegex, vnPhoneRegex } from "@customer/constants";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@customer/components/ui/select";
 
 const getProfileModalSchema = (locale: string) =>
   z.object({
