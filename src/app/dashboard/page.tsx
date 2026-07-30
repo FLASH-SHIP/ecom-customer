@@ -3,6 +3,7 @@
 import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
 import { Button } from "@flash-ship/ecom-ui/components/button";
+import { DatePicker } from "@customer/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -30,15 +31,45 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { trpc } from "../../lib/trpc";
 
-const profileModalSchema = z.object({
-  username: z.string().optional(),
-  name: z.string().min(1, "Vui lòng nhập họ và tên."),
-  phone: z.string().min(1, "Vui lòng nhập số điện thoại."),
-  dob: z.string().optional().nullable(),
-  gender: z.enum(["male", "female", "other"]).optional().nullable(),
-});
+import { noSpecialCharsNameRegex, usernameRegex, vnPhoneRegex } from "@customer/constants";
 
-type ProfileModalFormValues = z.infer<typeof profileModalSchema>;
+const getProfileModalSchema = (locale: string) =>
+  z.object({
+    username: z
+      .string()
+      .optional()
+      .refine(
+        (val) => !val || val.length <= 50,
+        translate("customerAuth.profileModal.usernameMax", locale),
+      )
+      .refine(
+        (val) => !val || usernameRegex.test(val),
+        translate("customerAuth.profileModal.usernameInvalid", locale),
+      ),
+    name: z
+      .string()
+      .min(1, translate("customerAuth.profileModal.nameRequired", locale))
+      .max(50, translate("customerAuth.profileModal.nameMax", locale))
+      .refine(
+        (val) => !val || noSpecialCharsNameRegex.test(val.trim()),
+        translate("customerAuth.profileModal.nameInvalid", locale),
+      ),
+    phone: z
+      .string()
+      .min(1, translate("customerAuth.profileModal.phoneRequired", locale))
+      .refine(
+        (val) => {
+          if (!val) return false;
+          const clean = val.replace(/[\s-]/g, "");
+          return vnPhoneRegex.test(clean);
+        },
+        translate("customerAuth.profileModal.phoneInvalid", locale),
+      ),
+    dob: z.string().optional().nullable(),
+    gender: z.enum(["male", "female"]).optional().nullable(),
+  });
+
+type ProfileModalFormValues = z.infer<ReturnType<typeof getProfileModalSchema>>;
 
 const _QUICK_LINKS = [
   {
@@ -86,7 +117,7 @@ export default function CustomerDashboardPage() {
     reset,
     formState: { errors },
   } = useForm<ProfileModalFormValues>({
-    resolver: zodResolver(profileModalSchema),
+    resolver: zodResolver(getProfileModalSchema(currentLocale ?? "vi")),
     defaultValues: {
       username: "",
       name: "",
@@ -107,7 +138,7 @@ export default function CustomerDashboardPage() {
         name: profile.name ?? "",
         phone: profile.phone ?? "",
         dob: profile.dob ? (new Date(profile.dob).toISOString().split("T")[0] ?? "") : "",
-        gender: (profile.gender as "male" | "female" | "other") || null,
+        gender: (profile.gender as "male" | "female") || null,
       });
     }
   }, [profile, reset]);
@@ -206,7 +237,7 @@ export default function CustomerDashboardPage() {
         >
           <PlusCircleIcon />
           <span className={"font-medium text-2xl xl:text-3xl 2xl:text-[32px]"}>
-            Create Single Order
+            {translate("customerDashboard.createSingleOrder", currentLocale)}
           </span>
         </div>
         <div
@@ -219,7 +250,7 @@ export default function CustomerDashboardPage() {
         >
           <ImportFileIcon />
           <span className={"font-medium text-2xl xl:text-3xl 2xl:text-[32px]"}>
-            Import Order File
+            {translate("customerDashboard.importOrderFile", currentLocale)}
           </span>
         </div>
         <div
@@ -231,7 +262,9 @@ export default function CustomerDashboardPage() {
           )}
         >
           <TopupIcon />
-          <span className={"font-medium text-2xl xl:text-3xl 2xl:text-[32px]"}>Top-up</span>
+          <span className={"font-medium text-2xl xl:text-3xl 2xl:text-[32px]"}>
+            {translate("customerDashboard.topup", currentLocale)}
+          </span>
         </div>
       </div>
 
@@ -239,7 +272,17 @@ export default function CustomerDashboardPage() {
       <Dialog open={showModal}>
         <DialogContent
           className="[&>button]:hidden max-w-md w-[95%] rounded-3xl p-6 md:p-8"
-          onPointerDownOutside={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => {
+            const target = e.target as HTMLElement | null;
+            if (
+              target?.closest?.(
+                "[data-radix-popper-content-wrapper], [role='listbox'], [role='option'], [data-radix-select-viewport]",
+              )
+            ) {
+              return;
+            }
+            e.preventDefault();
+          }}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
           <DialogHeader>
@@ -267,17 +310,16 @@ export default function CustomerDashboardPage() {
                 id="modal-username"
                 type="text"
                 disabled={!canChangeUsername}
-                {...register("username", {
-                  onChange: (e) => {
-                    e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, "");
-                  },
-                })}
+                {...register("username")}
                 placeholder={translate(
                   "customerAuth.profileModal.usernamePlaceholder",
                   currentLocale,
                 )}
                 className="w-full bg-background/50"
               />
+              {errors.username && (
+                <p className="text-xs text-destructive mt-0.5">{errors.username.message}</p>
+              )}
             </div>
 
             {/* Họ và tên */}
@@ -289,7 +331,6 @@ export default function CustomerDashboardPage() {
               <Input
                 id="modal-name"
                 type="text"
-                required
                 {...register("name")}
                 placeholder={translate("customerAuth.profileModal.namePlaceholder", currentLocale)}
                 className="w-full bg-background/50"
@@ -308,7 +349,6 @@ export default function CustomerDashboardPage() {
               <Input
                 id="modal-phone"
                 type="tel"
-                required
                 {...register("phone")}
                 placeholder={translate("customerAuth.profileModal.phonePlaceholder", currentLocale)}
                 className="w-full bg-background/50"
@@ -324,12 +364,22 @@ export default function CustomerDashboardPage() {
                 <Label htmlFor="modal-dob" className="text-xs font-bold text-muted-foreground">
                   {translate("customerAuth.profileModal.dobLabel", currentLocale)}
                 </Label>
-                <Input
-                  id="modal-dob"
-                  type="date"
-                  {...register("dob")}
-                  className="w-full bg-background/50"
+                <Controller
+                  name="dob"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      placeholder="dd/mm/yyyy"
+                      disabledDays={(date) => date > new Date()}
+                      className="w-full bg-background/50"
+                    />
+                  )}
                 />
+                {errors.dob && (
+                  <p className="text-xs text-destructive mt-0.5">{errors.dob.message}</p>
+                )}
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -340,7 +390,10 @@ export default function CustomerDashboardPage() {
                   name="gender"
                   control={control}
                   render={({ field }) => (
-                    <Select value={field.value || ""} onValueChange={field.onChange}>
+                    <Select
+                      value={field.value || undefined}
+                      onValueChange={(val) => field.onChange(val)}
+                    >
                       <SelectTrigger className="w-full bg-background/50 border-input">
                         <SelectValue
                           placeholder={translate(
@@ -351,18 +404,18 @@ export default function CustomerDashboardPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="male">
-                          {translate("customerProfile.genderMale", currentLocale)}
+                          {translate("customerAuth.profileModal.genderMale", currentLocale)}
                         </SelectItem>
                         <SelectItem value="female">
-                          {translate("customerProfile.genderFemale", currentLocale)}
-                        </SelectItem>
-                        <SelectItem value="other">
-                          {translate("customerProfile.genderOther", currentLocale)}
+                          {translate("customerAuth.profileModal.genderFemale", currentLocale)}
                         </SelectItem>
                       </SelectContent>
                     </Select>
                   )}
                 />
+                {errors.gender && (
+                  <p className="text-xs text-destructive mt-0.5">{errors.gender.message}</p>
+                )}
               </div>
             </div>
 
