@@ -50,21 +50,37 @@ async function extractAuthToken(req: Request): Promise<string | undefined> {
     let userEmail = session?.user?.email;
     let tokenVersion = (session?.tokenVersion as number) || 1;
 
-    // 2. Fallback to getToken if auth() session is empty
+    // 2. Fallback to getToken trying all possible session cookie names (for Nginx SSL termination / cookie variations)
     if (!session?.user) {
-      const cookieName = getCustomerSessionCookieName(env.NODE_ENV === "production");
-      const nextAuthToken = await getToken({
-        req: req as unknown as NextRequest,
-        secret: env.AUTH_SECRET,
-        cookieName,
-      });
+      const possibleCookieNames = [
+        getCustomerSessionCookieName(env.NODE_ENV === "production"),
+        getCustomerSessionCookieName(false),
+        getCustomerSessionCookieName(true),
+        "authjs.session-token",
+        "__Secure-authjs.session-token",
+        "next-auth.session-token",
+        "__Secure-next-auth.session-token",
+      ];
 
-      if (nextAuthToken) {
-        jwtToken = nextAuthToken.accessToken as string | undefined;
-        refreshToken = nextAuthToken.refreshToken;
-        userId = nextAuthToken.id as string | undefined;
-        userEmail = nextAuthToken.email as string | undefined;
-        tokenVersion = (nextAuthToken.tokenVersion as number) || 1;
+      for (const cookieName of possibleCookieNames) {
+        try {
+          const nextAuthToken = await getToken({
+            req: req as unknown as NextRequest,
+            secret: env.AUTH_SECRET,
+            cookieName,
+          });
+
+          if (nextAuthToken?.id || nextAuthToken?.accessToken) {
+            jwtToken = nextAuthToken.accessToken as string | undefined;
+            refreshToken = nextAuthToken.refreshToken;
+            userId = nextAuthToken.id as string | undefined;
+            userEmail = nextAuthToken.email as string | undefined;
+            tokenVersion = (nextAuthToken.tokenVersion as number) || 1;
+            break;
+          }
+        } catch {
+          // Continue trying next cookie name
+        }
       }
     }
 
