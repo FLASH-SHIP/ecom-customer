@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  getOrderStatusOptions,
+  getGroupOrderStatusOptions,
   getShippingMethodOptions,
 } from "@customer/app/orders/constants/constants";
 import { translate } from "@flash-ship/ecom-i18n";
@@ -56,7 +56,7 @@ export function OrderFilterBar({
   onGetLabels,
 }: OrderFilterBarProps) {
   const { languageId: currentLocale } = useI18n();
-  const statusOptions = useMemo(() => getOrderStatusOptions(), []);
+  const statusOptions = useMemo(() => getGroupOrderStatusOptions(), []);
   const shippingMethodOptions = useMemo(() => getShippingMethodOptions(), []);
 
   const defaultToDate = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
