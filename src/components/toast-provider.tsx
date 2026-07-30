@@ -117,13 +117,15 @@ export function ToastProvider({
             <div
               key={t.id}
               className={cn(
-                "flex min-w-[280px] max-w-[420px] items-start gap-3 rounded-lg border px-4 py-3 shadow-lg animate-in slide-in-from-right-full duration-300",
+                "flex min-w-[280px] max-w-[420px] sm:max-w-[480px] w-auto h-auto items-start gap-3 rounded-lg border px-4 py-3 shadow-lg animate-in slide-in-from-right-full duration-300",
                 toastStyles[t.type],
               )}
               role="alert"
             >
               <Icon className="mt-0.5 size-5 shrink-0" strokeWidth={1.8} />
-              <p className="flex-1 text-sm font-medium">{t.message}</p>
+              <p className="flex-1 text-sm font-medium whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                {t.message}
+              </p>
               <button
                 type="button"
                 onClick={() => removeToast(t.id)}

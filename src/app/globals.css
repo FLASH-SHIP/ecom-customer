@@ -247,3 +247,22 @@
   }
 }
 
+/* Toast & Alert auto text wrapping and flexible sizing */
+[role="alert"],
+.notistack-MuiContent,
+#notistack-snackbar {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  height: auto !important;
+}
+
+[role="alert"] p,
+.notistack-MuiContent div,
+#notistack-snackbar {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+
