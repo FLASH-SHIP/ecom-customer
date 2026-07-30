@@ -107,6 +107,9 @@ const nextAuth: NextAuthResult = NextAuth({
     async session({ session, token }) {
       if (token?.id) {
         session.user.id = token.id as string;
+        (session as unknown as Record<string, unknown>).accessToken = token.accessToken;
+        (session as unknown as Record<string, unknown>).refreshToken = token.refreshToken;
+        (session as unknown as Record<string, unknown>).tokenVersion = token.tokenVersion;
       }
       return session;
     },

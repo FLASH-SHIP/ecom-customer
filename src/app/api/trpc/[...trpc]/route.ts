@@ -1,5 +1,5 @@
 import { env } from "@customer/env";
-import { getCustomerSessionCookieName } from "@customer/lib/auth";
+import { auth, getCustomerSessionCookieName } from "@customer/lib/auth";
 import { decodeToken, signCustomerAccessToken } from "@flash-ship/ecom-lib/jwt";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
@@ -41,16 +41,34 @@ async function trySilentRefresh(refreshToken: unknown): Promise<string | undefin
 
 async function extractAuthToken(req: Request): Promise<string | undefined> {
   try {
-    const cookieName = getCustomerSessionCookieName(env.NODE_ENV === "production");
-    const nextAuthToken = await getToken({
-      req: req as unknown as NextRequest,
-      secret: env.AUTH_SECRET,
-      cookieName,
-    });
+    // 1. Try NextAuth auth() native helper (handles all cookie names & proxy headers)
+    const session = (await auth()) as unknown as (Record<string, unknown> & { user?: { id?: string; email?: string } }) | null;
+    
+    let jwtToken = session?.accessToken as string | undefined;
+    let refreshToken = session?.refreshToken;
+    let userId = session?.user?.id;
+    let userEmail = session?.user?.email;
+    let tokenVersion = (session?.tokenVersion as number) || 1;
 
-    if (!nextAuthToken) return undefined;
+    // 2. Fallback to getToken if auth() session is empty
+    if (!session?.user) {
+      const cookieName = getCustomerSessionCookieName(env.NODE_ENV === "production");
+      const nextAuthToken = await getToken({
+        req: req as unknown as NextRequest,
+        secret: env.AUTH_SECRET,
+        cookieName,
+      });
 
-    let jwtToken = nextAuthToken.accessToken as string | undefined;
+      if (nextAuthToken) {
+        jwtToken = nextAuthToken.accessToken as string | undefined;
+        refreshToken = nextAuthToken.refreshToken;
+        userId = nextAuthToken.id as string | undefined;
+        userEmail = nextAuthToken.email as string | undefined;
+        tokenVersion = (nextAuthToken.tokenVersion as number) || 1;
+      }
+    }
+
+    if (!userId && !jwtToken) return undefined;
 
     if (jwtToken) {
       const decoded = decodeToken(jwtToken);
@@ -59,15 +77,15 @@ async function extractAuthToken(req: Request): Promise<string | undefined> {
       }
     }
 
-    if (!jwtToken) {
-      jwtToken = await trySilentRefresh(nextAuthToken.refreshToken);
+    if (!jwtToken && refreshToken) {
+      jwtToken = await trySilentRefresh(refreshToken);
     }
 
-    if (!jwtToken && nextAuthToken.id) {
+    if (!jwtToken && userId) {
       jwtToken = signCustomerAccessToken({
-        sub: String(nextAuthToken.id),
-        email: nextAuthToken.email as string | undefined,
-        tokenVersion: (nextAuthToken.tokenVersion as number) || 1,
+        sub: String(userId),
+        email: userEmail,
+        tokenVersion,
       });
     }
 
