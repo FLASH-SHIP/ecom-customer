@@ -39,48 +39,60 @@ async function trySilentRefresh(refreshToken: unknown): Promise<string | undefin
   }
 }
 
+async function resolveSessionFallback(req: Request) {
+  const possibleCookieNames = [
+    getCustomerSessionCookieName(env.NODE_ENV === "production"),
+    getCustomerSessionCookieName(false),
+    getCustomerSessionCookieName(true),
+    "authjs.session-token",
+    "__Secure-authjs.session-token",
+    "next-auth.session-token",
+    "__Secure-next-auth.session-token",
+  ];
+
+  for (const cookieName of possibleCookieNames) {
+    try {
+      const token = await getToken({
+        req: req as unknown as NextRequest,
+        secret: env.AUTH_SECRET,
+        cookieName,
+      });
+
+      if (token?.id || token?.accessToken) {
+        return {
+          jwtToken: token.accessToken as string | undefined,
+          refreshToken: token.refreshToken,
+          userId: token.id as string | undefined,
+          userEmail: token.email as string | undefined,
+          tokenVersion: (token.tokenVersion as number) || 1,
+        };
+      }
+    } catch {
+      // Ignore and try next
+    }
+  }
+
+  return null;
+}
+
 async function extractAuthToken(req: Request): Promise<string | undefined> {
   try {
-    // 1. Try NextAuth auth() native helper (handles all cookie names & proxy headers)
     const session = (await auth()) as unknown as (Record<string, unknown> & { user?: { id?: string; email?: string } }) | null;
-    
+
     let jwtToken = session?.accessToken as string | undefined;
     let refreshToken = session?.refreshToken;
     let userId = session?.user?.id;
     let userEmail = session?.user?.email;
     let tokenVersion = (session?.tokenVersion as number) || 1;
 
-    // 2. Fallback to getToken trying all possible session cookie names (for Nginx SSL termination / cookie variations)
     if (!session?.user) {
-      const possibleCookieNames = [
-        getCustomerSessionCookieName(env.NODE_ENV === "production"),
-        getCustomerSessionCookieName(false),
-        getCustomerSessionCookieName(true),
-        "authjs.session-token",
-        "__Secure-authjs.session-token",
-        "next-auth.session-token",
-        "__Secure-next-auth.session-token",
-      ];
-
-      for (const cookieName of possibleCookieNames) {
-        try {
-          const nextAuthToken = await getToken({
-            req: req as unknown as NextRequest,
-            secret: env.AUTH_SECRET,
-            cookieName,
-          });
-
-          if (nextAuthToken?.id || nextAuthToken?.accessToken) {
-            jwtToken = nextAuthToken.accessToken as string | undefined;
-            refreshToken = nextAuthToken.refreshToken;
-            userId = nextAuthToken.id as string | undefined;
-            userEmail = nextAuthToken.email as string | undefined;
-            tokenVersion = (nextAuthToken.tokenVersion as number) || 1;
-            break;
-          }
-        } catch {
-          // Continue trying next cookie name
-        }
+      const fallback = await resolveSessionFallback(req);
+      if (fallback) {
+        jwtToken = fallback.jwtToken;
+        refreshToken = fallback.refreshToken;
+        userId = fallback.userId;
+        userEmail = fallback.userEmail;
+        tokenVersion = fallback.tokenVersion;
       }
     }
 
