@@ -318,7 +318,8 @@ export function AddFundModal({
       setIsSubmitting(true);
       setErrorMessage(null);
 
-      // 1. Upload images via ImageResizer Tool API endpoint using NEXT_PUBLIC_API_URL (localhost:4000 or https://dev-api.ecomexpress.vn)
+      // 1. Tải mảng ảnh lên Tool Resizer Image API endpoint (/api/v1/upload/topup)
+      // Tự động dùng NEXT_PUBLIC_API_URL (Localhost: http://localhost:4000, Server Dev: https://dev-api.ecomexpress.vn)
       const formData = new FormData();
       for (const item of uploadedFiles) {
         formData.append("files", item.file);
@@ -331,7 +332,7 @@ export function AddFundModal({
       });
 
       if (!uploadRes.ok) {
-        let errText = "Upload image failed.";
+        let errText = "Tải ảnh chứng từ thất bại.";
         try {
           const errJson = await uploadRes.json();
           errText = errJson.message || errJson.error || errText;
@@ -342,7 +343,8 @@ export function AddFundModal({
       const uploadData = await uploadRes.json();
       const relativeUrls: string[] = Array.isArray(uploadData.data) ? uploadData.data : [];
 
-      // 2. Call TRPC createTopupRequest mutation
+      // 2. Gọi TRPC mutation createTopupRequest để khởi tạo bản ghi yêu cầu nạp tiền (status = 1 WAITING)
+      // LƯU Ý: Không tự động cộng tiền vào ví độc lập ở bước này
       await createTopupMutation.mutateAsync({
         paymentMethodId: selectedPaymentMethod?.id ?? 1,
         wireAmount: parseFloat(wireAmountUsd),

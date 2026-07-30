@@ -114,6 +114,7 @@ export default function TopupTable({
       width: 135,
       cell: (order: TopupItem) => <div>{formatShortDate(order.wireDate)}</div>,
     },
+    // Cột Phương thức thanh toán (Hiển thị icon 20x20px rounded-full viền #E9EAED ở bên trái)
     {
       header: translate("customerWallet.table.paymentMethod", currentLocale) || "Payment Method",
       width: 180,
