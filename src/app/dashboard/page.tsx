@@ -71,23 +71,6 @@ const getProfileModalSchema = (locale: string) =>
 
 type ProfileModalFormValues = z.infer<ReturnType<typeof getProfileModalSchema>>;
 
-const _QUICK_LINKS = [
-  {
-    href: "/profile/info",
-    icon: User,
-    title: "Hồ sơ cá nhân",
-    desc: "Cập nhật thông tin của bạn",
-    color: "text-primary",
-  },
-  {
-    href: "/blog",
-    icon: FileText,
-    title: "Blog",
-    desc: "Đọc bài viết mới nhất",
-    color: "text-violet-600",
-  },
-];
-
 export default function CustomerDashboardPage() {
   const { status } = useSession();
   const { languageId: currentLocale } = useI18n();

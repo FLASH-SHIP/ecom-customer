@@ -81,10 +81,10 @@ export default function MyWallet() {
 
   const [openTopupModal, setOpenTopupModal] = React.useState(false);
   const [openAddFundModal, setOpenAddFundModal] = React.useState(false);
-  const [selectedMethodId, setSelectedMethodId] = React.useState<string>("payoneer");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = React.useState<any>(null);
 
-  const handleSelectPaymentMethod = (methodId: string) => {
-    setSelectedMethodId(methodId);
+  const handleSelectPaymentMethod = (method: any) => {
+    setSelectedPaymentMethod(method);
     setOpenTopupModal(false);
     setOpenAddFundModal(true);
   };
@@ -96,11 +96,6 @@ export default function MyWallet() {
 
   const handleAddFundSubmit = () => {
     setOpenAddFundModal(false);
-  };
-
-  const currentMethod = PAYMENT_METHOD_MAP[selectedMethodId] || {
-    name: "Payoneer",
-    logo: null,
   };
 
   return (
@@ -151,9 +146,9 @@ export default function MyWallet() {
       <AddFundModal
         open={openAddFundModal}
         onOpenChange={setOpenAddFundModal}
-        methodId={selectedMethodId}
-        methodName={currentMethod.name}
-        methodLogo={currentMethod.logo}
+        selectedPaymentMethod={selectedPaymentMethod}
+        methodId={selectedPaymentMethod?.id ? String(selectedPaymentMethod.id) : "payoneer"}
+        methodName={selectedPaymentMethod?.name ?? "Payoneer"}
         onBack={handleAddFundBack}
         onSubmit={handleAddFundSubmit}
       />

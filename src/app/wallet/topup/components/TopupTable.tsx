@@ -14,6 +14,7 @@ import {
 } from "@flash-ship/ecom-ui/components/dropdown-menu";
 import { ThreeDotsVerticalIcon } from "@flash-ship/ecom-ui/components/icons";
 import { format } from "date-fns";
+import { WireConfirmationGallery } from "./WireConfirmationGallery";
 
 export interface TopupItem {
   id: string;
@@ -22,10 +23,12 @@ export interface TopupItem {
   submissionDate: string;
   wireDate: string;
   paymentMethod: string;
+  paymentMethodIcon?: string | null;
   wireTransferConfirmation: string;
-  status: string;
+  status: string | number;
   wireAmount: number | string;
   wireAmountApproved: number | string;
+  wireImages?: string[];
 }
 
 export interface TopupTableProps {
@@ -113,36 +116,64 @@ export default function TopupTable({
     },
     {
       header: translate("customerWallet.table.paymentMethod", currentLocale) || "Payment Method",
-      width: 160,
-      cell: (order: TopupItem) => <div>{order.paymentMethod}</div>,
+      width: 180,
+      cell: (order: TopupItem) => {
+        const iconUrl = order.paymentMethodIcon;
+        return (
+          <div className="flex items-center gap-2">
+            {iconUrl ? (
+              <img
+                src={iconUrl}
+                alt={order.paymentMethod}
+                className="w-5 h-5 rounded-full object-contain shrink-0 border border-[#E9EAED]"
+              />
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-zinc-800 border border-[#E9EAED] flex items-center justify-center shrink-0 text-[10px] font-bold text-slate-500">
+                {order.paymentMethod ? order.paymentMethod.charAt(0).toUpperCase() : "$"}
+              </div>
+            )}
+            <span className="font-medium text-slate-800 dark:text-slate-200 truncate">
+              {order.paymentMethod}
+            </span>
+          </div>
+        );
+      },
     },
     {
       header:
         translate("customerWallet.table.wireTransferConfirmation", currentLocale) ||
         "Wire transfer confirmation",
-      width: 160,
-      cell: (order: TopupItem) => <div>{order.wireTransferConfirmation || order.transactionCode}</div>,
+      width: 220,
+      cell: (order: TopupItem) => (
+        <WireConfirmationGallery
+          images={order.wireImages && order.wireImages.length > 0 ? order.wireImages : undefined}
+          fallbackText={order.wireTransferConfirmation || order.transactionCode}
+        />
+      ),
     },
     {
       header: translate("customerWallet.table.status", currentLocale) || "Status",
       width: 135,
       cell: (order: TopupItem) => {
-        const upperStatus = (order.status || "").toUpperCase();
-        if (upperStatus === "CONFIRM" || upperStatus === "CONFIRMED" || upperStatus === "APPROVED") {
+        const rawStatus = order.status;
+        const statusNum = Number(rawStatus);
+        const upperStatus = String(rawStatus || "").toUpperCase();
+
+        if (statusNum === 2 || upperStatus === "CONFIRM" || upperStatus === "CONFIRMED" || upperStatus === "APPROVED") {
           return (
             <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border-emerald-200 font-medium">
               {translate("customerWallet.status.confirm", currentLocale) || "Confirmed"}
             </Badge>
           );
         }
-        if (upperStatus === "WAITING") {
+        if (statusNum === 1 || upperStatus === "WAITING" || upperStatus === "CREATED") {
           return (
             <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border-amber-200 font-medium">
               {translate("customerWallet.status.waiting", currentLocale) || "Waiting"}
             </Badge>
           );
         }
-        if (upperStatus === "CANCELLED" || upperStatus === "CANCEL") {
+        if (statusNum === 3 || upperStatus === "CANCELLED" || upperStatus === "CANCEL") {
           return (
             <Badge className="bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border-zinc-200 font-medium">
               {translate("customerWallet.status.cancel", currentLocale) || "Cancelled"}
@@ -179,9 +210,10 @@ export default function TopupTable({
       headerClassName: "text-center",
       className: "text-center",
       cell: (order: TopupItem) => {
-        // Chỉ hiển thị nút 3 chấm khi trạng thái là WAITING
-        const upperStatus = (order.status || "").toUpperCase();
-        if (upperStatus !== "WAITING") {
+        // Chỉ hiển thị nút 3 chấm khi trạng thái là WAITING (status = 1)
+        const statusNum = Number(order.status);
+        const upperStatus = String(order.status || "").toUpperCase();
+        if (statusNum !== 1 && upperStatus !== "WAITING") {
           return <div />;
         }
 
