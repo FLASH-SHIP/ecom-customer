@@ -14,6 +14,9 @@ const serverSchema = z.object({
   AUTH_GOOGLE_SECRET: z.string().optional(),
   FACEBOOK_CLIENT_ID: z.string().optional(),
   FACEBOOK_CLIENT_SECRET: z.string().optional(),
+  NEXTAUTH_URL: z.string().optional(),
+  AUTH_URL: z.string().optional(),
+  AUTH_TRUST_HOST: z.string().optional(),
 });
 
 // 2. Client-side validation schema (public parameters exposed to the browser)
@@ -61,6 +64,9 @@ const processEnv = {
   AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
   FACEBOOK_CLIENT_ID: process.env.FACEBOOK_CLIENT_ID,
   FACEBOOK_CLIENT_SECRET: process.env.FACEBOOK_CLIENT_SECRET,
+  NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+  AUTH_URL: process.env.AUTH_URL,
+  AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST,
 };
 
 const clientResult = clientSchema.safeParse(processEnv);
