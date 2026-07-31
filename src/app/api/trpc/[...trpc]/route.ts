@@ -1,5 +1,5 @@
 import { env } from "@customer/env";
-import { getCustomerSessionCookieName } from "@customer/lib/auth";
+import { auth, getCustomerSessionCookieName } from "@customer/lib/auth";
 import { decodeToken, signCustomerAccessToken } from "@flash-ship/ecom-lib/jwt";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
@@ -39,18 +39,64 @@ async function trySilentRefresh(refreshToken: unknown): Promise<string | undefin
   }
 }
 
+async function resolveSessionFallback(req: Request) {
+  const possibleCookieNames = [
+    getCustomerSessionCookieName(env.NODE_ENV === "production"),
+    getCustomerSessionCookieName(false),
+    getCustomerSessionCookieName(true),
+    "authjs.session-token",
+    "__Secure-authjs.session-token",
+    "next-auth.session-token",
+    "__Secure-next-auth.session-token",
+  ];
+
+  for (const cookieName of possibleCookieNames) {
+    try {
+      const token = await getToken({
+        req: req as unknown as NextRequest,
+        secret: env.AUTH_SECRET,
+        cookieName,
+      });
+
+      if (token?.id || token?.accessToken) {
+        return {
+          jwtToken: token.accessToken as string | undefined,
+          refreshToken: token.refreshToken,
+          userId: token.id as string | undefined,
+          userEmail: token.email as string | undefined,
+          tokenVersion: (token.tokenVersion as number) || 1,
+        };
+      }
+    } catch {
+      // Ignore and try next
+    }
+  }
+
+  return null;
+}
+
 async function extractAuthToken(req: Request): Promise<string | undefined> {
   try {
-    const cookieName = getCustomerSessionCookieName(env.NODE_ENV === "production");
-    const nextAuthToken = await getToken({
-      req: req as unknown as NextRequest,
-      secret: env.AUTH_SECRET,
-      cookieName,
-    });
+    const session = (await auth()) as unknown as (Record<string, unknown> & { user?: { id?: string; email?: string } }) | null;
 
-    if (!nextAuthToken) return undefined;
+    let jwtToken = session?.accessToken as string | undefined;
+    let refreshToken = session?.refreshToken;
+    let userId = session?.user?.id;
+    let userEmail = session?.user?.email;
+    let tokenVersion = (session?.tokenVersion as number) || 1;
 
-    let jwtToken = nextAuthToken.accessToken as string | undefined;
+    if (!session?.user) {
+      const fallback = await resolveSessionFallback(req);
+      if (fallback) {
+        jwtToken = fallback.jwtToken;
+        refreshToken = fallback.refreshToken;
+        userId = fallback.userId;
+        userEmail = fallback.userEmail;
+        tokenVersion = fallback.tokenVersion;
+      }
+    }
+
+    if (!userId && !jwtToken) return undefined;
 
     if (jwtToken) {
       const decoded = decodeToken(jwtToken);
@@ -59,15 +105,15 @@ async function extractAuthToken(req: Request): Promise<string | undefined> {
       }
     }
 
-    if (!jwtToken) {
-      jwtToken = await trySilentRefresh(nextAuthToken.refreshToken);
+    if (!jwtToken && refreshToken) {
+      jwtToken = await trySilentRefresh(refreshToken);
     }
 
-    if (!jwtToken && nextAuthToken.id) {
+    if (!jwtToken && userId) {
       jwtToken = signCustomerAccessToken({
-        sub: String(nextAuthToken.id),
-        email: nextAuthToken.email as string | undefined,
-        tokenVersion: (nextAuthToken.tokenVersion as number) || 1,
+        sub: String(userId),
+        email: userEmail,
+        tokenVersion,
       });
     }
 
