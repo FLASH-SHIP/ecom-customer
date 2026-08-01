@@ -75,23 +75,10 @@ export function TopupModal({ open, onOpenChange, onSelectPaymentMethod }: TopupM
                 </button>
               ))
             ) : (
-              // Fallback if no specific payment methods configured
-              <>
-                <button
-                  type="button"
-                  onClick={() => handleSelect("payoneer")}
-                  className="aspect-square w-full flex items-center justify-center p-5 border border-slate-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-900 hover:border-[#0F798C] hover:shadow-md cursor-pointer transition-all duration-200 group outline-none"
-                >
-                  <span className="text-[13px] font-bold text-slate-900 dark:text-white">Payoneer</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSelect("lianlian")}
-                  className="aspect-square w-full flex items-center justify-center p-5 border border-slate-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-900 hover:border-[#0F798C] hover:shadow-md cursor-pointer transition-all duration-200 group outline-none"
-                >
-                  <span className="text-[13px] font-bold text-slate-900 dark:text-white">LianLian Global</span>
-                </button>
-              </>
+              <div className="col-span-4 text-center py-8 text-slate-500 dark:text-slate-400 text-sm font-medium">
+                {translate("customerWallet.topupModal.noPaymentMethods", currentLocale) ||
+                  "No active payment methods configured yet."}
+              </div>
             )}
           </div>
         </div>
