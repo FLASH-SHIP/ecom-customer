@@ -15,6 +15,7 @@ import {
 } from "@flash-ship/ecom-ui/components/dropdown-menu";
 import { ThreeDotsVerticalIcon } from "@flash-ship/ecom-ui/components/icons";
 import { format } from "date-fns";
+import { Ban, Pencil } from "lucide-react";
 import { WireConfirmationGallery } from "./WireConfirmationGallery";
 
 export interface TopupItem {
@@ -233,25 +234,27 @@ export default function TopupTable({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-36 bg-white dark:bg-zinc-900 border border-border shadow-md rounded-lg p-1 z-30"
+                className="w-32 min-w-[120px] bg-white dark:bg-zinc-900 border border-border shadow-md rounded-lg p-1 z-30"
               >
                 <DropdownMenuItem
-                  className="px-3 py-2 text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md cursor-pointer"
+                  className="px-3 py-2 text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md cursor-pointer flex items-center gap-2"
                   onClick={(e) => {
                     e.stopPropagation();
                     onEdit?.(order);
                   }}
                 >
-                  {translate("common.edit", currentLocale)}
+                  <Pencil className="w-4 h-4 text-slate-500" />
+                  <span>{translate("common.edit", currentLocale)}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md cursor-pointer"
+                  className="px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md cursor-pointer flex items-center gap-2"
                   onClick={(e) => {
                     e.stopPropagation();
                     onCancel?.(order);
                   }}
                 >
-                  {translate("common.cancel", currentLocale)}
+                  <Ban className="w-4 h-4 text-rose-500" />
+                  <span>{translate("common.cancel", currentLocale)}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

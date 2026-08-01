@@ -7,11 +7,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type React from "react";
 
+/**
+ * Layout chung cho module Ví (Wallet) trên Customer Portal.
+ * Quản lý thanh điều hướng tab: Nạp tiền (topup), Giao dịch (transaction), Số dư cuối kỳ (ending-balance).
+ * 
+ * LƯU Ý BẢO TRÌ (UX FIX):
+ * Mặc định fallback khi `pathname` chỉ mới là "/wallet" (chưa chứa /transaction hay /ending-balance) 
+ * BẮT BUỘC phải là "topup" để tránh lỗi giật chớp tab active sang "ending-balance" trước khi chuyển hướng.
+ */
 export default function LayoutWallet({ children }: { children: React.ReactNode }) {
   const { languageId: currentLocale } = useI18n();
   const pathname = usePathname();
 
-  // Determine active tab based on pathname
+  // Xác định tab đang active theo pathname (Mặc định fallback là "topup")
   const activeTab = pathname.includes("/transaction")
     ? "transaction"
     : pathname.includes("/ending-balance")
