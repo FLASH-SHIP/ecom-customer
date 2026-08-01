@@ -52,8 +52,8 @@ export function AddFundModal({
   open,
   onOpenChange,
   selectedPaymentMethod,
-  methodId = "payoneer",
-  methodName = "Payoneer",
+  methodId = "",
+  methodName = "",
   methodLogo,
   onBack,
   onSubmit,
@@ -62,9 +62,7 @@ export function AddFundModal({
   const { toast } = useToast();
   const trpcUtils = trpc.useUtils();
 
-  const isBank =
-    selectedPaymentMethod?.isBank ??
-    (methodId === "payoneer" || methodName?.toLowerCase().includes("payoneer"));
+  const isBank = selectedPaymentMethod?.isBank;
 
   // Form State
   const [wireDate, setWireDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
@@ -78,7 +76,7 @@ export function AddFundModal({
   );
 
   const exchangeRate =
-    typeof exchangeRateData === "number" && exchangeRateData > 0 ? exchangeRateData : 25000;
+    typeof exchangeRateData === "number" && exchangeRateData > 0 ? exchangeRateData : 26000;
 
   // Copy State
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -466,11 +464,24 @@ export function AddFundModal({
       const relativeUrls: string[] = Array.isArray(uploadData.data) ? uploadData.data : [];
 
       // 2. Gọi TRPC mutation createTopupRequest để khởi tạo bản ghi yêu cầu nạp tiền (status = 1 WAITING)
-      // LƯU Ý NGHIỆP VỤ (ADR-012): Không tự động điền `description` ("Topup via...") khi gửi request.
-      // Trường `description` trong bảng topup_transactions được để trống (null) và chỉ dành riêng để lưu lý do từ chối (rejectReason) khi Admin Từ chối.
+      // Parse JSON field `dataInfo` của phương thức thanh toán được chọn để trích xuất trường `currency` (mặc định "USD")
+      let extractedCurrency = "USD";
+      if (selectedPaymentMethod?.dataInfo) {
+        try {
+          const parsedData = JSON.parse(selectedPaymentMethod.dataInfo);
+          if (parsedData.currency && typeof parsedData.currency === "string") {
+            extractedCurrency = parsedData.currency.toUpperCase();
+          }
+        } catch {
+          // Fallback "USD" nếu dataInfo không chứa JSON hợp lệ
+        }
+      }
+
       await createTopupMutation.mutateAsync({
         paymentMethodId: selectedPaymentMethod?.id ?? 1,
         wireAmount: parseFloat(wireAmountUsd),
+        currency: extractedCurrency,
+        rate: isBank ? exchangeRate : 0, //Nếu là chuyển khoản ngân hàng is_bank true thì phải truyền rate(tỷ giá ngày hôm đó vào)
         wireDate: wireDate,
         wireImages: relativeUrls,
       });

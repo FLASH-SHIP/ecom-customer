@@ -3,6 +3,7 @@
 import { DateRangePicker } from "@flash-ship/ecom-ui";
 import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
+import { TopupType } from "@flash-ship/ecom-types";
 import { Button } from "@flash-ship/ecom-ui/components/button";
 import { ExportFileIcon } from "@flash-ship/ecom-ui/components/icon-component/ExportFileIcon";
 import { Input } from "@flash-ship/ecom-ui/components/input";
@@ -149,28 +150,28 @@ export default function TransactionFilter({
                 {translate("customerWallet.transactionFilter.allTransactionTypes", currentLocale) ||
                   "All Transaction Types"}
               </SelectItem>
-              <SelectItem value="PAID">
+              <SelectItem value={TopupType.PAID}>
                 {translate("customerWallet.transactionFilter.paid", currentLocale) || "Paid"}
               </SelectItem>
-              <SelectItem value="ADDED_FUNDS">
+              <SelectItem value={TopupType.ADDED_FUNDS}>
                 {translate("customerWallet.transactionFilter.addedFunds", currentLocale) ||
                   "Added Funds"}
               </SelectItem>
-              <SelectItem value="CANCELED">
+              <SelectItem value={TopupType.CANCELED}>
                 {translate("customerWallet.transactionFilter.canceled", currentLocale) ||
                   "Canceled"}
               </SelectItem>
-              <SelectItem value="REFUNDED">
+              <SelectItem value={TopupType.REFUNDED}>
                 {translate("customerWallet.transactionFilter.refunded", currentLocale) ||
                   "Refunded"}
               </SelectItem>
-              <SelectItem value="ADJUST_INCREASE">
+              <SelectItem value={TopupType.ADJUST_BALANCE_INCREASE}>
                 {translate(
                   "customerWallet.transactionFilter.adjustBalanceIncrease",
                   currentLocale,
                 ) || "Adjust Balance Increase"}
               </SelectItem>
-              <SelectItem value="ADJUST_DECREASE">
+              <SelectItem value={TopupType.ADJUST_BALANCE_DECREASE}>
                 {translate(
                   "customerWallet.transactionFilter.adjustBalanceDecrease",
                   currentLocale,
