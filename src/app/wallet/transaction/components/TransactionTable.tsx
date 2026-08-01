@@ -1,257 +1,271 @@
 "use client";
 
-import { PaginationBase } from "@flash-ship/ecom-ui";
-import { TableBase } from "@flash-ship/ecom-ui";
-import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
+import { translate } from "@flash-ship/ecom-i18n";
+import { TopupType } from "@flash-ship/ecom-types";
+import { PaginationBase, TableBase } from "@flash-ship/ecom-ui";
 import { Badge } from "@flash-ship/ecom-ui/components/badge";
 import { Card } from "@flash-ship/ecom-ui/components/card";
-import { useState } from "react";
+import { format } from "date-fns";
+import React, { memo, useMemo } from "react";
 
-export interface TransactionItem {
+/**
+ * Interface đối tượng bản ghi Lịch Sử Giao Dịch Ví hiển thị trên Table (`TransactionItemRecord`)
+ */
+export interface TransactionItemRecord {
+  /** ID bản ghi giao dịch */
   id: string;
-  date: string;
-  orderCode: string;
-  partnerOrderId: string;
-  transactionType:
-    | "PAID"
-    | "ADDED_FUNDS"
-    | "CANCELED"
-    | "REFUNDED"
-    | "ADJUST_INCREASE"
-    | "ADJUST_DECREASE";
-  initialAmount: string;
-  amount: string;
-  finalAmount: string;
-  description: string;
+  /** Ngày xác nhận nạp tiền / Ngày tạo giao dịch (ISO String) */
+  submissionDate: string | null;
+  /** Mã đơn hàng (order_code) */
+  orderCode: string | null;
+  /** ID đơn hàng (order_id) */
+  orderId: string | null;
+  /** Loại giao dịch (topupType dạng enum TopupType) */
+  topupType: TopupType | string;
+  /** Số dư tài khoản trước giao dịch */
+  accountBalanceBefore: number;
+  /** Biến động số tiền giao dịch */
+  amountChange: number;
+  /** Số dư tài khoản sau giao dịch */
+  accountBalanceAfter: number;
+  /** Mô tả nội dung ghi chú giao dịch */
+  description: string | null;
+  /** Thời gian tạo bản ghi */
+  createdAt?: string | null;
+  /** Thời gian cập nhật bản ghi */
+  updatedAt?: string | null;
 }
 
-const MOCK_TRANSACTION_DATA = {
-  data: [
-    {
-      id: "1",
-      date: "25/07/2026 14:30:12",
-      orderCode: "ORD-20260725-8812",
-      partnerOrderId: "PO-991823",
-      transactionType: "PAID" as const,
-      initialAmount: "$100,000.00",
-      amount: "-$368.00",
-      finalAmount: "$99,632.00",
-      description: "Payment for Order #ORD-20260725-8812",
-    },
-    {
-      id: "2",
-      date: "24/07/2026 11:15:00",
-      orderCode: "TOP-20260724-001",
-      partnerOrderId: "-",
-      transactionType: "ADDED_FUNDS" as const,
-      initialAmount: "$49,632.00",
-      amount: "+$50,000.00",
-      finalAmount: "$99,632.00",
-      description: "Bank transfer top-up via CONF-9812405",
-    },
-    {
-      id: "3",
-      date: "22/07/2026 09:45:30",
-      orderCode: "ORD-20260722-1054",
-      partnerOrderId: "PO-887123",
-      transactionType: "REFUNDED" as const,
-      initialAmount: "$49,500.00",
-      amount: "+$132.00",
-      finalAmount: "$49,632.00",
-      description: "Refund for canceled order #ORD-20260722-1054",
-    },
-    {
-      id: "4",
-      date: "20/07/2026 16:20:10",
-      orderCode: "ORD-20260720-0098",
-      partnerOrderId: "PO-772109",
-      transactionType: "CANCELED" as const,
-      initialAmount: "$49,500.00",
-      amount: "$0.00",
-      finalAmount: "$49,500.00",
-      description: "Order canceled prior to processing",
-    },
-    {
-      id: "5",
-      date: "18/07/2026 10:00:00",
-      orderCode: "ADJ-20260718-01",
-      partnerOrderId: "-",
-      transactionType: "ADJUST_INCREASE" as const,
-      initialAmount: "$44,500.00",
-      amount: "+$5,000.00",
-      finalAmount: "$49,500.00",
-      description: "System adjustment: Promotional bonus credit",
-    },
-    {
-      id: "6",
-      date: "15/07/2026 17:05:40",
-      orderCode: "ADJ-20260715-02",
-      partnerOrderId: "-",
-      transactionType: "ADJUST_DECREASE" as const,
-      initialAmount: "$45,000.00",
-      amount: "-$500.00",
-      finalAmount: "$44,500.00",
-      description: "System adjustment: Manual fee deduction",
-    },
-  ],
-  meta: {
-    total: 6,
-    page: 1,
-    perPage: 10,
-  },
-};
+/**
+ * Props truyền vào Component `TransactionTable`
+ */
+export interface TransactionTableProps {
+  /** Danh sách mảng các bản ghi giao dịch ví từ TRPC API */
+  data?: TransactionItemRecord[];
+  /** Trạng thái đang tải dữ liệu (Loading Spinner / Skeleton) */
+  isLoading?: boolean;
+  /** Trang hiện tại (1-indexed) */
+  page: number;
+  /** Số bản ghi hiển thị trên mỗi trang */
+  perPage: number;
+  /** Tổng số lượng bản ghi thỏa mãn điều kiện lọc */
+  total: number;
+  /** Callback khi người dùng chuyển trang */
+  onPageChange: (newPage: number) => void;
+  /** Callback khi người dùng thay đổi kích thước trang (pageSize) */
+  onPerPageChange: (newPerPage: number) => void;
+}
 
-export default function TransactionTable() {
+/**
+ * Helper hàm định dạng số tiền USD dạng `$100.00`
+ */
+function formatCurrency(val: number | string): string {
+  const num = typeof val === "number" ? val : Number.parseFloat(val);
+  if (Number.isNaN(num)) return "$0.00";
+  return `$${Math.abs(num).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+/**
+ * Helper hàm định dạng chuỗi ngày tháng sang dạng `dd/MM/yyyy HH:mm:ss`
+ */
+function formatDate(dateStr?: string | null): string {
+  if (!dateStr) return "-";
+  try {
+    return format(new Date(dateStr), "dd/MM/yyyy HH:mm:ss");
+  } catch {
+    return dateStr;
+  }
+}
+
+/**
+ * Component Hiển Thị Bảng Lịch Sử Biến Động Số Dư Ví (`TransactionTable`)
+ * - Hiển thị 9 cột chuẩn: STT, Date, Order code, Order ID, Transaction type, Initial amount, Amount, Final amount, Description.
+ * - Ánh xạ `topupType` thông qua Enum `TopupType` từ `@flash-ship/ecom-types`, không hardcode string.
+ * - Tối ưu `React.memo` và `useMemo` chống re-render thừa.
+ * - Hỗ trợ đa ngôn ngữ i18n (`en` & `vi`) đầy đủ.
+ */
+export const TransactionTable = memo(function TransactionTable({
+  data = [],
+  isLoading = false,
+  page = 1,
+  perPage = 10,
+  total = 0,
+  onPageChange,
+  onPerPageChange,
+}: TransactionTableProps) {
   const { languageId: currentLocale } = useI18n();
-  const isLoading = false;
 
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
-  const listData = MOCK_TRANSACTION_DATA;
-
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-  };
-
-  type TransactionType = (typeof MOCK_TRANSACTION_DATA)["data"][number];
-
-  const renderTransactionTypeBadge = (type: TransactionItem["transactionType"]) => {
+  /**
+   * Render Badge màu sắc theo từng loại giao dịch ánh xạ chuẩn xác qua `TopupType` enum
+   */
+  const renderTransactionTypeBadge = (type: TopupType | string) => {
     switch (type) {
-      case "PAID":
+      case TopupType.PAID:
         return (
           <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 border-blue-200 font-medium">
-            Paid
+            {translate("customerWallet.transactionFilter.paid", currentLocale) || "Paid"}
           </Badge>
         );
-      case "ADDED_FUNDS":
+      case TopupType.ADDED_FUNDS:
         return (
           <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border-emerald-200 font-medium">
-            Added Funds
+            {translate("customerWallet.transactionFilter.addedFunds", currentLocale) || "Added Funds"}
           </Badge>
         );
-      case "CANCELED":
+      case TopupType.CANCELED:
         return (
           <Badge className="bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-500/20 border-zinc-200 font-medium">
-            Canceled
+            {translate("customerWallet.transactionFilter.canceled", currentLocale) || "Canceled"}
           </Badge>
         );
-      case "REFUNDED":
+      case TopupType.REFUNDED:
         return (
           <Badge className="bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 border-purple-200 font-medium">
-            Refunded
+            {translate("customerWallet.transactionFilter.refunded", currentLocale) || "Refunded"}
           </Badge>
         );
-      case "ADJUST_INCREASE":
+      case TopupType.ADJUST_BALANCE_INCREASE:
         return (
           <Badge className="bg-teal-500/10 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 border-teal-200 font-medium">
-            Adjust Balance Increase
+            {translate("customerWallet.transactionFilter.adjustBalanceIncrease", currentLocale) ||
+              "Adjust Balance Increase"}
           </Badge>
         );
-      case "ADJUST_DECREASE":
+      case TopupType.ADJUST_BALANCE_DECREASE:
         return (
           <Badge className="bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 border-rose-200 font-medium">
-            Adjust Balance Decrease
+            {translate("customerWallet.transactionFilter.adjustBalanceDecrease", currentLocale) ||
+              "Adjust Balance Decrease"}
           </Badge>
         );
       default:
-        return null;
+        return (
+          <Badge variant="outline" className="font-medium">
+            {type}
+          </Badge>
+        );
     }
   };
 
-  const columns = [
-    {
-      header: translate("customerWallet.transactionTable.no", currentLocale) || "No.",
-      width: 60,
-      fixed: "left" as const,
-      headerClassName: "text-center",
-      className: "text-center font-medium text-muted-foreground",
-      cell: (item: TransactionType) => {
-        const index = listData.data.findIndex((row) => row.id === item.id);
-        const rowNumber = (page - 1) * perPage + index + 1;
-        return <div>{rowNumber}</div>;
+  /**
+   * Định nghĩa cấu hình các cột của Bảng (`columns`) bọc trong `useMemo` tối ưu hiệu năng
+   */
+  const columns = useMemo(
+    () => [
+      {
+        header: translate("customerWallet.transactionTable.no", currentLocale) || "No.",
+        width: 60,
+        fixed: "left" as const,
+        headerClassName: "text-center",
+        className: "text-center font-medium text-muted-foreground",
+        cell: (item: TransactionItemRecord) => {
+          const index = data.findIndex((row) => row.id === item.id);
+          const rowNumber = (page - 1) * perPage + (index >= 0 ? index : 0) + 1;
+          return <div>{rowNumber}</div>;
+        },
       },
-    },
-    {
-      header: translate("customerWallet.transactionTable.date", currentLocale) || "Date",
-      width: 160,
-      cell: (item: TransactionType) => <div>{item.date}</div>,
-    },
-    {
-      header: translate("customerWallet.transactionTable.orderCode", currentLocale) || "Order code",
-      width: 160,
-      cell: (item: TransactionType) => (
-        <span className="font-semibold text-[#0F798C]">{item.orderCode}</span>
-      ),
-    },
-    {
-      header:
-        translate("customerWallet.transactionTable.partnerOrderId", currentLocale) ||
-        "Order ID",
-      width: 150,
-      cell: (item: TransactionType) => <div>{item.partnerOrderId}</div>,
-    },
-    {
-      header:
-        translate("customerWallet.transactionTable.transactionType", currentLocale) ||
-        "Transaction type",
-      width: 190,
-      cell: (item: TransactionType) => renderTransactionTypeBadge(item.transactionType),
-    },
-    {
-      header:
-        translate("customerWallet.transactionTable.initialAmount", currentLocale) ||
-        "Initial amount",
-      width: 140,
-      cell: (item: TransactionType) => (
-        <span className="font-medium text-foreground">{item.initialAmount}</span>
-      ),
-    },
-    {
-      header: translate("customerWallet.transactionTable.amount", currentLocale) || "Amount",
-      width: 140,
-      cell: (item: TransactionType) => {
-        const isPositive = item.amount.startsWith("+");
-        const isNegative = item.amount.startsWith("-");
-        return (
-          <span
-            className={`font-bold ${
-              isPositive
-                ? "text-emerald-600 dark:text-emerald-400"
-                : isNegative
-                  ? "text-rose-600 dark:text-rose-400"
-                  : "text-muted-foreground"
-            }`}
-          >
-            {item.amount}
+      {
+        header: translate("customerWallet.transactionTable.date", currentLocale) || "Date",
+        width: 170,
+        cell: (item: TransactionItemRecord) => <div>{formatDate(item.submissionDate)}</div>,
+      },
+      {
+        header: translate("customerWallet.transactionTable.orderCode", currentLocale) || "Order code",
+        width: 160,
+        cell: (item: TransactionItemRecord) => (
+          <span className="font-semibold text-[#0F798C]">{item.orderCode || "-"}</span>
+        ),
+      },
+      {
+        header:
+          translate("customerWallet.transactionTable.partnerOrderId", currentLocale) || "Order ID",
+        width: 160,
+        cell: (item: TransactionItemRecord) => (
+          <div className="font-medium text-slate-700 dark:text-slate-300">{item.orderId || "-"}</div>
+        ),
+      },
+      {
+        header:
+          translate("customerWallet.transactionTable.transactionType", currentLocale) ||
+          "Transaction type",
+        width: 200,
+        cell: (item: TransactionItemRecord) => renderTransactionTypeBadge(item.topupType),
+      },
+      {
+        header:
+          translate("customerWallet.transactionTable.initialAmount", currentLocale) ||
+          "Initial amount",
+        width: 150,
+        cell: (item: TransactionItemRecord) => (
+          <span className="font-medium text-foreground">
+            {formatCurrency(item.accountBalanceBefore)}
           </span>
-        );
+        ),
       },
-    },
-    {
-      header:
-        translate("customerWallet.transactionTable.finalAmount", currentLocale) || "Final amount",
-      width: 140,
-      cell: (item: TransactionType) => (
-        <span className="font-bold text-foreground">{item.finalAmount}</span>
-      ),
-    },
-    {
-      header:
-        translate("customerWallet.transactionTable.description", currentLocale) || "Description",
-      width: 280,
-      cell: (item: TransactionType) => (
-        <div className="text-muted-foreground truncate" title={item.description}>
-          {item.description}
-        </div>
-      ),
-    },
-  ];
+      {
+        header: translate("customerWallet.transactionTable.amount", currentLocale) || "Amount",
+        width: 150,
+        cell: (item: TransactionItemRecord) => {
+          const amt = item.amountChange;
+          const type = item.topupType;
+          const isPositive =
+            amt > 0 ||
+            type === TopupType.ADDED_FUNDS ||
+            type === TopupType.REFUNDED ||
+            type === TopupType.ADJUST_BALANCE_INCREASE;
+          const isNegative =
+            amt < 0 ||
+            type === TopupType.PAID ||
+            type === TopupType.ADJUST_BALANCE_DECREASE;
+
+          const prefix = amt === 0 ? "" : isPositive ? "+" : "-";
+
+          return (
+            <span
+              className={`font-bold ${
+                amt === 0 || type === TopupType.CANCELED
+                  ? "text-muted-foreground"
+                  : isPositive
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-rose-600 dark:text-rose-400"
+              }`}
+            >
+              {prefix}
+              {formatCurrency(amt)}
+            </span>
+          );
+        },
+      },
+      {
+        header:
+          translate("customerWallet.transactionTable.finalAmount", currentLocale) || "Final amount",
+        width: 150,
+        cell: (item: TransactionItemRecord) => (
+          <span className="font-bold text-foreground">{formatCurrency(item.accountBalanceAfter)}</span>
+        ),
+      },
+      {
+        header:
+          translate("customerWallet.transactionTable.description", currentLocale) || "Description",
+        width: 280,
+        cell: (item: TransactionItemRecord) => (
+          <div className="text-muted-foreground truncate" title={item.description || ""}>
+            {item.description || "-"}
+          </div>
+        ),
+      },
+    ],
+    [currentLocale, page, perPage, data],
+  );
 
   return (
     <Card className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
       <TableBase
-        data={listData.data}
+        data={data}
         columns={columns}
         isLoading={isLoading}
         emptyMessage={
@@ -261,22 +275,19 @@ export default function TransactionTable() {
         minWidth={1400}
       />
 
-      {/* Pagination Controls */}
-      {listData && listData.meta.total > 0 && (
+      {/* Điều khiển phân trang (PaginationBase) */}
+      {total > 0 && (
         <PaginationBase
           currentPage={page}
-          totalItems={listData.meta.total}
+          totalItems={total}
           perPage={perPage}
-          onPageChange={handlePageChange}
-          onPerPageChange={(val) => {
-            setPerPage(val);
-            setPage(1);
-          }}
-          renderRangeText={(from, to, total) => (
+          onPageChange={onPageChange}
+          onPerPageChange={onPerPageChange}
+          renderRangeText={(from, to, totalItems) => (
             <>
               {translate("pagination.showing", currentLocale)} {from}-{to}{" "}
               {translate("pagination.of", currentLocale)}{" "}
-              <span className="text-[#0F798C] font-semibold">{total}</span>{" "}
+              <span className="text-[#0F798C] font-semibold">{totalItems}</span>{" "}
               {translate("pagination.items", currentLocale) || "items"}
             </>
           )}
@@ -284,4 +295,6 @@ export default function TransactionTable() {
       )}
     </Card>
   );
-}
+});
+
+export default TransactionTable;

@@ -464,11 +464,24 @@ export function AddFundModal({
       const relativeUrls: string[] = Array.isArray(uploadData.data) ? uploadData.data : [];
 
       // 2. Gọi TRPC mutation createTopupRequest để khởi tạo bản ghi yêu cầu nạp tiền (status = 1 WAITING)
-      // LƯU Ý NGHIỆP VỤ (ADR-012): Không tự động điền `description` ("Topup via...") khi gửi request.
-      // Trường `description` trong bảng topup_transactions được để trống (null) và chỉ dành riêng để lưu lý do từ chối (rejectReason) khi Admin Từ chối.
+      // Parse JSON field `dataInfo` của phương thức thanh toán được chọn để trích xuất trường `currency` (mặc định "USD")
+      let extractedCurrency = "USD";
+      if (selectedPaymentMethod?.dataInfo) {
+        try {
+          const parsedData = JSON.parse(selectedPaymentMethod.dataInfo);
+          if (parsedData.currency && typeof parsedData.currency === "string") {
+            extractedCurrency = parsedData.currency.toUpperCase();
+          }
+        } catch {
+          // Fallback "USD" nếu dataInfo không chứa JSON hợp lệ
+        }
+      }
+
       await createTopupMutation.mutateAsync({
         paymentMethodId: selectedPaymentMethod?.id ?? 1,
         wireAmount: parseFloat(wireAmountUsd),
+        currency: extractedCurrency,
+        rate: isBank ? exchangeRate : 0, //Nếu là chuyển khoản ngân hàng is_bank true thì phải truyền rate(tỷ giá ngày hôm đó vào)
         wireDate: wireDate,
         wireImages: relativeUrls,
       });
