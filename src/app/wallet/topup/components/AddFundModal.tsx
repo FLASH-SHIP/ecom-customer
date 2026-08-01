@@ -52,8 +52,8 @@ export function AddFundModal({
   open,
   onOpenChange,
   selectedPaymentMethod,
-  methodId = "payoneer",
-  methodName = "Payoneer",
+  methodId = "",
+  methodName = "",
   methodLogo,
   onBack,
   onSubmit,
@@ -62,9 +62,7 @@ export function AddFundModal({
   const { toast } = useToast();
   const trpcUtils = trpc.useUtils();
 
-  const isBank =
-    selectedPaymentMethod?.isBank ??
-    (methodId === "payoneer" || methodName?.toLowerCase().includes("payoneer"));
+  const isBank = selectedPaymentMethod?.isBank;
 
   // Form State
   const [wireDate, setWireDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
@@ -78,7 +76,7 @@ export function AddFundModal({
   );
 
   const exchangeRate =
-    typeof exchangeRateData === "number" && exchangeRateData > 0 ? exchangeRateData : 25000;
+    typeof exchangeRateData === "number" && exchangeRateData > 0 ? exchangeRateData : 26000;
 
   // Copy State
   const [copiedKey, setCopiedKey] = useState<string | null>(null);

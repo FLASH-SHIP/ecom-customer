@@ -187,7 +187,7 @@ export default function TransactionTable() {
     {
       header:
         translate("customerWallet.transactionTable.partnerOrderId", currentLocale) ||
-        "Partner Order ID",
+        "Order ID",
       width: 150,
       cell: (item: TransactionType) => <div>{item.partnerOrderId}</div>,
     },
