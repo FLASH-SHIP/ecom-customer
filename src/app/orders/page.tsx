@@ -2,6 +2,7 @@
 
 import TagOrderStatus from "@customer/app/orders/components/TagOrderStatus";
 import { OrderStatus } from "@customer/app/orders/constants/enums";
+import { getRawStatusesForGroup } from "@customer/app/orders/constants/constants";
 import { PaginationBase } from "@flash-ship/ecom-ui";
 import { TableBase } from "@flash-ship/ecom-ui";
 import { trpc } from "@customer/lib/trpc";
@@ -53,7 +54,7 @@ export default function CustomerOrdersPage() {
   // Fetch orders list
   const { data: listData, isLoading } = trpc.customer.orders.list.useQuery({
     search: search.trim() || undefined,
-    status: statusFilter && statusFilter !== "ALL" ? (statusFilter as OrderStatus) : undefined,
+    status: statusFilter && statusFilter !== "ALL" ? getRawStatusesForGroup(statusFilter) : undefined,
     fromDate: dateFrom,
     toDate: dateTo,
     shippingMethod:
@@ -78,7 +79,7 @@ export default function CustomerOrdersPage() {
   const handleExport = () => {
     exportExcelMutation.mutate({
       search: search.trim() || undefined,
-      status: statusFilter && statusFilter !== "ALL" ? (statusFilter as OrderStatus) : undefined,
+      status: statusFilter && statusFilter !== "ALL" ? getRawStatusesForGroup(statusFilter) : undefined,
       fromDate: dateFrom,
       toDate: dateTo,
       shippingMethod:

@@ -1,8 +1,10 @@
 "use client";
 
 import { DatePicker } from "@flash-ship/ecom-ui";
+import { trpc } from "@customer/lib/trpc";
 import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
+import { useToast } from "@customer/components/toast-provider";
 import { Button } from "@flash-ship/ecom-ui/components/button";
 import { Input } from "@flash-ship/ecom-ui/components/input";
 import { BaseModal, BaseModalContent } from "@flash-ship/ecom-ui/components/modals/base-modal";
@@ -14,14 +16,25 @@ import {
   Copy,
   ImageIcon,
   Info,
+  Loader2,
   Plus,
   X,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
+export interface SelectedPaymentMethodInfo {
+  id?: number;
+  name: string;
+  isBank: boolean;
+  icon?: string | null;
+  image?: string | null;
+  dataInfo?: string | null;
+}
+
 export interface AddFundModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  selectedPaymentMethod?: SelectedPaymentMethodInfo | null;
   methodId?: string;
   methodName?: string;
   methodLogo?: React.ReactNode;
@@ -38,6 +51,7 @@ interface UploadedImageItem {
 export function AddFundModal({
   open,
   onOpenChange,
+  selectedPaymentMethod,
   methodId = "payoneer",
   methodName = "Payoneer",
   methodLogo,
@@ -45,13 +59,25 @@ export function AddFundModal({
   onSubmit,
 }: AddFundModalProps) {
   const { languageId: currentLocale } = useI18n();
+  const { toast } = useToast();
 
-  const isPayoneer = methodId === "payoneer" || methodName?.toLowerCase().includes("payoneer");
+  const isBank =
+    selectedPaymentMethod?.isBank ??
+    (methodId === "payoneer" || methodName?.toLowerCase().includes("payoneer"));
 
   // Form State
-  const [wireDate, setWireDate] = useState<string>("");
+  const [wireDate, setWireDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
   const [wireAmountUsd, setWireAmountUsd] = useState<string>("");
   const [wireAmountVnd, setWireAmountVnd] = useState<string>("");
+  const [activeInput, setActiveInput] = useState<"usd" | "vnd" | null>(null);
+
+  // Query Exchange Rate from DB topup_exchange_rate_management according to selected wireDate
+  const { data: exchangeRateData } = trpc.customer.topup.getLatestExchangeRate.useQuery(
+    wireDate ? { date: wireDate } : undefined,
+  );
+
+  const exchangeRate =
+    typeof exchangeRateData === "number" && exchangeRateData > 0 ? exchangeRateData : 25000;
 
   // Copy State
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -66,33 +92,116 @@ export function AddFundModal({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const accountEmail = "admin@mattertee.com";
-  const EXCHANGE_RATE = 25000;
+  // Parse dataInfo JSON
+  const parsedDataInfo = React.useMemo(() => {
+    if (!selectedPaymentMethod?.dataInfo) return {};
+    try {
+      return typeof selectedPaymentMethod.dataInfo === "string"
+        ? JSON.parse(selectedPaymentMethod.dataInfo)
+        : selectedPaymentMethod.dataInfo;
+    } catch {
+      return {};
+    }
+  }, [selectedPaymentMethod?.dataInfo]);
 
-  // Handle USD Input & Conversion to VND
+  // Dynamic payment info fields
+  const accountEmail = (parsedDataInfo?.email || "").trim();
+  const accountHolder = (
+    parsedDataInfo?.account_holder ||
+    parsedDataInfo?.accountHolder ||
+    "-"
+  ).trim();
+  const bankName = (parsedDataInfo?.bank_name || parsedDataInfo?.bankName || "-").trim();
+  const accountNumber = (
+    parsedDataInfo?.account_number ||
+    parsedDataInfo?.accountNumber ||
+    "-"
+  ).trim();
+  const description = (parsedDataInfo?.description || "-").trim();
+  const defaultQrUrl = "/assets/images/qr-code/banking.jpg";
+  const rawQrUrl = (parsedDataInfo?.qr_url || parsedDataInfo?.qrUrl || "").trim();
+
+  const [qrSrc, setQrSrc] = useState<string>(rawQrUrl || defaultQrUrl);
+
+  useEffect(() => {
+    setQrSrc(rawQrUrl || defaultQrUrl);
+  }, [rawQrUrl]);
+
+  // Debounce 1s USD -> VND
+  useEffect(() => {
+    if (activeInput !== "usd") return;
+    const timer = setTimeout(() => {
+      if (!wireAmountUsd) {
+        setWireAmountVnd("");
+        return;
+      }
+      const num = parseFloat(wireAmountUsd);
+      if (!Number.isNaN(num)) {
+        const vnd = Math.round(num * exchangeRate);
+        setWireAmountVnd(vnd.toLocaleString("vi-VN"));
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [wireAmountUsd, exchangeRate, activeInput]);
+
+  // Debounce 1s VND -> USD
+  useEffect(() => {
+    if (activeInput !== "vnd") return;
+    const timer = setTimeout(() => {
+      if (!wireAmountVnd) {
+        setWireAmountUsd("");
+        return;
+      }
+      const cleanDigits = wireAmountVnd.replace(/[^0-9]/g, "");
+      const num = Number.parseInt(cleanDigits, 10);
+      if (!Number.isNaN(num)) {
+        const usd = (num / exchangeRate).toFixed(2);
+        setWireAmountUsd(usd);
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [wireAmountVnd, exchangeRate, activeInput]);
+
+  // Handle USD Input Change
   const handleUsdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    setWireAmountUsd(val);
-    const num = parseFloat(val.replace(/[^0-9.]/g, ""));
-    if (!isNaN(num)) {
-      const vndVal = Math.round(num * EXCHANGE_RATE);
-      setWireAmountVnd(vndVal.toLocaleString("vi-VN"));
-    } else {
-      setWireAmountVnd("");
+    if (val && !/^[0-9.]*$/.test(val)) {
+      setErrorMessage(
+        translate("customerWallet.addFundModal.invalidNumber", currentLocale) ||
+          "Wire amount only allows numbers and decimal point.",
+      );
+      return;
     }
+    if (val.includes(".")) {
+      const parts = val.split(".");
+      if (parts[1] && parts[1].length > 2) {
+        setErrorMessage(
+          translate("customerWallet.addFundModal.usdDecimalLimit", currentLocale) ||
+            "USD wire amount allows maximum 2 decimal places.",
+        );
+        return;
+      }
+    }
+    setErrorMessage(null);
+    setActiveInput("usd");
+    setWireAmountUsd(val);
   };
 
-  // Handle VND Input & Conversion to USD
+  // Handle VND Input Change
   const handleVndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    setWireAmountVnd(val);
-    const num = parseFloat(val.replace(/[^0-9]/g, ""));
-    if (!isNaN(num)) {
-      const usdVal = (num / EXCHANGE_RATE).toFixed(2);
-      setWireAmountUsd(usdVal);
-    } else {
-      setWireAmountUsd("");
+    const cleanDigits = val.replace(/[^0-9]/g, "");
+    if (val && !/^[0-9,.]*$/.test(val)) {
+      setErrorMessage(
+        translate("customerWallet.addFundModal.invalidNumber", currentLocale) ||
+          "Wire amount only allows numbers.",
+      );
+      return;
     }
+    setErrorMessage(null);
+    setActiveInput("vnd");
+    const num = Number.parseInt(cleanDigits, 10);
+    setWireAmountVnd(Number.isNaN(num) ? "" : num.toLocaleString("vi-VN"));
   };
 
   // Check scroll position
@@ -116,8 +225,15 @@ export function AddFundModal({
   };
 
   const handleCopy = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
+    const trimmed = text ? text.trim() : "";
+    if (!trimmed || trimmed === "-") return;
+    navigator.clipboard.writeText(trimmed);
     setCopiedKey(key);
+    toast(
+      translate("customerWallet.addFundModal.copySuccess", currentLocale) ||
+        "Đã sao chép vào bộ nhớ tạm!",
+      "success",
+    );
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
@@ -198,29 +314,138 @@ export function AddFundModal({
     });
     setUploadedFiles([]);
     setErrorMessage(null);
-    setWireDate("");
+    setWireDate(new Date().toISOString().split("T")[0]);
     setWireAmountUsd("");
     setWireAmountVnd("");
     onBack?.();
   };
 
-  const handleSubmit = () => {
-    onSubmit?.();
-    onOpenChange(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const utils = trpc.useUtils();
+  const createTopupMutation = trpc.customer.topup.createTopupRequest.useMutation({
+    onSuccess: () => {
+      utils.customer.topup.getWalletSummary.invalidate();
+      utils.customer.topup.getTopupHistory.invalidate();
+    },
+  });
+
+  const handleSubmit = async () => {
+    if (!wireDate) {
+      setErrorMessage(
+        translate("customerWallet.addFundModal.wireDateRequired", currentLocale) ||
+          "Please select wire date.",
+      );
+      return;
+    }
+
+    if (!wireAmountUsd || Number.isNaN(parseFloat(wireAmountUsd)) || parseFloat(wireAmountUsd) <= 0) {
+      setErrorMessage(
+        translate("customerWallet.addFundModal.wireAmountRequired", currentLocale) ||
+          "Please enter wire amount.",
+      );
+      return;
+    }
+
+    if (uploadedFiles.length === 0) {
+      setErrorMessage(
+        translate("customerWallet.addFundModal.uploadRequired", currentLocale) ||
+          "Please upload at least 1 wire transfer confirmation image.",
+      );
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setErrorMessage(null);
+
+      // 1. Tải mảng ảnh lên Tool Resizer Image API endpoint (/api/v1/upload/topup)
+      // Tự động dùng NEXT_PUBLIC_API_URL (Localhost: http://localhost:4000, Server Dev: https://dev-api.ecomexpress.vn)
+      const formData = new FormData();
+      for (const item of uploadedFiles) {
+        formData.append("files", item.file);
+      }
+
+      const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000").replace(/\/$/, "");
+      const uploadRes = await fetch(`${apiBaseUrl}/api/v1/upload/topup`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        let errText = "Tải ảnh chứng từ thất bại.";
+        try {
+          const errJson = await uploadRes.json();
+          errText = errJson.message || errJson.error || errText;
+        } catch {}
+        throw new Error(errText);
+      }
+
+      const uploadData = await uploadRes.json();
+      const relativeUrls: string[] = Array.isArray(uploadData.data) ? uploadData.data : [];
+
+      // 2. Gọi TRPC mutation createTopupRequest để khởi tạo bản ghi yêu cầu nạp tiền (status = 1 WAITING)
+      // LƯU Ý NGHIỆP VỤ (ADR-012): Không tự động điền `description` ("Topup via...") khi gửi request.
+      // Trường `description` trong bảng topup_transactions được để trống (null) và chỉ dành riêng để lưu lý do từ chối (rejectReason) khi Admin Từ chối.
+      await createTopupMutation.mutateAsync({
+        paymentMethodId: selectedPaymentMethod?.id ?? 1,
+        wireAmount: parseFloat(wireAmountUsd),
+        wireDate: wireDate,
+        wireImages: relativeUrls,
+      });
+
+      // Cleanup state
+      uploadedFiles.forEach((item) => {
+        URL.revokeObjectURL(item.url);
+      });
+      setUploadedFiles([]);
+      setWireAmountUsd("");
+      setWireAmountVnd("");
+
+      // Trigger success toast (Top Right SHA CDN ToastProvider)
+      toast(
+        translate("customerWallet.addFundModal.createSuccess", currentLocale) ||
+          "Tạo yêu cầu nạp tiền thành công!",
+        "success",
+      );
+
+      onSubmit?.();
+      onOpenChange(false);
+    } catch (err: any) {
+      const errText =
+        err?.message ||
+        translate("customerWallet.addFundModal.createError", currentLocale) ||
+        "Tạo yêu cầu nạp tiền thất bại!";
+      setErrorMessage(errText);
+
+      // Trigger error toast (Top Right SHA CDN ToastProvider)
+      toast(errText, "error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const defaultLogo = (
-    <div className="w-6 h-6 rounded-full bg-[#00B4D8]/20 text-[#00B4D8] flex items-center justify-center font-bold text-xs">
+    <div className="w-6 h-6 rounded-full bg-[#0F798C]/20 text-[#0F798C] flex items-center justify-center font-bold text-xs">
       $
     </div>
   );
 
+  const displayLogo =
+    selectedPaymentMethod?.icon || selectedPaymentMethod?.image ? (
+      <img
+        src={selectedPaymentMethod.icon || selectedPaymentMethod.image || ""}
+        alt={selectedPaymentMethod.name}
+        className="w-6 h-6 object-contain rounded-[6px] border border-[#E9EAED]"
+      />
+    ) : (
+      methodLogo || defaultLogo
+    );
+
   const modalTitle = (
-    <div className="flex items-center gap-2.5">
-      {methodLogo || defaultLogo}
-      <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-        {translate("customerWallet.addFundModal.titleVia", currentLocale) || "Top-up via"}{" "}
-        {methodName}
+    <div className="flex items-center gap-3">
+      {displayLogo}
+      <span className="font-semibold text-lg text-slate-800 dark:text-slate-100">
+        {selectedPaymentMethod?.name || methodName}
       </span>
     </div>
   );
@@ -231,6 +456,7 @@ export function AddFundModal({
         type="button"
         variant="outline"
         onClick={handleBack}
+        disabled={isSubmitting}
         className="px-6 py-2 h-10 rounded-lg font-medium border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-zinc-700 dark:text-slate-300 cursor-pointer transition-colors"
       >
         {translate("customerWallet.addFundModal.back", currentLocale) || "Back"}
@@ -238,9 +464,19 @@ export function AddFundModal({
       <Button
         type="button"
         onClick={handleSubmit}
-        className="px-6 py-2 h-10 rounded-lg font-semibold bg-[#00B4D8] hover:bg-[#0096B4] text-white shadow-sm cursor-pointer transition-all"
+        disabled={isSubmitting}
+        className="px-6 py-2 h-10 rounded-lg font-semibold bg-[#0F798C] hover:bg-[#0c6070] text-white shadow-sm cursor-pointer transition-all disabled:opacity-50 flex items-center gap-2"
       >
-        {translate("customerWallet.addFundModal.submit", currentLocale) || "Submit"}
+        {isSubmitting ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+            <span>
+              {translate("customerWallet.addFundModal.submitting", currentLocale) || "Submitting..."}
+            </span>
+          </>
+        ) : (
+          translate("customerWallet.addFundModal.submit", currentLocale) || "Submit"
+        )}
       </Button>
     </>
   );
@@ -264,8 +500,8 @@ export function AddFundModal({
             className="hidden"
           />
 
-          {/* Yellow Warning Alert Box — Only for Non-Payoneer methods */}
-          {!isPayoneer && (
+          {/* Yellow Warning Alert Box — Only for Non-Bank methods */}
+          {!isBank && (
             <div className="bg-amber-500/10 border border-amber-300/60 dark:border-amber-700/50 rounded-xl p-3.5 flex gap-3 items-start">
               <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div className="flex flex-col gap-0.5">
@@ -284,12 +520,12 @@ export function AddFundModal({
           {/* Step 1: Send Fund */}
           <div className="relative pl-8">
             {/* Step Number Circle */}
-            <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-[#00B4D8] text-white flex items-center justify-center text-xs font-bold shadow-xs">
+            <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-[#0F798C] text-white flex items-center justify-center text-xs font-bold shadow-xs">
               1
             </div>
 
             {/* Connecting Vertical Line to Step 2 */}
-            <div className="absolute left-[11px] top-6 -bottom-7 w-0 border-l-2 border-dashed border-[#00B4D8] z-0" />
+            <div className="absolute left-[11px] top-6 -bottom-7 w-0 border-l-2 border-dashed border-[#0F798C] z-0" />
 
             <div className="flex flex-col gap-1 pb-4">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
@@ -300,8 +536,8 @@ export function AddFundModal({
                   "Please use the wire info below to send the funding amount."}
               </p>
 
-              {isPayoneer ? (
-                /* Payoneer Banking Info + QR Code Card Box */
+              {isBank ? (
+                /* Bank Info + QR Code Card Box (When is_bank === true) */
                 <div className="mt-3 border border-slate-200/90 dark:border-zinc-800 rounded-2xl p-4 bg-slate-50/30 dark:bg-zinc-900/40 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
                   {/* Left Side: Banking Details */}
                   <div className="flex flex-col gap-2.5 flex-1 min-w-0 w-full text-xs">
@@ -313,8 +549,8 @@ export function AddFundModal({
                           currentLocale,
                         ) || "Account holder:"}
                       </span>
-                      <span className="col-span-8 font-bold text-[#1B64F2] truncate">
-                        NGUYEN THI TOAN
+                      <span className="col-span-8 font-bold text-[#1B64F2] truncate select-all">
+                        {accountHolder}
                       </span>
                     </div>
 
@@ -324,8 +560,8 @@ export function AddFundModal({
                         {translate("customerWallet.addFundModal.bankNameLabel", currentLocale) ||
                           "Bank Name:"}
                       </span>
-                      <span className="col-span-8 font-bold text-[#1B64F2] leading-tight">
-                        Bank for Investment and Development of Vietnam
+                      <span className="col-span-8 font-bold text-[#1B64F2] leading-tight select-all">
+                        {bankName}
                       </span>
                     </div>
 
@@ -338,19 +574,21 @@ export function AddFundModal({
                         ) || "Account Number:"}
                       </span>
                       <div className="col-span-8 border border-dashed border-slate-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 flex items-center justify-between bg-white dark:bg-zinc-900">
-                        <span className="font-bold text-[#1B64F2]">8833161232</span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy("8833161232", "accNum")}
-                          className="text-slate-400 hover:text-[#00B4D8] transition-colors cursor-pointer ml-1"
-                          title="Copy account number"
-                        >
-                          {copiedKey === "accNum" ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-500" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
+                        <span className="font-bold text-[#1B64F2] select-all">{accountNumber}</span>
+                        {accountNumber && accountNumber !== "-" && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(accountNumber, "accNum")}
+                            className="text-slate-400 hover:text-[#0F798C] transition-colors cursor-pointer ml-1"
+                            title="Copy account number"
+                          >
+                            {copiedKey === "accNum" ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-500" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -361,32 +599,37 @@ export function AddFundModal({
                           "Description:"}
                       </span>
                       <div className="col-span-8 border border-dashed border-slate-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 flex items-center justify-between bg-white dark:bg-zinc-900">
-                        <span className="font-bold text-[#1B64F2]">SellerID</span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy("SellerID", "desc")}
-                          className="text-slate-400 hover:text-[#00B4D8] transition-colors cursor-pointer ml-1"
-                          title="Copy description"
-                        >
-                          {copiedKey === "desc" ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-500" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
+                        <span className="font-bold text-[#1B64F2] select-all">{description}</span>
+                        {description && description !== "-" && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(description, "desc")}
+                            className="text-slate-400 hover:text-[#0F798C] transition-colors cursor-pointer ml-1"
+                            title="Copy description"
+                          >
+                            {copiedKey === "desc" ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-500" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
 
                   {/* Right Side: QR Code Card Box */}
-                  <div className="w-32 h-32 lg:w-36 lg:h-36 rounded-xl border border-sky-400 bg-white p-2 flex flex-col items-center justify-center shrink-0 shadow-xs">
-                    <div className="relative w-full h-full bg-slate-50 flex items-center justify-center rounded-lg border border-slate-100">
-                      <ImageIcon className="w-10 h-10 text-slate-300" />
-                    </div>
+                  <div className="w-32 h-32 lg:w-36 lg:h-36 rounded-xl border border-sky-400 bg-white p-2 flex flex-col items-center justify-center shrink-0 shadow-xs overflow-hidden">
+                    <img
+                      src={qrSrc}
+                      alt="Bank QR Code"
+                      onError={() => setQrSrc(defaultQrUrl)}
+                      className="w-full h-full object-contain rounded-lg"
+                    />
                   </div>
                 </div>
               ) : (
-                /* Non-Payoneer Methods: Simple Account Card */
+                /* Non-Bank Methods: Simple Account Card */
                 <div className="mt-3 border border-slate-200 dark:border-zinc-800 rounded-xl p-3.5 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -394,21 +637,23 @@ export function AddFundModal({
                         "Account:"}
                     </span>
                     <span className="text-sm font-bold text-[#1B64F2] select-all">
-                      {accountEmail}
+                      {accountEmail || "-"}
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(accountEmail, "accEmail")}
-                    className="p-1.5 text-slate-400 hover:text-[#00B4D8] rounded-md transition-colors cursor-pointer relative"
-                    title="Copy email"
-                  >
-                    {copiedKey === "accEmail" ? (
-                      <Check className="w-4 h-4 text-emerald-500" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </button>
+                  {accountEmail && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(accountEmail, "accEmail")}
+                      className="p-1.5 text-slate-400 hover:text-[#0F798C] rounded-md transition-colors cursor-pointer relative"
+                      title="Copy email"
+                    >
+                      {copiedKey === "accEmail" ? (
+                        <Check className="w-4 h-4 text-emerald-500" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -417,7 +662,7 @@ export function AddFundModal({
           {/* Step 2: Submit Wire Transaction Detail */}
           <div className="relative pl-8">
             {/* Step Number Circle */}
-            <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-[#00B4D8] text-white flex items-center justify-center text-xs font-bold shadow-xs">
+            <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-[#0F798C] text-white flex items-center justify-center text-xs font-bold shadow-xs">
               2
             </div>
 
@@ -434,8 +679,8 @@ export function AddFundModal({
               </div>
 
               {/* Form Layout */}
-              {isPayoneer ? (
-                /* Payoneer Form: Full Width Wire Date + Exchange Rate + USD/VND Row */
+              {isBank ? (
+                /* Bank Form: Full Width Wire Date + Dynamic Exchange Rate Note + USD/VND Dual Inputs */
                 <div className="flex flex-col gap-3">
                   {/* Full Width Row: Wire date */}
                   <div className="flex flex-col gap-1.5">
@@ -448,16 +693,19 @@ export function AddFundModal({
                       value={wireDate}
                       onChange={setWireDate}
                       placeholder="Select date"
+                      disabledDays={(date) => date > new Date()}
                       className="w-full h-11 rounded-lg border-slate-300 dark:border-zinc-700"
                     />
 
-                    {/* Exchange Rate Info Note */}
+                    {/* Dynamic Exchange Rate Info Note */}
                     <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
                       <Info className="w-4 h-4 text-[#1B64F2] shrink-0" />
                       <span>
                         {translate("customerWallet.addFundModal.exchangeRateText", currentLocale) ||
                           "Exchange rate:"}{" "}
-                        <strong className="text-[#1B64F2] font-bold">25.000 VND = 1 USD</strong>{" "}
+                        <strong className="text-[#1B64F2] font-bold">
+                          {exchangeRate.toLocaleString("vi-VN")} VND = 1 USD
+                        </strong>{" "}
                         <span className="text-slate-400">
                           {translate(
                             "customerWallet.addFundModal.exchangeRateNote",
@@ -506,7 +754,7 @@ export function AddFundModal({
                   </div>
                 </div>
               ) : (
-                /* Non-Payoneer Methods Form: 2-Column Wire Date & Wire Amount (USD) */
+                /* Non-Bank Form: 2-Column Wire Date & Wire Amount (USD) */
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -518,14 +766,15 @@ export function AddFundModal({
                       value={wireDate}
                       onChange={setWireDate}
                       placeholder="Select date"
-                      className="h-11 rounded-lg border-slate-300 dark:border-zinc-700"
+                      disabledDays={(date) => date > new Date()}
+                      className="w-full h-11 rounded-lg border-slate-300 dark:border-zinc-700"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      {translate("customerWallet.addFundModal.wireAmountUsdLabel", currentLocale) ||
-                        "Wire amount (USD)"}{" "}
+                      {translate("customerWallet.addFundModal.wireAmountLabel", currentLocale) ||
+                        "Wire amount"}{" "}
                       <span className="text-rose-500">*</span>
                     </label>
                     <Input
@@ -539,56 +788,63 @@ export function AddFundModal({
                 </div>
               )}
 
-              {/* Upload Image Section */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  {translate("customerWallet.addFundModal.wireConfirmationLabel", currentLocale) ||
-                    "Wire transfer confirmation"}{" "}
-                  <span className="text-rose-500">*</span>
-                </label>
+              {/* Wire Transfer Confirmation Image Upload Section */}
+              <div className="flex flex-col gap-2 mt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    {translate("customerWallet.addFundModal.uploadLabel", currentLocale) ||
+                      "Wire transfer confirmation image"}{" "}
+                    <span className="text-rose-500">*</span>{" "}
+                    <span className="text-slate-400 font-normal">
+                      {translate("customerWallet.addFundModal.uploadNote", currentLocale) ||
+                        "(Maximum 10 images, each image not exceeding 5MB)"}
+                    </span>
+                  </label>
+                </div>
 
-                {/* Error Banner */}
-                {errorMessage && (
-                  <p className="text-xs font-medium text-rose-500 mt-0.5">{errorMessage}</p>
-                )}
-
-                {/* Upload Container */}
                 {uploadedFiles.length === 0 ? (
-                  /* Empty State: Big Drag & Drop Box */
+                  /* State 1: Big Drag & Drop Zone Box when 0 files uploaded */
                   <div
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-slate-300 dark:border-zinc-700 hover:border-[#00B4D8] rounded-2xl p-6 flex flex-col items-center justify-center gap-2 bg-slate-50/40 dark:bg-zinc-900/40 cursor-pointer transition-all group"
+                    className="rounded-2xl border-2 border-dashed border-sky-400/80 bg-slate-50/50 dark:bg-zinc-900/30 hover:bg-slate-100/50 dark:hover:bg-zinc-900/50 p-6 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all text-center"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-slate-200/60 dark:bg-zinc-800 flex items-center justify-center text-slate-400 group-hover:text-[#00B4D8] transition-colors">
-                      <ImageIcon className="w-6 h-6" />
+                    <div className="w-12 h-12 rounded-xl bg-slate-200/60 dark:bg-zinc-800 flex items-center justify-center mb-1 text-slate-400">
+                      <ImageIcon className="w-7 h-7" />
                     </div>
-                    <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+
+                    <div className="text-sm text-slate-600 dark:text-slate-300 font-normal">
                       {translate("customerWallet.addFundModal.dragAndDrop", currentLocale) ||
                         "Drag & drop or"}{" "}
-                      <span className="text-[#1B64F2] font-semibold underline">
+                      <span className="text-[#1B64F2] font-semibold hover:underline">
                         {translate("customerWallet.addFundModal.browse", currentLocale) || "Browse"}
                       </span>
                     </div>
-                    <span className="text-[11px] text-slate-400">
+
+                    <span className="text-xs text-slate-400">
                       {translate("customerWallet.addFundModal.uploadLimit", currentLocale) ||
                         "Upload up to 10 files"}
                     </span>
-                    <span className="text-[11px] text-slate-400 font-medium">
+
+                    <span className="text-xs text-slate-400 font-medium">
                       {translate("customerWallet.addFundModal.requiredFormat", currentLocale) ||
                         "Required to upload:*png, *jpg, *jpeg"}
                     </span>
                   </div>
                 ) : (
-                  /* Uploaded List View with Horizontal Scroll & Floating Arrows */
-                  <div className="relative border border-dashed border-slate-300 dark:border-zinc-700 rounded-2xl p-3 bg-slate-50/20 dark:bg-zinc-900/20">
+                  /* State 2: Uploaded List View with Horizontal Scroll & Floating Arrows */
+                  <div
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleDrop}
+                    className="relative rounded-2xl border-2 border-dashed border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30 p-3 min-h-[120px] flex items-center"
+                  >
                     {/* Left Scroll Arrow */}
                     {canScrollLeft && (
                       <button
                         type="button"
                         onClick={handleScrollLeft}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-md flex items-center justify-center text-slate-500 hover:text-[#00B4D8] dark:text-slate-300 cursor-pointer z-30 transition-all"
+                        className="absolute left-2 z-10 w-8 h-8 rounded-full bg-white/90 dark:bg-zinc-800/90 shadow-md text-slate-700 dark:text-slate-200 flex items-center justify-center hover:bg-white dark:hover:bg-zinc-800 cursor-pointer border border-slate-200 dark:border-zinc-700 transition-all"
                       >
                         <ChevronLeft className="w-5 h-5" />
                       </button>
@@ -598,42 +854,47 @@ export function AddFundModal({
                     <div
                       ref={scrollContainerRef}
                       onScroll={checkScrollPosition}
-                      className="flex items-center gap-3.5 overflow-x-auto no-scrollbar scroll-smooth py-2.5 -my-2.5 px-2.5 -mx-2.5"
+                      className="w-full flex items-center gap-3 overflow-x-auto scrollbar-none py-1 px-1 scroll-smooth"
+                      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                     >
                       {uploadedFiles.map((item) => (
                         <div
                           key={item.id}
-                          className="relative group w-24 h-24 rounded-2xl shrink-0 border border-slate-200 dark:border-zinc-800 transition-all hover:border-2 hover:border-red-500 shadow-xs"
+                          className="relative w-24 h-24 rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shrink-0 overflow-hidden group shadow-xs"
                         >
                           <img
                             src={item.url}
                             alt="Wire confirmation"
-                            className="w-full h-full object-cover rounded-2xl"
+                            className="w-full h-full object-cover"
                           />
-
-                          {/* Hover Red X Clear Badge at top-right corner */}
                           <button
                             type="button"
-                            aria-label="Remove image"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleRemoveFile(item.id);
                             }}
-                            className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-20"
+                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-90 hover:bg-rose-600 transition-all cursor-pointer"
+                            title="Remove image"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ))}
 
-                      {/* Add Image Button (+) - Hidden when 10 images uploaded */}
+                      {/* Add Image Button (+) - ONLY displayed when uploadedFiles.length > 0 AND < 10 */}
                       {uploadedFiles.length < 10 && (
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          className="w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 dark:border-zinc-700 hover:border-[#00B4D8] flex items-center justify-center text-slate-400 hover:text-[#00B4D8] shrink-0 transition-all bg-white dark:bg-zinc-900 cursor-pointer"
+                          className="w-24 h-24 rounded-2xl border-2 border-dashed border-sky-400/80 bg-sky-50/50 dark:bg-sky-950/20 hover:bg-sky-100/50 dark:hover:bg-sky-950/40 flex flex-col items-center justify-center shrink-0 cursor-pointer transition-all group"
                         >
-                          <Plus className="w-6 h-6" />
+                          <div className="w-8 h-8 rounded-full bg-[#0F798C] text-white flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
+                            <Plus className="w-5 h-5 stroke-[2.5]" />
+                          </div>
+                          <span className="text-[11px] font-bold text-[#0F798C]">
+                            {translate("customerWallet.addFundModal.uploadButton", currentLocale) ||
+                              "Upload file"}
+                          </span>
                         </button>
                       )}
                     </div>
@@ -643,12 +904,20 @@ export function AddFundModal({
                       <button
                         type="button"
                         onClick={handleScrollRight}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-md flex items-center justify-center text-slate-500 hover:text-[#00B4D8] dark:text-slate-300 cursor-pointer z-30 transition-all"
+                        className="absolute right-2 z-10 w-8 h-8 rounded-full bg-white/90 dark:bg-zinc-800/90 shadow-md text-slate-700 dark:text-slate-200 flex items-center justify-center hover:bg-white dark:hover:bg-zinc-800 cursor-pointer border border-slate-200 dark:border-zinc-700 transition-all"
                       >
                         <ChevronRight className="w-5 h-5" />
                       </button>
                     )}
                   </div>
+                )}
+
+                {/* Error Message display */}
+                {errorMessage && (
+                  <p className="text-xs text-rose-500 font-medium flex items-center gap-1 mt-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    {errorMessage}
+                  </p>
                 )}
               </div>
             </div>

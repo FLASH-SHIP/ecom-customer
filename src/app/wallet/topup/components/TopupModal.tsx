@@ -9,15 +9,15 @@ import React from "react";
 export interface TopupModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectPaymentMethod?: (methodId: string) => void;
+  onSelectPaymentMethod?: (method: any) => void;
 }
 
 export function TopupModal({ open, onOpenChange, onSelectPaymentMethod }: TopupModalProps) {
   const { languageId: currentLocale } = useI18n();
   const { data: paymentMethods, isLoading } = trpc.customer.topup.getPaymentMethods.useQuery();
 
-  const handleSelect = (methodId: string) => {
-    onSelectPaymentMethod?.(methodId);
+  const handleSelect = (method: any) => {
+    onSelectPaymentMethod?.(method);
     onOpenChange(false);
   };
 
@@ -57,7 +57,7 @@ export function TopupModal({ open, onOpenChange, onSelectPaymentMethod }: TopupM
                 <button
                   key={method.id}
                   type="button"
-                  onClick={() => handleSelect(String(method.id))}
+                  onClick={() => handleSelect(method)}
                   className="aspect-square w-full flex items-center justify-center p-3 border-2 border-slate-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-900 hover:border-[#0F798C] hover:shadow-md cursor-pointer transition-all duration-200 group outline-none overflow-hidden"
                   title={method.name}
                 >

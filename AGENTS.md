@@ -34,3 +34,9 @@ src/app/                 # Next.js 16 App Router routes (Customer Portal)
 src/components/          # Customer-specific UI components
 src/lib/                 # Customer client utilities, i18n provider, & auth
 ```
+
+## Architecture Specs & Maintenance Docs
+
+- **Customer Authentication & Session Management**: [specs/auth-customer/](file:///Users/hy/SourceCode/flashship/ecom-v2/specs/auth-customer/) (`decisions.md`, `implementation.md`)
+- **Wallet & Top-up Module**: [specs/wallet/](file:///Users/hy/SourceCode/flashship/ecom-v2/specs/wallet/) (`decisions.md`, `implementation.md`)
+

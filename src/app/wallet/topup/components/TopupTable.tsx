@@ -3,6 +3,7 @@
 import { PaginationBase, TableBase } from "@flash-ship/ecom-ui";
 import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
+import { TopupStatus } from "@flash-ship/ecom-types";
 import { Badge } from "@flash-ship/ecom-ui/components/badge";
 import { Button } from "@flash-ship/ecom-ui/components/button";
 import { Card } from "@flash-ship/ecom-ui/components/card";
@@ -14,6 +15,7 @@ import {
 } from "@flash-ship/ecom-ui/components/dropdown-menu";
 import { ThreeDotsVerticalIcon } from "@flash-ship/ecom-ui/components/icons";
 import { format } from "date-fns";
+import { WireConfirmationGallery } from "./WireConfirmationGallery";
 
 export interface TopupItem {
   id: string;
@@ -22,10 +24,12 @@ export interface TopupItem {
   submissionDate: string;
   wireDate: string;
   paymentMethod: string;
+  paymentMethodIcon?: string | null;
   wireTransferConfirmation: string;
-  status: string;
+  status: string | number;
   wireAmount: number | string;
   wireAmountApproved: number | string;
+  wireImages?: string[];
 }
 
 export interface TopupTableProps {
@@ -36,6 +40,7 @@ export interface TopupTableProps {
     pageSize: number;
   };
   isLoading?: boolean;
+  isFetching?: boolean;
   page?: number;
   perPage?: number;
   onPageChange?: (page: number) => void;
@@ -48,6 +53,7 @@ export default function TopupTable({
   data = [],
   meta = { total: 0, page: 1, pageSize: 10 },
   isLoading = false,
+  isFetching = false,
   page = 1,
   perPage = 10,
   onPageChange,
@@ -111,60 +117,86 @@ export default function TopupTable({
       width: 135,
       cell: (order: TopupItem) => <div>{formatShortDate(order.wireDate)}</div>,
     },
+    // Cột Phương thức thanh toán (Hiển thị icon 20x20px rounded-full viền #E9EAED ở bên trái)
     {
       header: translate("customerWallet.table.paymentMethod", currentLocale) || "Payment Method",
-      width: 160,
-      cell: (order: TopupItem) => <div>{order.paymentMethod}</div>,
+      width: 180,
+      cell: (order: TopupItem) => {
+        const iconUrl = order.paymentMethodIcon;
+        return (
+          <div className="flex items-center gap-2">
+            {iconUrl ? (
+              <img
+                src={iconUrl}
+                alt={order.paymentMethod}
+                className="w-5 h-5 rounded-full object-contain shrink-0 border border-[#E9EAED]"
+              />
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-zinc-800 border border-[#E9EAED] flex items-center justify-center shrink-0 text-[10px] font-bold text-slate-500">
+                {order.paymentMethod ? order.paymentMethod.charAt(0).toUpperCase() : "$"}
+              </div>
+            )}
+            <span className="font-medium text-slate-800 dark:text-slate-200 truncate">
+              {order.paymentMethod}
+            </span>
+          </div>
+        );
+      },
     },
     {
       header:
         translate("customerWallet.table.wireTransferConfirmation", currentLocale) ||
         "Wire transfer confirmation",
-      width: 160,
-      cell: (order: TopupItem) => <div>{order.wireTransferConfirmation || order.transactionCode}</div>,
+      width: 220,
+      cell: (order: TopupItem) => (
+        <WireConfirmationGallery
+          images={order.wireImages && order.wireImages.length > 0 ? order.wireImages : undefined}
+          fallbackText={order.wireTransferConfirmation || order.transactionCode}
+        />
+      ),
     },
     {
-      header: translate("customerWallet.table.status", currentLocale) || "Status",
+      header: translate("customerWallet.table.status", currentLocale),
       width: 135,
       cell: (order: TopupItem) => {
-        const upperStatus = (order.status || "").toUpperCase();
-        if (upperStatus === "CONFIRM" || upperStatus === "CONFIRMED" || upperStatus === "APPROVED") {
-          return (
-            <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border-emerald-200 font-medium">
-              {translate("customerWallet.status.confirm", currentLocale) || "Confirmed"}
-            </Badge>
-          );
-        }
-        if (upperStatus === "WAITING") {
+        const status = Number(order.status) as TopupStatus;
+
+        if (status === TopupStatus.WAITING) {
           return (
             <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border-amber-200 font-medium">
-              {translate("customerWallet.status.waiting", currentLocale) || "Waiting"}
+              {translate("customerWallet.status.waiting", currentLocale)}
             </Badge>
           );
         }
-        if (upperStatus === "CANCELLED" || upperStatus === "CANCEL") {
+
+        if (status === TopupStatus.CONFIRMED) {
           return (
-            <Badge className="bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border-zinc-200 font-medium">
-              {translate("customerWallet.status.cancel", currentLocale) || "Cancelled"}
+            <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border-emerald-200 font-medium">
+              {translate("customerWallet.status.confirm", currentLocale)}
             </Badge>
           );
         }
-        return (
-          <Badge className="bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 border-rose-200 font-medium">
-            {translate("customerWallet.status.reject", currentLocale) || "Rejected"}
-          </Badge>
-        );
+
+        if (status === TopupStatus.REJECT) {
+          return (
+            <Badge className="bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 border-rose-200 font-medium">
+              {translate("customerWallet.status.reject", currentLocale)}
+            </Badge>
+          );
+        }
+
+        return null;
       },
     },
     {
-      header: translate("customerWallet.table.wireAmount", currentLocale) || "Wire Amount",
+      header: translate("customerWallet.table.wireAmount", currentLocale),
       width: 160,
       cell: (order: TopupItem) => (
         <span className="font-bold text-foreground">{formatCurrency(order.wireAmount)}</span>
       ),
     },
     {
-      header: translate("customerWallet.table.approvedAmount", currentLocale) || "Approved Amount",
+      header: translate("customerWallet.table.approvedAmount", currentLocale),
       width: 160,
       cell: (order: TopupItem) => (
         <span className="font-bold text-emerald-600 dark:text-emerald-400">
@@ -173,15 +205,15 @@ export default function TopupTable({
       ),
     },
     {
-      header: translate("customerWallet.table.action", currentLocale) || "Action",
+      header: translate("customerWallet.table.action", currentLocale),
       width: 80,
       fixed: "right" as const,
       headerClassName: "text-center",
       className: "text-center",
       cell: (order: TopupItem) => {
-        // Chỉ hiển thị nút 3 chấm khi trạng thái là WAITING
-        const upperStatus = (order.status || "").toUpperCase();
-        if (upperStatus !== "WAITING") {
+        // Chỉ hiển thị nút 3 chấm khi trạng thái là TopupStatus.WAITING (1)
+        const status = Number(order.status) as TopupStatus;
+        if (status !== TopupStatus.WAITING) {
           return <div />;
         }
 
@@ -210,7 +242,7 @@ export default function TopupTable({
                     onEdit?.(order);
                   }}
                 >
-                  Edit
+                  {translate("common.edit", currentLocale)}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md cursor-pointer"
@@ -219,7 +251,7 @@ export default function TopupTable({
                     onCancel?.(order);
                   }}
                 >
-                  Cancel
+                  {translate("common.cancel", currentLocale)}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -230,7 +262,12 @@ export default function TopupTable({
   ];
 
   return (
-    <Card className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+    <Card className="relative rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+      {isFetching && !isLoading && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-[#0F798C]/20 overflow-hidden z-30">
+          <div className="h-full bg-[#0F798C] animate-pulse w-full" />
+        </div>
+      )}
       <TableBase
         data={data}
         columns={columns}
@@ -257,7 +294,7 @@ export default function TopupTable({
               {translate("pagination.showing", currentLocale)} {from}-{to}{" "}
               {translate("pagination.of", currentLocale)}{" "}
               <span className="text-[#0F798C] font-semibold">{total}</span>{" "}
-              {translate("pagination.orders", currentLocale)}
+              {translate("customerWallet.table.records", currentLocale) || "records"}
             </>
           )}
         />

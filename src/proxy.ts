@@ -22,20 +22,20 @@ export default auth((req) => {
   const normalizedPath = cleanPathname.startsWith("/") ? cleanPathname.slice(1) : cleanPathname;
 
   // NextAuth v5 session check - req.auth contains the validated JWT session
-  const isLoggedIn = !!req.auth;
+  const isLoggedIn = !!req.auth?.user;
 
   // Protected routes check
-  if (
-    normalizedPath.startsWith("dashboard/") ||
-    normalizedPath === "dashboard" ||
-    normalizedPath.startsWith("profile/") ||
-    normalizedPath === "profile"
-  ) {
-    if (!isLoggedIn) {
-      const loginUrl = req.nextUrl.clone();
-      loginUrl.pathname = "/auth/login";
-      return NextResponse.redirect(loginUrl);
-    }
+  const isProtectedRoute =
+    normalizedPath.startsWith("dashboard") ||
+    normalizedPath.startsWith("profile") ||
+    normalizedPath.startsWith("wallet") ||
+    normalizedPath.startsWith("orders") ||
+    normalizedPath.startsWith("developer");
+
+  if (isProtectedRoute && !isLoggedIn) {
+    const loginUrl = req.nextUrl.clone();
+    loginUrl.pathname = "/auth/login";
+    return NextResponse.redirect(loginUrl);
   }
 
   if (normalizedPath.startsWith("auth/") || normalizedPath === "auth") {

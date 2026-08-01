@@ -30,3 +30,16 @@ export const ShippingMethod = {
 } as const;
 
 export type ShippingMethod = (typeof ShippingMethod)[keyof typeof ShippingMethod];
+
+export const GroupOrderStatus = {
+  LABEL_NOT_CREATED: "LABEL_NOT_CREATED",
+  LABEL_CREATED: "LABEL_CREATED",
+  WE_HAVE_YOUR_PACKAGE: "WE_HAVE_YOUR_PACKAGE",
+  ON_THE_WAY: "ON_THE_WAY",
+  OUT_FOR_DELIVERY: "OUT_FOR_DELIVERY",
+  DELIVERED: "DELIVERED",
+  CANCELLED: "CANCELLED",
+  EXCEPTION: "EXCEPTION",
+} as const;
+
+export type GroupOrderStatus = (typeof GroupOrderStatus)[keyof typeof GroupOrderStatus];
