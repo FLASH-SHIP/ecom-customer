@@ -40,6 +40,7 @@ export interface TopupTableProps {
     pageSize: number;
   };
   isLoading?: boolean;
+  isFetching?: boolean;
   page?: number;
   perPage?: number;
   onPageChange?: (page: number) => void;
@@ -52,6 +53,7 @@ export default function TopupTable({
   data = [],
   meta = { total: 0, page: 1, pageSize: 10 },
   isLoading = false,
+  isFetching = false,
   page = 1,
   perPage = 10,
   onPageChange,
@@ -260,7 +262,12 @@ export default function TopupTable({
   ];
 
   return (
-    <Card className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+    <Card className="relative rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+      {isFetching && !isLoading && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-[#0F798C]/20 overflow-hidden z-30">
+          <div className="h-full bg-[#0F798C] animate-pulse w-full" />
+        </div>
+      )}
       <TableBase
         data={data}
         columns={columns}
@@ -287,7 +294,7 @@ export default function TopupTable({
               {translate("pagination.showing", currentLocale)} {from}-{to}{" "}
               {translate("pagination.of", currentLocale)}{" "}
               <span className="text-[#0F798C] font-semibold">{total}</span>{" "}
-              {translate("pagination.orders", currentLocale)}
+              {translate("customerWallet.table.records", currentLocale) || "records"}
             </>
           )}
         />

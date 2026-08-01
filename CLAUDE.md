@@ -26,3 +26,11 @@ yarn build
 # Link local yalc packages
 yarn yalc:link:all
 ```
+
+---
+
+## Architecture Specs & Maintenance Docs
+
+- **Customer Authentication & Session Management**: [specs/auth-customer/](file:///Users/hy/SourceCode/flashship/ecom-v2/specs/auth-customer/) (`decisions.md`, `implementation.md`, `AGENTS.md`)
+- **Wallet & Top-up Module**: [specs/wallet/](file:///Users/hy/SourceCode/flashship/ecom-v2/specs/wallet/) (`decisions.md`, `implementation.md`, `AGENTS.md`)
+

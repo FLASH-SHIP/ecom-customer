@@ -12,11 +12,11 @@ export default function LayoutWallet({ children }: { children: React.ReactNode }
   const pathname = usePathname();
 
   // Determine active tab based on pathname
-  const activeTab = pathname.includes("/topup")
-    ? "topup"
-    : pathname.includes("/transaction")
-      ? "transaction"
-      : "ending-balance";
+  const activeTab = pathname.includes("/transaction")
+    ? "transaction"
+    : pathname.includes("/ending-balance")
+      ? "ending-balance"
+      : "topup";
 
   return (
     <>

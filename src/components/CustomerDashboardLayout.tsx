@@ -22,6 +22,7 @@ import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { type ReactNode, useEffect, useState } from "react";
+import { useToast } from "./toast-provider";
 import { trpc } from "../lib/trpc";
 import { CustomerSidebar } from "./CustomerSidebar";
 
@@ -34,11 +35,13 @@ export function CustomerDashboardLayout({ children }: CustomerDashboardLayoutPro
   const router = useRouter();
   const { status } = useSession();
   const { languageId: currentLocale } = useI18n();
+  const { toast } = useToast();
 
   // Sidebar States
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [welcomeShown, setWelcomeShown] = useState(false);
 
   // Responsive Breakpoint Detection
   useEffect(() => {
@@ -55,22 +58,55 @@ export function CustomerDashboardLayout({ children }: CustomerDashboardLayoutPro
   }, []);
 
   // Fetch real-time customer profile
-  const { data: profile } = trpc.customer.auth.me.useQuery(undefined, {
+  const { data: profile, error: profileError } = trpc.customer.auth.me.useQuery(undefined, {
     enabled: status === "authenticated",
+    retry: false,
   });
 
   // Handle expired sessions / tokens by signing out and redirecting to login page
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/auth/login");
-    } else if (status === "authenticated" && profile === null) {
+    } else if (status === "authenticated" && (profile === null || profileError)) {
+      if (typeof window !== "undefined") {
+        sessionStorage.clear();
+      }
+      document.cookie = "ecom-customer.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "__Secure-ecom-customer.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       signOut({ callbackUrl: "/auth/login" });
     }
-  }, [status, profile, router]);
+  }, [status, profile, profileError, router]);
+
+  // Show welcome toast on successful login (Credentials & SSO)
+  useEffect(() => {
+    if (status === "authenticated" && profile && !welcomeShown) {
+      const sessionKey = `welcome_toast_${profile.id || profile.email}`;
+      const alreadyShown = sessionStorage.getItem(sessionKey);
+      const justLoggedIn = sessionStorage.getItem("just_logged_in");
+
+      if (!alreadyShown || justLoggedIn === "true") {
+        sessionStorage.setItem(sessionKey, "true");
+        sessionStorage.removeItem("just_logged_in");
+        setWelcomeShown(true);
+
+        const name = profile.name || profile.email?.split("@")[0] || "Customer";
+        const welcomeMsg =
+          translate("customerAuth.login.welcomeMessage", currentLocale, { name }) ||
+          (currentLocale === "vi"
+            ? `🎉 Chào mừng ${name} đã quay trở lại với Ecom Express!`
+            : `🎉 Welcome back to Ecom Express, ${name}!`);
+
+        toast(welcomeMsg, "success");
+      }
+    }
+  }, [status, profile, currentLocale, welcomeShown, toast]);
 
   const displayName = profile?.name ?? profile?.email?.split("@")[0] ?? "Customer";
 
   const handleLogout = async () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.clear();
+    }
     await signOut({ callbackUrl: "/auth/login" });
   };
 

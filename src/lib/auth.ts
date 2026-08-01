@@ -2,6 +2,7 @@ import { env } from "@customer/env";
 import type { CustomerAuthResponse } from "@flash-ship/ecom-types";
 import NextAuth, { type NextAuthResult } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Facebook from "next-auth/providers/facebook";
 import Google from "next-auth/providers/google";
 
 export const AUTH_KEYS = {
@@ -46,6 +47,14 @@ const nextAuth: NextAuthResult = NextAuth({
           Google({
             clientId: env.AUTH_GOOGLE_ID,
             clientSecret: env.AUTH_GOOGLE_SECRET,
+          }),
+        ]
+      : []),
+    ...(env.FACEBOOK_CLIENT_ID && env.FACEBOOK_CLIENT_SECRET
+      ? [
+          Facebook({
+            clientId: env.FACEBOOK_CLIENT_ID,
+            clientSecret: env.FACEBOOK_CLIENT_SECRET,
           }),
         ]
       : []),
@@ -95,8 +104,49 @@ const nextAuth: NextAuthResult = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
+    async jwt({ token, user, account }) {
+      const isSocialProvider =
+        account?.provider &&
+        account.provider !== "credentials" &&
+        (account.provider === "google" || account.provider === "facebook");
+
+      if (isSocialProvider && user?.email) {
+        try {
+          const apiUrl = env.NEXT_PUBLIC_API_URL;
+          const res = await fetch(`${apiUrl}/api/v1/customer/auth/social-login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              provider: account.provider,
+              providerId: user.id || account.providerAccountId,
+              email: user.email,
+              name: user.name || user.email,
+              avatarUrl: user.image || undefined,
+            }),
+          });
+
+          if (res.ok) {
+            const json = await res.json();
+            const data = json?.data || json;
+            const backendUser = data?.user || data?.customer;
+            const backendAccessToken = data?.accessToken;
+            const backendRefreshToken = data?.refreshToken;
+
+            if (backendUser) {
+              token.id = String(backendUser.id);
+              token.email = backendUser.email;
+              token.name = backendUser.name || user.name;
+              token.accessToken = backendAccessToken;
+              token.refreshToken = backendRefreshToken;
+              token.tokenVersion = backendUser.tokenVersion ?? 1;
+            }
+          } else {
+            console.error(`[NextAuth ${account.provider} SSO] Social login API returned error:`, res.status);
+          }
+        } catch (error) {
+          console.error(`[NextAuth ${account.provider} SSO] Error syncing user with backend:`, error);
+        }
+      } else if (user) {
         token.id = user.id;
         token.accessToken = (user as { accessToken?: string }).accessToken;
         token.refreshToken = (user as { refreshToken?: string }).refreshToken;
@@ -107,6 +157,12 @@ const nextAuth: NextAuthResult = NextAuth({
     async session({ session, token }) {
       if (token?.id) {
         session.user.id = token.id as string;
+      }
+      if (token?.accessToken) {
+        (session as any).accessToken = token.accessToken;
+      }
+      if (token?.refreshToken) {
+        (session as any).refreshToken = token.refreshToken;
       }
       return session;
     },

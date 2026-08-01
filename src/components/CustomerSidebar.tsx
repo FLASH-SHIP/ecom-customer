@@ -225,7 +225,7 @@ export function CustomerSidebar({
       items: [
         {
           label: translate("customerDashboard.sidebar.wallet", currentLocale),
-          href: "/wallet",
+          href: "/wallet/topup",
           icon: NotepadTextIcon,
         },
       ],

@@ -289,4 +289,16 @@
   overflow-wrap: anywhere !important;
 }
 
-
+/* Payment Method Thumbnail Icon styling for Wallet Filter Topup (16px x 16px, rounded-full, light gray border) */
+.wallet-payment-method-select img,
+.searchable-select-scrollbar img {
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  max-width: 16px !important;
+  max-height: 16px !important;
+  border-radius: 9999px !important;
+  border: 1px solid #E2E8F0 !important;
+  object-fit: contain !important;
+}

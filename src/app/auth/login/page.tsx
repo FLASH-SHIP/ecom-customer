@@ -8,7 +8,7 @@ import { Label } from "@flash-ship/ecom-ui/components/label";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { AuthCard } from "../../../components/auth/AuthCard";
@@ -23,6 +23,11 @@ export default function LoginPage() {
   const router = useRouter();
   const { languageId: currentLocale } = useI18n();
   const [error, setError] = useState<string | null>(null);
+
+  // Pre-warm dashboard route bundle for instant transition after login
+  useEffect(() => {
+    router.prefetch("/dashboard");
+  }, [router]);
 
   const schema = useMemo(
     () =>
@@ -63,7 +68,10 @@ export default function LoginPage() {
       if (res?.error) {
         setError(translate("customerAuth.login.invalidCredentials", currentLocale));
       } else {
-        router.push("/dashboard");
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("just_logged_in", "true");
+        }
+        router.replace("/dashboard");
       }
     } catch (err) {
       console.error(err);

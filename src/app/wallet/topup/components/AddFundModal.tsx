@@ -92,7 +92,40 @@ export function AddFundModal({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const accountEmail = "admin@mattertee.com";
+  // Parse dataInfo JSON
+  const parsedDataInfo = React.useMemo(() => {
+    if (!selectedPaymentMethod?.dataInfo) return {};
+    try {
+      return typeof selectedPaymentMethod.dataInfo === "string"
+        ? JSON.parse(selectedPaymentMethod.dataInfo)
+        : selectedPaymentMethod.dataInfo;
+    } catch {
+      return {};
+    }
+  }, [selectedPaymentMethod?.dataInfo]);
+
+  // Dynamic payment info fields
+  const accountEmail = (parsedDataInfo?.email || "").trim();
+  const accountHolder = (
+    parsedDataInfo?.account_holder ||
+    parsedDataInfo?.accountHolder ||
+    "-"
+  ).trim();
+  const bankName = (parsedDataInfo?.bank_name || parsedDataInfo?.bankName || "-").trim();
+  const accountNumber = (
+    parsedDataInfo?.account_number ||
+    parsedDataInfo?.accountNumber ||
+    "-"
+  ).trim();
+  const description = (parsedDataInfo?.description || "-").trim();
+  const defaultQrUrl = "/assets/images/qr-code/banking.jpg";
+  const rawQrUrl = (parsedDataInfo?.qr_url || parsedDataInfo?.qrUrl || "").trim();
+
+  const [qrSrc, setQrSrc] = useState<string>(rawQrUrl || defaultQrUrl);
+
+  useEffect(() => {
+    setQrSrc(rawQrUrl || defaultQrUrl);
+  }, [rawQrUrl]);
 
   // Debounce 1s USD -> VND
   useEffect(() => {
@@ -192,8 +225,15 @@ export function AddFundModal({
   };
 
   const handleCopy = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
+    const trimmed = text ? text.trim() : "";
+    if (!trimmed || trimmed === "-") return;
+    navigator.clipboard.writeText(trimmed);
     setCopiedKey(key);
+    toast(
+      translate("customerWallet.addFundModal.copySuccess", currentLocale) ||
+        "Đã sao chép vào bộ nhớ tạm!",
+      "success",
+    );
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
@@ -385,7 +425,7 @@ export function AddFundModal({
   };
 
   const defaultLogo = (
-    <div className="w-6 h-6 rounded-full bg-[#00B4D8]/20 text-[#00B4D8] flex items-center justify-center font-bold text-xs">
+    <div className="w-6 h-6 rounded-full bg-[#0F798C]/20 text-[#0F798C] flex items-center justify-center font-bold text-xs">
       $
     </div>
   );
@@ -425,7 +465,7 @@ export function AddFundModal({
         type="button"
         onClick={handleSubmit}
         disabled={isSubmitting}
-        className="px-6 py-2 h-10 rounded-lg font-semibold bg-[#00B4D8] hover:bg-[#0096B4] text-white shadow-sm cursor-pointer transition-all disabled:opacity-50 flex items-center gap-2"
+        className="px-6 py-2 h-10 rounded-lg font-semibold bg-[#0F798C] hover:bg-[#0c6070] text-white shadow-sm cursor-pointer transition-all disabled:opacity-50 flex items-center gap-2"
       >
         {isSubmitting ? (
           <>
@@ -480,12 +520,12 @@ export function AddFundModal({
           {/* Step 1: Send Fund */}
           <div className="relative pl-8">
             {/* Step Number Circle */}
-            <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-[#00B4D8] text-white flex items-center justify-center text-xs font-bold shadow-xs">
+            <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-[#0F798C] text-white flex items-center justify-center text-xs font-bold shadow-xs">
               1
             </div>
 
             {/* Connecting Vertical Line to Step 2 */}
-            <div className="absolute left-[11px] top-6 -bottom-7 w-0 border-l-2 border-dashed border-[#00B4D8] z-0" />
+            <div className="absolute left-[11px] top-6 -bottom-7 w-0 border-l-2 border-dashed border-[#0F798C] z-0" />
 
             <div className="flex flex-col gap-1 pb-4">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
@@ -509,8 +549,8 @@ export function AddFundModal({
                           currentLocale,
                         ) || "Account holder:"}
                       </span>
-                      <span className="col-span-8 font-bold text-[#1B64F2] truncate">
-                        NGUYEN THI TOAN
+                      <span className="col-span-8 font-bold text-[#1B64F2] truncate select-all">
+                        {accountHolder}
                       </span>
                     </div>
 
@@ -520,8 +560,8 @@ export function AddFundModal({
                         {translate("customerWallet.addFundModal.bankNameLabel", currentLocale) ||
                           "Bank Name:"}
                       </span>
-                      <span className="col-span-8 font-bold text-[#1B64F2] leading-tight">
-                        Bank for Investment and Development of Vietnam
+                      <span className="col-span-8 font-bold text-[#1B64F2] leading-tight select-all">
+                        {bankName}
                       </span>
                     </div>
 
@@ -534,19 +574,21 @@ export function AddFundModal({
                         ) || "Account Number:"}
                       </span>
                       <div className="col-span-8 border border-dashed border-slate-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 flex items-center justify-between bg-white dark:bg-zinc-900">
-                        <span className="font-bold text-[#1B64F2]">8833161232</span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy("8833161232", "accNum")}
-                          className="text-slate-400 hover:text-[#00B4D8] transition-colors cursor-pointer ml-1"
-                          title="Copy account number"
-                        >
-                          {copiedKey === "accNum" ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-500" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
+                        <span className="font-bold text-[#1B64F2] select-all">{accountNumber}</span>
+                        {accountNumber && accountNumber !== "-" && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(accountNumber, "accNum")}
+                            className="text-slate-400 hover:text-[#0F798C] transition-colors cursor-pointer ml-1"
+                            title="Copy account number"
+                          >
+                            {copiedKey === "accNum" ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-500" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -557,28 +599,33 @@ export function AddFundModal({
                           "Description:"}
                       </span>
                       <div className="col-span-8 border border-dashed border-slate-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 flex items-center justify-between bg-white dark:bg-zinc-900">
-                        <span className="font-bold text-[#1B64F2]">SellerID</span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy("SellerID", "desc")}
-                          className="text-slate-400 hover:text-[#00B4D8] transition-colors cursor-pointer ml-1"
-                          title="Copy description"
-                        >
-                          {copiedKey === "desc" ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-500" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
+                        <span className="font-bold text-[#1B64F2] select-all">{description}</span>
+                        {description && description !== "-" && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(description, "desc")}
+                            className="text-slate-400 hover:text-[#0F798C] transition-colors cursor-pointer ml-1"
+                            title="Copy description"
+                          >
+                            {copiedKey === "desc" ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-500" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
 
                   {/* Right Side: QR Code Card Box */}
-                  <div className="w-32 h-32 lg:w-36 lg:h-36 rounded-xl border border-sky-400 bg-white p-2 flex flex-col items-center justify-center shrink-0 shadow-xs">
-                    <div className="relative w-full h-full bg-slate-50 flex items-center justify-center rounded-lg border border-slate-100">
-                      <ImageIcon className="w-10 h-10 text-slate-300" />
-                    </div>
+                  <div className="w-32 h-32 lg:w-36 lg:h-36 rounded-xl border border-sky-400 bg-white p-2 flex flex-col items-center justify-center shrink-0 shadow-xs overflow-hidden">
+                    <img
+                      src={qrSrc}
+                      alt="Bank QR Code"
+                      onError={() => setQrSrc(defaultQrUrl)}
+                      className="w-full h-full object-contain rounded-lg"
+                    />
                   </div>
                 </div>
               ) : (
@@ -590,21 +637,23 @@ export function AddFundModal({
                         "Account:"}
                     </span>
                     <span className="text-sm font-bold text-[#1B64F2] select-all">
-                      {accountEmail}
+                      {accountEmail || "-"}
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(accountEmail, "accEmail")}
-                    className="p-1.5 text-slate-400 hover:text-[#00B4D8] rounded-md transition-colors cursor-pointer relative"
-                    title="Copy email"
-                  >
-                    {copiedKey === "accEmail" ? (
-                      <Check className="w-4 h-4 text-emerald-500" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </button>
+                  {accountEmail && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(accountEmail, "accEmail")}
+                      className="p-1.5 text-slate-400 hover:text-[#0F798C] rounded-md transition-colors cursor-pointer relative"
+                      title="Copy email"
+                    >
+                      {copiedKey === "accEmail" ? (
+                        <Check className="w-4 h-4 text-emerald-500" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -613,7 +662,7 @@ export function AddFundModal({
           {/* Step 2: Submit Wire Transaction Detail */}
           <div className="relative pl-8">
             {/* Step Number Circle */}
-            <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-[#00B4D8] text-white flex items-center justify-center text-xs font-bold shadow-xs">
+            <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-[#0F798C] text-white flex items-center justify-center text-xs font-bold shadow-xs">
               2
             </div>
 
@@ -839,10 +888,10 @@ export function AddFundModal({
                           onClick={() => fileInputRef.current?.click()}
                           className="w-24 h-24 rounded-2xl border-2 border-dashed border-sky-400/80 bg-sky-50/50 dark:bg-sky-950/20 hover:bg-sky-100/50 dark:hover:bg-sky-950/40 flex flex-col items-center justify-center shrink-0 cursor-pointer transition-all group"
                         >
-                          <div className="w-8 h-8 rounded-full bg-[#00B4D8] text-white flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
+                          <div className="w-8 h-8 rounded-full bg-[#0F798C] text-white flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
                             <Plus className="w-5 h-5 stroke-[2.5]" />
                           </div>
-                          <span className="text-[11px] font-bold text-[#00B4D8]">
+                          <span className="text-[11px] font-bold text-[#0F798C]">
                             {translate("customerWallet.addFundModal.uploadButton", currentLocale) ||
                               "Upload file"}
                           </span>

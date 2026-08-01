@@ -19,14 +19,23 @@ export default function WalletTopupPage() {
   const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [status, setStatus] = useState<string>("");
 
-  const { data: historyData, isLoading } = trpc.customer.topup.getHistory.useQuery({
-    page,
-    pageSize,
-    dateFrom,
-    dateTo,
-    paymentMethodId: paymentMethod && paymentMethod !== "ALL" ? Number(paymentMethod) : undefined,
-    status: status && status !== "ALL" ? status : undefined,
-  });
+  const {
+    data: historyData,
+    isLoading,
+    isFetching,
+  } = trpc.customer.topup.getHistory.useQuery(
+    {
+      page,
+      pageSize,
+      dateFrom,
+      dateTo,
+      paymentMethodId: paymentMethod && paymentMethod !== "ALL" ? Number(paymentMethod) : undefined,
+      status: status && status !== "ALL" ? status : undefined,
+    },
+    {
+      placeholderData: (previousData) => previousData,
+    },
+  );
 
   const cancelMutation = trpc.customer.topup.cancel.useMutation({
     onSuccess: () => {
@@ -89,6 +98,7 @@ export default function WalletTopupPage() {
         data={historyData?.data}
         meta={historyData?.meta}
         isLoading={isLoading}
+        isFetching={isFetching}
         page={page}
         perPage={pageSize}
         onPageChange={(p) => setPage(p)}
