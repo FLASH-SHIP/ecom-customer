@@ -51,7 +51,16 @@ export function TopupModal({ open, onOpenChange, onSelectPaymentMethod }: TopupM
           {/* Payment Methods Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {isLoading ? (
-              <div className="col-span-4 text-center py-6 text-slate-500">Loading payment methods...</div>
+              <div className="col-span-4 text-center py-6 text-slate-500 font-medium">
+                {(() => {
+                  const translated = translate("customerWallet.topupModal.loadingPaymentMethods", currentLocale);
+                  return translated && translated !== "customerWallet.topupModal.loadingPaymentMethods"
+                    ? translated
+                    : currentLocale === "vi"
+                      ? "Đang tải phương thức thanh toán..."
+                      : "Loading payment methods...";
+                })()}
+              </div>
             ) : paymentMethods && paymentMethods.length > 0 ? (
               paymentMethods.map((method) => (
                 <button

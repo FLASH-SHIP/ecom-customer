@@ -51,7 +51,7 @@ export default function WalletCost() {
               <span className={"text-sm 2xl:text-base font-medium"}>
                 {translate("customerWallet.paid", currentLocale)}
               </span>
-              <span className="text-foreground font-semibold">$368.00</span>
+              <span className="text-foreground font-semibold">$0.00</span>
             </div>
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <span className={"text-sm 2xl:text-base font-medium"}>

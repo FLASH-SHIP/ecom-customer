@@ -4,12 +4,17 @@ import MyWallet from "@customer/app/wallet/topup/components/MyWallet";
 import TopupTable, { type TopupItem } from "@customer/app/wallet/topup/components/TopupTable";
 import WalletCost from "@customer/app/wallet/topup/components/WalletCost";
 import WalletFilter from "@customer/app/wallet/topup/components/WalletFilter";
+import { EditTopupModal } from "@customer/app/wallet/topup/components/EditTopupModal";
+import { CancelTopupModal } from "@customer/app/wallet/topup/components/CancelTopupModal";
 import { trpc } from "@customer/lib/trpc";
 import { useState } from "react";
 import { useToast } from "@customer/components/toast-provider";
+import { useI18n } from "@ecom/shared/@i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 
 export default function WalletTopupPage() {
   const { toast } = useToast();
+  const { languageId: currentLocale } = useI18n();
   const trpcUtils = trpc.useUtils();
 
   const [page, setPage] = useState(1);
@@ -18,6 +23,15 @@ export default function WalletTopupPage() {
   const [dateTo, setDateTo] = useState<string | undefined>();
   const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [status, setStatus] = useState<string>("");
+
+  // Modal Edit State
+  const [editingItem, setEditingItem] = useState<TopupItem | null>(null);
+  const [openEditModal, setOpenEditModal] = useState(false);
+
+  // Modal Cancel State
+  const [cancelingItem, setCancelingItem] = useState<TopupItem | null>(null);
+  const [openCancelModal, setOpenCancelModal] = useState(false);
+  const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
 
   const {
     data: historyData,
@@ -37,20 +51,43 @@ export default function WalletTopupPage() {
     },
   );
 
-  const cancelMutation = trpc.customer.topup.cancel.useMutation({
-    onSuccess: () => {
-      toast("Cancelled top-up request successfully", "success");
-      trpcUtils.customer.topup.getHistory.invalidate();
-      trpcUtils.customer.topup.getWalletSummary.invalidate();
-    },
-    onError: (err) => {
-      toast(err.message || "Failed to cancel top-up request", "error");
-    },
-  });
+  const cancelMutation = trpc.customer.topup.cancel.useMutation();
+
+  const handleEditItem = (item: TopupItem) => {
+    setEditingItem(item);
+    setOpenEditModal(true);
+  };
 
   const handleCancelItem = (item: TopupItem) => {
-    if (window.confirm(`Are you sure you want to cancel top-up request ${item.transactionCode}?`)) {
-      cancelMutation.mutate({ id: Number(item.id) });
+    setCancelingItem(item);
+    setOpenCancelModal(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelingItem) return;
+    try {
+      setIsSubmittingCancel(true);
+      await cancelMutation.mutateAsync({ id: Number(cancelingItem.id) });
+
+      // Làm mới cache tRPC (bảng giao dịch và tổng quan ví)
+      await trpcUtils.customer.topup.invalidate();
+
+      // Hiển thị Toast thông báo đa ngôn ngữ thành công
+      const msg =
+        translate("customerWallet.cancelTopupModal.cancelSuccess", currentLocale) ||
+        "Top-up request cancelled successfully!";
+      toast(msg, "success");
+
+      setOpenCancelModal(false);
+      setCancelingItem(null);
+    } catch (err: any) {
+      const errMsg =
+        err?.message ||
+        translate("customerWallet.cancelTopupModal.cancelError", currentLocale) ||
+        "Failed to cancel top-up request.";
+      toast(errMsg, "error");
+    } finally {
+      setIsSubmittingCancel(false);
     }
   };
 
@@ -106,7 +143,24 @@ export default function WalletTopupPage() {
           setPageSize(ps);
           setPage(1);
         }}
+        onEdit={handleEditItem}
         onCancel={handleCancelItem}
+      />
+
+      {/* Modal Edit Transaction */}
+      <EditTopupModal
+        open={openEditModal}
+        onOpenChange={setOpenEditModal}
+        item={editingItem}
+      />
+
+      {/* Modal Confirm Cancel Topup Transaction */}
+      <CancelTopupModal
+        open={openCancelModal}
+        onOpenChange={setOpenCancelModal}
+        item={cancelingItem}
+        onConfirm={handleConfirmCancel}
+        isSubmitting={isSubmittingCancel}
       />
     </div>
   );

@@ -60,6 +60,7 @@ export function AddFundModal({
 }: AddFundModalProps) {
   const { languageId: currentLocale } = useI18n();
   const { toast } = useToast();
+  const trpcUtils = trpc.useUtils();
 
   const isBank =
     selectedPaymentMethod?.isBank ??
@@ -85,6 +86,13 @@ export function AddFundModal({
   // Upload State
   const [uploadedFiles, setUploadedFiles] = useState<UploadedImageItem[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Field-level Error State (Lưu thông báo lỗi hiển thị ngay dưới từng trường)
+  const [fieldErrors, setFieldErrors] = useState<{
+    wireDate?: string;
+    wireAmount?: string;
+    wireImages?: string;
+  }>({});
 
   // Scroll State
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -162,47 +170,102 @@ export function AddFundModal({
     return () => clearTimeout(timer);
   }, [wireAmountVnd, exchangeRate, activeInput]);
 
+  // Reset modal state & errors whenever modal opens or payment method changes
+  useEffect(() => {
+    if (open) {
+      setErrorMessage(null);
+      setFieldErrors({});
+    }
+  }, [open, selectedPaymentMethod]);
+
+  // Real-time validation helper for Wire Date
+  const handleWireDateChange = (val: string) => {
+    setWireDate(val);
+    if (!val) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        wireDate:
+          translate("customerWallet.addFundModal.wireDateRequired", currentLocale) ||
+          "Please select wire date.",
+      }));
+    } else {
+      const selectedDate = new Date(val);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      if (selectedDate > today) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          wireDate:
+            translate("customerWallet.addFundModal.wireDateFutureError", currentLocale) ||
+            "Wire date cannot be in the future.",
+        }));
+      } else {
+        setFieldErrors((prev) => ({ ...prev, wireDate: undefined }));
+      }
+    }
+  };
+
+  // Real-time validation helper for Wire Amount
+  const validateWireAmountRealtime = (usdVal: string) => {
+    if (!usdVal || Number.isNaN(parseFloat(usdVal))) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        wireAmount:
+          translate("customerWallet.addFundModal.wireAmountRequired", currentLocale) ||
+          "Please enter wire amount.",
+      }));
+    } else if (parseFloat(usdVal) <= 0) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        wireAmount:
+          translate("customerWallet.addFundModal.wireAmountPositive", currentLocale) ||
+          "Wire amount must be greater than 0.",
+      }));
+    } else {
+      setFieldErrors((prev) => ({ ...prev, wireAmount: undefined }));
+    }
+  };
+
   // Handle USD Input Change
   const handleUsdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    if (val && !/^[0-9.]*$/.test(val)) {
-      setErrorMessage(
-        translate("customerWallet.addFundModal.invalidNumber", currentLocale) ||
-          "Wire amount only allows numbers and decimal point.",
-      );
-      return;
-    }
-    if (val.includes(".")) {
-      const parts = val.split(".");
-      if (parts[1] && parts[1].length > 2) {
-        setErrorMessage(
-          translate("customerWallet.addFundModal.usdDecimalLimit", currentLocale) ||
-            "USD wire amount allows maximum 2 decimal places.",
-        );
-        return;
-      }
-    }
-    setErrorMessage(null);
     setActiveInput("usd");
     setWireAmountUsd(val);
+    validateWireAmountRealtime(val);
   };
 
   // Handle VND Input Change
   const handleVndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     const cleanDigits = val.replace(/[^0-9]/g, "");
-    if (val && !/^[0-9,.]*$/.test(val)) {
-      setErrorMessage(
-        translate("customerWallet.addFundModal.invalidNumber", currentLocale) ||
-          "Wire amount only allows numbers.",
-      );
-      return;
-    }
-    setErrorMessage(null);
     setActiveInput("vnd");
     const num = Number.parseInt(cleanDigits, 10);
-    setWireAmountVnd(Number.isNaN(num) ? "" : num.toLocaleString("vi-VN"));
+    const formattedVnd = Number.isNaN(num) ? "" : num.toLocaleString("vi-VN");
+    setWireAmountVnd(formattedVnd);
+
+    if (exchangeRate > 0) {
+      const calculatedUsd = Number.isNaN(num) ? "" : (num / exchangeRate).toFixed(2);
+      validateWireAmountRealtime(calculatedUsd);
+    }
   };
+
+  // Real-time validation effect for Uploaded Files
+  useEffect(() => {
+    setFieldErrors((prev) => {
+      if (prev.wireImages === undefined && uploadedFiles.length === 0) {
+        return prev;
+      }
+      if (uploadedFiles.length === 0) {
+        return {
+          ...prev,
+          wireImages:
+            translate("customerWallet.addFundModal.uploadRequired", currentLocale) ||
+            "Please upload at least 1 wire transfer confirmation image.",
+        };
+      }
+      return { ...prev, wireImages: undefined };
+    });
+  }, [uploadedFiles, currentLocale]);
 
   // Check scroll position
   const checkScrollPosition = () => {
@@ -330,29 +393,48 @@ export function AddFundModal({
   });
 
   const handleSubmit = async () => {
+    const errors: { wireDate?: string; wireAmount?: string; wireImages?: string } = {};
+
+    // 1. Validate Wire Date (Required & Not Future Date)
     if (!wireDate) {
-      setErrorMessage(
+      errors.wireDate =
         translate("customerWallet.addFundModal.wireDateRequired", currentLocale) ||
-          "Please select wire date.",
-      );
-      return;
+        "Please select wire date.";
+    } else {
+      const selectedDate = new Date(wireDate);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      if (selectedDate > today) {
+        errors.wireDate =
+          translate("customerWallet.addFundModal.wireDateFutureError", currentLocale) ||
+          "Wire date cannot be in the future.";
+      }
     }
 
-    if (!wireAmountUsd || Number.isNaN(parseFloat(wireAmountUsd)) || parseFloat(wireAmountUsd) <= 0) {
-      setErrorMessage(
+    // 2. Validate Wire Amount USD (Required & Positive Number > 0)
+    if (!wireAmountUsd || Number.isNaN(parseFloat(wireAmountUsd))) {
+      errors.wireAmount =
         translate("customerWallet.addFundModal.wireAmountRequired", currentLocale) ||
-          "Please enter wire amount.",
-      );
+        "Please enter wire amount.";
+    } else if (parseFloat(wireAmountUsd) <= 0) {
+      errors.wireAmount =
+        translate("customerWallet.addFundModal.wireAmountPositive", currentLocale) ||
+        "Wire amount must be greater than 0.";
+    }
+
+    // 3. Validate Proof Images (Required at least 1 image)
+    if (uploadedFiles.length === 0) {
+      errors.wireImages =
+        translate("customerWallet.addFundModal.uploadRequired", currentLocale) ||
+        "Please upload at least 1 wire transfer confirmation image.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
-    if (uploadedFiles.length === 0) {
-      setErrorMessage(
-        translate("customerWallet.addFundModal.uploadRequired", currentLocale) ||
-          "Please upload at least 1 wire transfer confirmation image.",
-      );
-      return;
-    }
+    setFieldErrors({});
 
     try {
       setIsSubmitting(true);
@@ -392,6 +474,9 @@ export function AddFundModal({
         wireDate: wireDate,
         wireImages: relativeUrls,
       });
+
+      // Refetch all topup queries (wallet summary & transaction history table)
+      await trpcUtils.customer.topup.invalidate();
 
       // Cleanup state
       uploadedFiles.forEach((item) => {
@@ -441,11 +526,20 @@ export function AddFundModal({
       methodLogo || defaultLogo
     );
 
+  const titleViaPrefix = (() => {
+    const translated = translate("customerWallet.addFundModal.titleVia", currentLocale);
+    return translated && translated !== "customerWallet.addFundModal.titleVia"
+      ? translated
+      : currentLocale === "vi"
+        ? "Nạp tiền qua"
+        : "Top-up via";
+  })();
+
   const modalTitle = (
     <div className="flex items-center gap-3">
       {displayLogo}
       <span className="font-semibold text-lg text-slate-800 dark:text-slate-100">
-        {selectedPaymentMethod?.name || methodName}
+        {titleViaPrefix} {selectedPaymentMethod?.name || methodName}
       </span>
     </div>
   );
@@ -691,11 +785,17 @@ export function AddFundModal({
                     </label>
                     <DatePicker
                       value={wireDate}
-                      onChange={setWireDate}
+                      onChange={handleWireDateChange}
                       placeholder="Select date"
                       disabledDays={(date) => date > new Date()}
                       className="w-full h-11 rounded-lg border-slate-300 dark:border-zinc-700"
                     />
+                    {fieldErrors.wireDate && (
+                      <span className="text-xs text-rose-500 font-medium flex items-center gap-1 mt-0.5">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        {fieldErrors.wireDate}
+                      </span>
+                    )}
 
                     {/* Dynamic Exchange Rate Info Note */}
                     <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
@@ -726,13 +826,31 @@ export function AddFundModal({
                         ) || "Wire amount (USD)"}{" "}
                         <span className="text-rose-500">*</span>
                       </label>
-                      <Input
-                        type="text"
-                        value={wireAmountUsd}
-                        onChange={handleUsdChange}
-                        placeholder="$"
-                        className="h-11 rounded-lg border-slate-300 dark:border-zinc-700"
-                      />
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">
+                          $
+                        </span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0.01"
+                          placeholder="0.00"
+                          value={wireAmountUsd}
+                          onFocus={() => setActiveInput("usd")}
+                          onChange={(e) => {
+                            setActiveInput("usd");
+                            setWireAmountUsd(e.target.value);
+                            setFieldErrors((prev) => ({ ...prev, wireAmount: undefined }));
+                          }}
+                          className="pl-7 h-11 rounded-lg border-slate-300 dark:border-zinc-700 font-medium"
+                        />
+                      </div>
+                      {fieldErrors.wireAmount && (
+                        <span className="text-xs text-rose-500 font-medium flex items-center gap-1 mt-0.5">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          {fieldErrors.wireAmount}
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex flex-col gap-1.5">
@@ -743,13 +861,19 @@ export function AddFundModal({
                         ) || "Wire amount (VND)"}{" "}
                         <span className="text-rose-500">*</span>
                       </label>
-                      <Input
-                        type="text"
-                        value={wireAmountVnd}
-                        onChange={handleVndChange}
-                        placeholder="VND"
-                        className="h-11 rounded-lg border-slate-300 dark:border-zinc-700"
-                      />
+                      <div className="relative">
+                        <Input
+                          type="text"
+                          value={wireAmountVnd}
+                          onFocus={() => setActiveInput("vnd")}
+                          onChange={handleVndChange}
+                          placeholder="0"
+                          className="pr-12 h-11 rounded-lg border-slate-300 dark:border-zinc-700 font-medium"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">
+                          VND
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -764,11 +888,17 @@ export function AddFundModal({
                     </label>
                     <DatePicker
                       value={wireDate}
-                      onChange={setWireDate}
+                      onChange={handleWireDateChange}
                       placeholder="Select date"
                       disabledDays={(date) => date > new Date()}
                       className="w-full h-11 rounded-lg border-slate-300 dark:border-zinc-700"
                     />
+                    {fieldErrors.wireDate && (
+                      <span className="text-xs text-rose-500 font-medium flex items-center gap-1 mt-0.5">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        {fieldErrors.wireDate}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-1.5">
@@ -777,13 +907,31 @@ export function AddFundModal({
                         "Wire amount"}{" "}
                       <span className="text-rose-500">*</span>
                     </label>
-                    <Input
-                      type="text"
-                      value={wireAmountUsd}
-                      onChange={handleUsdChange}
-                      placeholder="$"
-                      className="h-11 rounded-lg border-slate-300 dark:border-zinc-700"
-                    />
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">
+                        $
+                      </span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        placeholder="0.00"
+                        value={wireAmountUsd}
+                        onFocus={() => setActiveInput("usd")}
+                        onChange={(e) => {
+                          setActiveInput("usd");
+                          setWireAmountUsd(e.target.value);
+                          setFieldErrors((prev) => ({ ...prev, wireAmount: undefined }));
+                        }}
+                        className="pl-7 h-11 rounded-lg border-slate-300 dark:border-zinc-700 font-medium"
+                      />
+                    </div>
+                    {fieldErrors.wireAmount && (
+                      <span className="text-xs text-rose-500 font-medium flex items-center gap-1 mt-0.5">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        {fieldErrors.wireAmount}
+                      </span>
+                    )}
                   </div>
                 </div>
               )}
@@ -912,7 +1060,14 @@ export function AddFundModal({
                   </div>
                 )}
 
-                {/* Error Message display */}
+                {fieldErrors.wireImages && (
+                  <p className="text-xs text-rose-500 font-medium flex items-center gap-1 mt-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    {fieldErrors.wireImages}
+                  </p>
+                )}
+
+                {/* API Error Message display */}
                 {errorMessage && (
                   <p className="text-xs text-rose-500 font-medium flex items-center gap-1 mt-1">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />

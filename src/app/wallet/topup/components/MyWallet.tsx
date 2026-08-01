@@ -83,6 +83,8 @@ export default function MyWallet() {
   const [openAddFundModal, setOpenAddFundModal] = React.useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = React.useState<any>(null);
 
+  const trpcUtils = trpc.useUtils();
+
   const handleSelectPaymentMethod = (method: any) => {
     setSelectedPaymentMethod(method);
     setOpenTopupModal(false);
@@ -96,6 +98,7 @@ export default function MyWallet() {
 
   const handleAddFundSubmit = () => {
     setOpenAddFundModal(false);
+    trpcUtils.customer.topup.invalidate();
   };
 
   return (
