@@ -76,8 +76,14 @@ export function TopupModal({ open, onOpenChange, onSelectPaymentMethod }: TopupM
               ))
             ) : (
               <div className="col-span-4 text-center py-8 text-slate-500 dark:text-slate-400 text-sm font-medium">
-                {translate("customerWallet.topupModal.noPaymentMethods", currentLocale) ||
-                  "No active payment methods configured yet."}
+                {(() => {
+                  const translated = translate("customerWallet.topupModal.noPaymentMethods", currentLocale);
+                  return translated && translated !== "customerWallet.topupModal.noPaymentMethods"
+                    ? translated
+                    : currentLocale === "vi"
+                      ? "Chưa có phương thức thanh toán nào khả dụng."
+                      : "No active payment methods configured yet.";
+                })()}
               </div>
             )}
           </div>
