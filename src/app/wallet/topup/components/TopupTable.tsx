@@ -3,6 +3,7 @@
 import { PaginationBase, TableBase } from "@flash-ship/ecom-ui";
 import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
+import { TopupStatus } from "@flash-ship/ecom-types";
 import { Badge } from "@flash-ship/ecom-ui/components/badge";
 import { Button } from "@flash-ship/ecom-ui/components/button";
 import { Card } from "@flash-ship/ecom-ui/components/card";
@@ -153,50 +154,47 @@ export default function TopupTable({
       ),
     },
     {
-      header: translate("customerWallet.table.status", currentLocale) || "Status",
+      header: translate("customerWallet.table.status", currentLocale),
       width: 135,
       cell: (order: TopupItem) => {
-        const rawStatus = order.status;
-        const statusNum = Number(rawStatus);
-        const upperStatus = String(rawStatus || "").toUpperCase();
+        const status = Number(order.status) as TopupStatus;
 
-        if (statusNum === 2 || upperStatus === "CONFIRM" || upperStatus === "CONFIRMED" || upperStatus === "APPROVED") {
-          return (
-            <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border-emerald-200 font-medium">
-              {translate("customerWallet.status.confirm", currentLocale) || "Confirmed"}
-            </Badge>
-          );
-        }
-        if (statusNum === 1 || upperStatus === "WAITING" || upperStatus === "CREATED") {
+        if (status === TopupStatus.WAITING) {
           return (
             <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border-amber-200 font-medium">
-              {translate("customerWallet.status.waiting", currentLocale) || "Waiting"}
+              {translate("customerWallet.status.waiting", currentLocale)}
             </Badge>
           );
         }
-        if (statusNum === 3 || upperStatus === "CANCELLED" || upperStatus === "CANCEL") {
+
+        if (status === TopupStatus.CONFIRMED) {
           return (
-            <Badge className="bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border-zinc-200 font-medium">
-              {translate("customerWallet.status.cancel", currentLocale) || "Cancelled"}
+            <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border-emerald-200 font-medium">
+              {translate("customerWallet.status.confirm", currentLocale)}
             </Badge>
           );
         }
-        return (
-          <Badge className="bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 border-rose-200 font-medium">
-            {translate("customerWallet.status.reject", currentLocale) || "Rejected"}
-          </Badge>
-        );
+
+        if (status === TopupStatus.REJECT) {
+          return (
+            <Badge className="bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 border-rose-200 font-medium">
+              {translate("customerWallet.status.reject", currentLocale)}
+            </Badge>
+          );
+        }
+
+        return null;
       },
     },
     {
-      header: translate("customerWallet.table.wireAmount", currentLocale) || "Wire Amount",
+      header: translate("customerWallet.table.wireAmount", currentLocale),
       width: 160,
       cell: (order: TopupItem) => (
         <span className="font-bold text-foreground">{formatCurrency(order.wireAmount)}</span>
       ),
     },
     {
-      header: translate("customerWallet.table.approvedAmount", currentLocale) || "Approved Amount",
+      header: translate("customerWallet.table.approvedAmount", currentLocale),
       width: 160,
       cell: (order: TopupItem) => (
         <span className="font-bold text-emerald-600 dark:text-emerald-400">
@@ -205,16 +203,15 @@ export default function TopupTable({
       ),
     },
     {
-      header: translate("customerWallet.table.action", currentLocale) || "Action",
+      header: translate("customerWallet.table.action", currentLocale),
       width: 80,
       fixed: "right" as const,
       headerClassName: "text-center",
       className: "text-center",
       cell: (order: TopupItem) => {
-        // Chỉ hiển thị nút 3 chấm khi trạng thái là WAITING (status = 1)
-        const statusNum = Number(order.status);
-        const upperStatus = String(order.status || "").toUpperCase();
-        if (statusNum !== 1 && upperStatus !== "WAITING") {
+        // Chỉ hiển thị nút 3 chấm khi trạng thái là TopupStatus.WAITING (1)
+        const status = Number(order.status) as TopupStatus;
+        if (status !== TopupStatus.WAITING) {
           return <div />;
         }
 
@@ -243,7 +240,7 @@ export default function TopupTable({
                     onEdit?.(order);
                   }}
                 >
-                  Edit
+                  {translate("common.edit", currentLocale)}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="px-3 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md cursor-pointer"
@@ -252,7 +249,7 @@ export default function TopupTable({
                     onCancel?.(order);
                   }}
                 >
-                  Cancel
+                  {translate("common.cancel", currentLocale)}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

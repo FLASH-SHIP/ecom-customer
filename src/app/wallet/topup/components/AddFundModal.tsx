@@ -344,12 +344,12 @@ export function AddFundModal({
       const relativeUrls: string[] = Array.isArray(uploadData.data) ? uploadData.data : [];
 
       // 2. Gọi TRPC mutation createTopupRequest để khởi tạo bản ghi yêu cầu nạp tiền (status = 1 WAITING)
-      // LƯU Ý: Không tự động cộng tiền vào ví độc lập ở bước này
+      // LƯU Ý NGHIỆP VỤ (ADR-012): Không tự động điền `description` ("Topup via...") khi gửi request.
+      // Trường `description` trong bảng topup_transactions được để trống (null) và chỉ dành riêng để lưu lý do từ chối (rejectReason) khi Admin Từ chối.
       await createTopupMutation.mutateAsync({
         paymentMethodId: selectedPaymentMethod?.id ?? 1,
         wireAmount: parseFloat(wireAmountUsd),
         wireDate: wireDate,
-        description: `Topup via ${selectedPaymentMethod?.name || methodName}`,
         wireImages: relativeUrls,
       });
 

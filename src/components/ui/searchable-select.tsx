@@ -52,6 +52,7 @@ const OptionItem = React.memo(function OptionItem({
     <div>
       <button
         type="button"
+        title={opt.label}
         onClick={() => onSelect(opt.value)}
         className={cn(
           "flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
@@ -67,7 +68,7 @@ const OptionItem = React.memo(function OptionItem({
             {opt.icon}
           </span>
         )}
-        <span className="truncate">{opt.label}</span>
+        <span className="truncate" title={opt.label}>{opt.label}</span>
       </button>
       {opt.separatorAfter && <div className="my-1 h-px bg-border" />}
     </div>
@@ -237,7 +238,10 @@ function SearchableSelect({
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+      <PopoverContent
+        className="w-auto min-w-[var(--radix-popover-trigger-width)] max-w-[360px] p-0"
+        align="start"
+      >
         <div className="flex items-center border-b border-border px-2.5 py-2">
           <Search className="mr-2 size-3.5 shrink-0 text-muted-foreground" />
           <input
@@ -255,8 +259,8 @@ function SearchableSelect({
         {/* Options list */}
         <div
           role="presentation"
-          className="overflow-y-auto p-1"
-          style={{ maxHeight }}
+          className="overflow-y-auto p-1 pr-1 searchable-select-scrollbar"
+          style={{ maxHeight, scrollbarWidth: "thin", scrollbarColor: "rgba(0,0,0,0.18) transparent" }}
           onWheel={(e) => e.stopPropagation()}
         >
           {!loading && filteredOptions.length === 0 ? (
