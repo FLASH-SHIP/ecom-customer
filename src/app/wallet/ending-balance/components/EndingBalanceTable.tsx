@@ -17,56 +17,10 @@ export interface EndingBalanceItem {
   endingBalance: string;
 }
 
-const MOCK_ENDING_BALANCE_DATA = {
-  data: [
-    {
-      id: "1",
-      date: "25/07/2026",
-      totalTopupAmount: "$0.00",
-      totalPaymentAmount: "$368.00",
-      totalRefundAmount: "$0.00",
-      totalAdjustmentAmount: "$0.00",
-      endingBalance: "$99,632.00",
-    },
-    {
-      id: "2",
-      date: "24/07/2026",
-      totalTopupAmount: "$50,000.00",
-      totalPaymentAmount: "$1,250.00",
-      totalRefundAmount: "$0.00",
-      totalAdjustmentAmount: "$0.00",
-      endingBalance: "$100,000.00",
-    },
-    {
-      id: "3",
-      date: "23/07/2026",
-      totalTopupAmount: "$0.00",
-      totalPaymentAmount: "$820.00",
-      totalRefundAmount: "$132.00",
-      totalAdjustmentAmount: "$0.00",
-      endingBalance: "$51,250.00",
-    },
-    {
-      id: "4",
-      date: "22/07/2026",
-      totalTopupAmount: "$0.00",
-      totalPaymentAmount: "$2,100.00",
-      totalRefundAmount: "$350.00",
-      totalAdjustmentAmount: "+$5,000.00",
-      endingBalance: "$51,938.00",
-    },
-    {
-      id: "5",
-      date: "21/07/2026",
-      totalTopupAmount: "$10,000.00",
-      totalPaymentAmount: "$1,540.00",
-      totalRefundAmount: "$0.00",
-      totalAdjustmentAmount: "-$500.00",
-      endingBalance: "$48,688.00",
-    },
-  ],
+const EMPTY_ENDING_BALANCE_DATA = {
+  data: [] as EndingBalanceItem[],
   meta: {
-    total: 5,
+    total: 0,
     page: 1,
     perPage: 10,
   },
@@ -78,13 +32,13 @@ export default function EndingBalanceTable() {
 
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const listData = MOCK_ENDING_BALANCE_DATA;
+  const listData = EMPTY_ENDING_BALANCE_DATA;
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
   };
 
-  type EndingBalanceRow = (typeof MOCK_ENDING_BALANCE_DATA)["data"][number];
+  type EndingBalanceRow = EndingBalanceItem;
 
   const columns = [
     {
