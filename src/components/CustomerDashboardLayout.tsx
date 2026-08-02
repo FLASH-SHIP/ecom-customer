@@ -63,6 +63,18 @@ export function CustomerDashboardLayout({ children }: CustomerDashboardLayoutPro
     retry: false,
   });
 
+  // LƯU Ý BẢO TRÌ (HEADER WALLET BALANCE):
+  // Truy vấn số dư ví thực tế từ Hệ Thống Ví Độc Lập qua endpoint /payment-api/account/info (thông qua TRPC getWalletSummary).
+  // Đảm bảo số dư ví hiển thị trên Header luôn đồng bộ 100% với thẻ "My Wallet" tại trang Quản Lý Ví (/wallet).
+  const { data: walletSummary } = trpc.customer.topup.getWalletSummary.useQuery(undefined, {
+    enabled: status === "authenticated",
+    staleTime: 10_000, // Caching 10 giây tối ưu hiệu năng không spam API
+  });
+
+  const formattedHeaderBalance = walletSummary
+    ? `$${walletSummary.accountBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : "$0.00";
+
   // Handle expired sessions / tokens by signing out and redirecting to login page
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -157,11 +169,14 @@ export function CustomerDashboardLayout({ children }: CustomerDashboardLayoutPro
             <ThemeToggle storageKey="customer-theme" />
           </div>*/}
 
-          {/* Wallet */}
-          <div className="hidden lg:flex items-center gap-2 rounded-md bg-[#CFFEF9] dark:bg-teal-950/40 px-3 py-[7px] text-sm font-semibold text-[#0F798C] dark:text-teal-200 border border-transparent dark:border-teal-800/30 cursor-pointer">
+          {/* Wallet (Số dư ví tài khoản khả dụng từ hệ thống ví độc lập) */}
+          <NextLink
+            href="/wallet"
+            className="hidden lg:flex items-center gap-2 rounded-md bg-[#CFFEF9] dark:bg-teal-950/40 px-3 py-[7px] text-sm font-semibold text-[#0F798C] dark:text-teal-200 border border-transparent dark:border-teal-800/30 hover:opacity-90 transition-opacity cursor-pointer"
+          >
             <WalletSolidIcon />
-            <span>$164,250</span>
-          </div>
+            <span>{formattedHeaderBalance}</span>
+          </NextLink>
 
           {/* Notification */}
           <div className={"hidden lg:block"}>
