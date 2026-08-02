@@ -5,15 +5,15 @@ import type { AppRouter } from "@flash-ship/ecom-trpc-types";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
+import { signOut } from "next-auth/react";
 import { useState } from "react";
 import superjson from "superjson";
-
-import { signOut } from "next-auth/react";
 
 export const trpc = createTRPCReact<AppRouter>();
 
 function handleUnauthorized(error: any) {
-  const errCode = error?.shape?.code ?? error?.data?.code ?? error?.status ?? error?.data?.httpStatus;
+  const errCode =
+    error?.shape?.code ?? error?.data?.code ?? error?.status ?? error?.data?.httpStatus;
   const errMsg = String(error?.message || error?.shape?.message || "").toLowerCase();
   const isUnauthorized =
     errCode === -32001 ||
@@ -26,8 +26,10 @@ function handleUnauthorized(error: any) {
 
   if (isUnauthorized && typeof window !== "undefined") {
     // Clear NextAuth session token cookies instantly from browser
-    document.cookie = "ecom-customer.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie = "__Secure-ecom-customer.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie =
+      "ecom-customer.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie =
+      "__Secure-ecom-customer.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     signOut({ callbackUrl: "/auth/login" });
   }
   return isUnauthorized;
