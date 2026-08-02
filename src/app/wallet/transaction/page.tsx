@@ -98,6 +98,31 @@ export default function TransactionPage() {
     setPage(1);
   }, [defaultFromDate, defaultToDate]);
 
+  // Handler xuất Excel danh sách giao dịch
+  const exportMutation = trpc.customer.topup.exportTransactionExcel.useMutation({
+    onSuccess: (data) => {
+      if (!data?.fileData) return;
+      downloadBase64File(data.filename || "Wallet_Transactions.xlsx", data.fileData);
+    },
+    onError: (error) => {
+      console.error("Export Excel API error:", error);
+    },
+  });
+
+  const handleExport = useCallback(() => {
+    exportMutation.mutate({
+      page,
+      pageSize,
+      dateFrom,
+      dateTo,
+      search: orderCode ? orderCode.trim() : undefined,
+      topupType: transactionType === "ALL" ? "" : transactionType,
+      status: TopupStatus.CONFIRMED,
+      sortBy: "updatedAt",
+      sortOrder: "desc",
+    });
+  }, [page, pageSize, dateFrom, dateTo, orderCode, transactionType, exportMutation]);
+
   // Handler chuyển trang
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
@@ -121,6 +146,8 @@ export default function TransactionPage() {
         transactionType={transactionType}
         onTransactionTypeChange={handleTransactionTypeChange}
         onClearAll={handleClearAll}
+        onExport={handleExport}
+        isExporting={exportMutation.isPending}
       />
 
       {/* 2. Bảng Hiển Thị Danh Sách Giao Dịch */}
@@ -135,4 +162,27 @@ export default function TransactionPage() {
       />
     </div>
   );
+}
+
+/**
+ * Helper giải mã chuỗi Base64 và kích hoạt tải về File Blob Excel trên Trình Duyệt
+ */
+function downloadBase64File(filename: string, base64Data: string) {
+  const byteCharacters = atob(base64Data);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
 }
