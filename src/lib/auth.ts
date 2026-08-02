@@ -141,10 +141,16 @@ const nextAuth: NextAuthResult = NextAuth({
               token.tokenVersion = backendUser.tokenVersion ?? 1;
             }
           } else {
-            console.error(`[NextAuth ${account.provider} SSO] Social login API returned error:`, res.status);
+            console.error(
+              `[NextAuth ${account.provider} SSO] Social login API returned error:`,
+              res.status,
+            );
           }
         } catch (error) {
-          console.error(`[NextAuth ${account.provider} SSO] Error syncing user with backend:`, error);
+          console.error(
+            `[NextAuth ${account.provider} SSO] Error syncing user with backend:`,
+            error,
+          );
         }
       } else if (user) {
         token.id = user.id;
