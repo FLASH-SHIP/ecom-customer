@@ -307,37 +307,44 @@ export function AddFundModal({
   };
 
   const processFiles = (files: File[]) => {
-    if (uploadedFiles.length + files.length > 10) {
-      setErrorMessage(
-        translate("customerWallet.addFundModal.maxFilesError", currentLocale) ||
-          "You can upload up to 10 images",
-      );
-      return;
-    }
-
+    let currentCount = uploadedFiles.length;
+    const maxFiles = 10;
     const validNewItems: UploadedImageItem[] = [];
+    const errorMessages: string[] = [];
 
     for (const file of files) {
-      if (file.size > 5 * 1024 * 1024) {
-        setErrorMessage(
-          translate("customerWallet.addFundModal.maxSizeError", currentLocale) ||
-            "Each image must not exceed 5MB",
+      if (currentCount >= maxFiles) {
+        errorMessages.push(
+          translate("customerWallet.addFundModal.maxFilesError", currentLocale) ||
+            "You can upload up to 10 images",
         );
-        return;
+        break;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        errorMessages.push(
+          `${file.name}: ${
+            translate("customerWallet.addFundModal.maxSizeError", currentLocale) ||
+            "Each image must not exceed 5MB"
+          }`,
+        );
+        continue;
       }
 
       const isValidType =
         file.type === "image/png" ||
         file.type === "image/jpeg" ||
         file.type === "image/jpg" ||
-        file.name.match(/\.(png|jpg|jpeg)$/i);
+        Boolean(file.name.match(/\.(png|jpg|jpeg)$/i));
 
       if (!isValidType) {
-        setErrorMessage(
-          translate("customerWallet.addFundModal.requiredFormat", currentLocale) ||
-            "Required to upload:*png, *jpg, *jpeg",
+        errorMessages.push(
+          `${file.name}: ${
+            translate("customerWallet.addFundModal.requiredFormat", currentLocale) ||
+            "Required to upload:*png, *jpg, *jpeg"
+          }`,
         );
-        return;
+        continue;
       }
 
       const imageUrl = URL.createObjectURL(file);
@@ -346,9 +353,20 @@ export function AddFundModal({
         url: imageUrl,
         file,
       });
+      currentCount++;
     }
 
-    setUploadedFiles((prev) => [...prev, ...validNewItems]);
+    if (errorMessages.length > 0) {
+      const combinedMsg = Array.from(new Set(errorMessages)).join(" | ");
+      setErrorMessage(combinedMsg);
+      toast(combinedMsg, "error");
+    } else {
+      setErrorMessage(null);
+    }
+
+    if (validNewItems.length > 0) {
+      setUploadedFiles((prev) => [...prev, ...validNewItems]);
+    }
   };
 
   const handleRemoveFile = (id: string) => {
