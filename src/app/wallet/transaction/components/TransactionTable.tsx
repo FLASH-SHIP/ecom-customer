@@ -201,7 +201,7 @@ export const TransactionTable = memo(function TransactionTable({
           "Initial amount",
         width: 150,
         cell: (item: TransactionItemRecord) => (
-          <span className="font-medium text-foreground">
+          <span className="text-foreground">
             {formatCurrency(item.accountBalanceBefore)}
           </span>
         ),
@@ -226,7 +226,7 @@ export const TransactionTable = memo(function TransactionTable({
 
           return (
             <span
-              className={`font-bold ${
+              className={`font-semibold ${
                 amt === 0 || type === TopupType.CANCELED
                   ? "text-muted-foreground"
                   : isPositive
@@ -245,7 +245,7 @@ export const TransactionTable = memo(function TransactionTable({
           translate("customerWallet.transactionTable.finalAmount", currentLocale) || "Final amount",
         width: 150,
         cell: (item: TransactionItemRecord) => (
-          <span className="font-bold text-foreground">{formatCurrency(item.accountBalanceAfter)}</span>
+          <span className="text-foreground">{formatCurrency(item.accountBalanceAfter)}</span>
         ),
       },
       {

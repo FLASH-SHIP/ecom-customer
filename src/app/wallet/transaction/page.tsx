@@ -4,6 +4,7 @@ import TransactionFilter from "@customer/app/wallet/transaction/components/Trans
 import TransactionTable from "@customer/app/wallet/transaction/components/TransactionTable";
 import { trpc } from "@customer/lib/trpc";
 import { format, subDays } from "date-fns";
+import { TopupStatus } from "@flash-ship/ecom-types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 /**
@@ -27,6 +28,7 @@ function useDebounceValue<T>(value: T, delay = 300): T {
  * Trang Quản Lý Lịch Sử Biến Động Số Dư Ví Khách Hàng (`TransactionPage`)
  * - Kết nối TRPC API Query `trpc.customer.topup.getTransactionHistory.useQuery`.
  * - Tự động thiết lập bộ lọc mặc định: Lọc 7 ngày gần nhất, khóa ngày tương lai (`disableFuture = true`).
+ * - Chỉ lấy các giao dịch ở trạng thái `status = 2` (`TopupStatus.CONFIRMED` - Đã phê duyệt).
  * - Phân trang mặc định `pageSize = 10`, `page = 1`, sắp xếp `updatedAt: "desc"`.
  * - Tối ưu hóa hiệu năng với Debounce Search 300ms và `staleTime: 10000ms` (React Query Caching).
  */
@@ -46,7 +48,7 @@ export default function TransactionPage() {
   // Debounce từ khóa tìm kiếm (300ms) để không spam request API
   const debouncedOrderCode = useDebounceValue(orderCode, 300);
 
-  // Gọi TRPC Query lấy danh sách giao dịch
+  // Gọi TRPC Query lấy danh sách giao dịch (Chỉ lấy status = 2 = TopupStatus.CONFIRMED)
   const { data: responseData, isLoading } = trpc.customer.topup.getTransactionHistory.useQuery(
     {
       page,
@@ -55,6 +57,7 @@ export default function TransactionPage() {
       dateTo,
       search: debouncedOrderCode,
       topupType: transactionType === "ALL" ? "" : transactionType,
+      status: TopupStatus.CONFIRMED, // 2 = TopupStatus.CONFIRMED (Chỉ hiển thị các giao dịch đã được Phê duyệt)
       sortBy: "updatedAt",
       sortOrder: "desc",
     },
