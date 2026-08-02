@@ -290,39 +290,61 @@ export function EditTopupModal({
   };
 
   const processFiles = (files: File[]) => {
-    if (uploadedFiles.length + files.length > 10) {
-      setErrorMessage(
-        translate("customerWallet.addFundModal.maxFilesError", currentLocale) ||
-          "You can upload up to 10 images",
-      );
-      return;
-    }
-
+    let currentCount = uploadedFiles.length;
+    const maxFiles = 10;
     const validNewItems: UploadedImageItem[] = [];
+    const errorMessages: string[] = [];
 
     for (const file of files) {
-      if (file.size > 5 * 1024 * 1024) {
-        setErrorMessage(
-          translate("customerWallet.addFundModal.maxSizeError", currentLocale) ||
-            "Each file size cannot exceed 5MB",
+      if (currentCount >= maxFiles) {
+        errorMessages.push(
+          translate("customerWallet.addFundModal.maxFilesError", currentLocale) ||
+            "You can upload up to 10 images",
         );
-        return;
+        break;
       }
 
-      if (!file.type.match(/^image\/(png|jpe?g)$/i)) {
-        setErrorMessage(
-          translate("customerWallet.addFundModal.requiredFormat", currentLocale) ||
-            "Allowed format:*png, *jpg, *jpeg",
+      if (file.size > 5 * 1024 * 1024) {
+        errorMessages.push(
+          `${file.name}: ${
+            translate("customerWallet.addFundModal.maxSizeError", currentLocale) ||
+            "Each file size cannot exceed 5MB"
+          }`,
         );
-        return;
+        continue;
+      }
+
+      const isValidType =
+        Boolean(file.type.match(/^image\/(png|jpe?g)$/i)) ||
+        Boolean(file.name.match(/\.(png|jpg|jpeg)$/i));
+
+      if (!isValidType) {
+        errorMessages.push(
+          `${file.name}: ${
+            translate("customerWallet.addFundModal.requiredFormat", currentLocale) ||
+            "Allowed format:*png, *jpg, *jpeg"
+          }`,
+        );
+        continue;
       }
 
       const id = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const url = URL.createObjectURL(file);
       validNewItems.push({ id, url, file });
+      currentCount++;
     }
 
-    setUploadedFiles((prev) => [...prev, ...validNewItems]);
+    if (errorMessages.length > 0) {
+      const combinedMsg = Array.from(new Set(errorMessages)).join(" | ");
+      setErrorMessage(combinedMsg);
+      toast(combinedMsg, "error");
+    } else {
+      setErrorMessage(null);
+    }
+
+    if (validNewItems.length > 0) {
+      setUploadedFiles((prev) => [...prev, ...validNewItems]);
+    }
   };
 
   const handleRemoveFile = (id: string) => {
