@@ -70,8 +70,8 @@ export default function LoginPage() {
       } else {
         if (typeof window !== "undefined") {
           sessionStorage.setItem("just_logged_in", "true");
+          window.location.replace("/dashboard");
         }
-        router.replace("/dashboard");
       }
     } catch (err) {
       console.error(err);
