@@ -1,7 +1,7 @@
 import { defaultLocale, locales } from "@flash-ship/ecom-i18n";
 import { I18nProvider } from "@ecom/shared/@i18n";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Be_Vietnam_Pro } from "next/font/google";
 import { cookies } from "next/headers";
 import { SessionProvider } from "next-auth/react";
 import { CustomerLayout } from "../components/CustomerLayout";
@@ -12,10 +12,11 @@ import "./globals.css";
 
 import { env } from "@customer/env";
 
-const inter = Inter({
+const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
@@ -38,7 +39,7 @@ export default async function RootLayout({
     locale && (locales as readonly string[]).includes(locale) ? locale : defaultLocale;
 
   return (
-    <html lang={lang} className={inter.variable}>
+    <html lang={lang} className={beVietnamPro.variable}>
       <body>
         <CustomerThemeProvider>
           <SessionProvider>
