@@ -9,6 +9,7 @@ import {
   validateReceiverName,
   validateReceiverPhone,
   validateReceiverState,
+  validateSenderPhone,
 } from "@flash-ship/ecom-lib/addressValidator";
 import { ShippingMethod, ShippingOrigin } from "@flash-ship/ecom-types";
 import { Button } from "@flash-ship/ecom-ui/components/button";
@@ -56,7 +57,11 @@ function getOrderFormSchema(locale: string) {
         .min(1, translate("customerOrder.validation.senderNameRequired", locale)),
       senderPhone: z
         .string()
-        .min(1, translate("customerOrder.validation.senderPhoneRequired", locale)),
+        .min(1, translate("customerOrder.validation.senderPhoneRequired", locale))
+        .refine(
+          (val) => validateSenderPhone(val, locale).valid,
+          translate("customerOrder.validation.senderPhoneInvalid", locale),
+        ),
       senderEmail: z
         .string()
         .email(translate("customerOrder.validation.senderEmailInvalid", locale))
@@ -90,8 +95,8 @@ function getOrderFormSchema(locale: string) {
         .string()
         .optional()
         .refine(
-          (val) => !val || validateReceiverPhone(val).valid,
-          translate("customerOrder.validation.receiverPhoneMax", locale),
+          (val) => !val || validateReceiverPhone(val, locale).valid,
+          translate("customerOrder.validation.receiverPhoneInvalid", locale),
         ),
       receiverEmail: z
         .string()
