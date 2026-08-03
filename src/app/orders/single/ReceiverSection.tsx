@@ -336,9 +336,9 @@ export function ReceiverSection({
                     maxLength={50}
                     {...registerParent("receiverState")}
                     placeholder={translate(
-                      "customerOrder.placeholder.receiverState",
+                      "customerOrder.placeholder.enterState",
                       currentLocale,
-                    )}
+                    ) || "Enter state"}
                     className={cn(
                       "w-full bg-background/50",
                       errorsParent.receiverState &&
@@ -399,7 +399,7 @@ export function ReceiverSection({
                     type="text"
                     required
                     {...registerParent("receiverCity")}
-                    placeholder={translate("customerOrder.placeholder.receiverCity", currentLocale)}
+                    placeholder={translate("customerOrder.placeholder.enterCity", currentLocale) || "Enter city"}
                     className={cn(
                       "w-full bg-background/50",
                       errorsParent.receiverCity &&
