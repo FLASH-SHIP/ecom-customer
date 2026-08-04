@@ -39,7 +39,7 @@ export function RecipientSummaryCard({ data }: RecipientSummaryCardProps) {
           <span className="text-[#7B7B7B] w-36 2xl:w-46 flex-shrink-0">
             {translate("customerOrder.summaryCards.recipientName", currentLocale)}
           </span>
-          <span className="font-semibold text-[#0F798C]">{receiverName || "N/A"}</span>
+          <span className="font-semibold text-[#232323] break-all">{receiverName || "N/A"}</span>
         </div>
 
         <div className="flex items-start text-sm 2xl:text-xl">
@@ -53,7 +53,7 @@ export function RecipientSummaryCard({ data }: RecipientSummaryCardProps) {
           <span className="text-[#7B7B7B] w-36 2xl:w-46 flex-shrink-0">
             {translate("customerOrder.summaryCards.address1", currentLocale)}
           </span>
-          <span className="font-medium text-[#232323]">{receiverAddress1 || "N/A"}</span>
+          <span className="font-medium text-[#232323] break-all">{receiverAddress1 || "N/A"}</span>
         </div>
 
         {receiverAddress2 && (
@@ -61,7 +61,7 @@ export function RecipientSummaryCard({ data }: RecipientSummaryCardProps) {
             <span className="text-[#7B7B7B] w-36 2xl:w-46 flex-shrink-0">
               {translate("customerOrder.summaryCards.address2", currentLocale)}
             </span>
-            <span className="font-medium text-[#232323]">{receiverAddress2}</span>
+            <span className="font-medium text-[#232323] break-all">{receiverAddress2}</span>
           </div>
         )}
 
@@ -83,7 +83,7 @@ export function RecipientSummaryCard({ data }: RecipientSummaryCardProps) {
           <span className="text-[#7B7B7B] w-36 2xl:w-46 flex-shrink-0">
             {translate("customerOrder.summaryCards.email", currentLocale)}
           </span>
-          <span className="font-medium text-[#232323]">{receiverEmail || "N/A"}</span>
+          <span className="font-medium text-[#232323] break-all">{receiverEmail || "N/A"}</span>
         </div>
       </div>
     </div>

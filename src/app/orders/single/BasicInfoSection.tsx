@@ -130,6 +130,7 @@ export const BasicInfoSection = React.memo(function BasicInfoSection({ control, 
             <Input
               id="sellerOrderId"
               type="text"
+              maxLength={50}
               {...register("sellerOrderId")}
               placeholder={translate("customerOrder.placeholder.enterOrderId", currentLocale)}
               className={cn(

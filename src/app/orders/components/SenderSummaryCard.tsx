@@ -31,7 +31,7 @@ export function SenderSummaryCard({ data }: SenderSummaryCardProps) {
           <span className="text-[#7B7B7B] w-36 2xl:w-46 flex-shrink-0">
             {translate("customerOrder.summaryCards.senderName", currentLocale)}
           </span>
-          <span className="font-medium text-[#232323]">{senderName || "N/A"}</span>
+          <span className="font-medium text-[#232323] break-all">{senderName || "N/A"}</span>
         </div>
 
         <div className="flex items-start text-sm 2xl:text-xl">
@@ -45,7 +45,7 @@ export function SenderSummaryCard({ data }: SenderSummaryCardProps) {
           <span className="text-[#7B7B7B] w-36 2xl:w-46 flex-shrink-0">
             {translate("customerOrder.summaryCards.address", currentLocale)}
           </span>
-          <span className="font-medium text-[#232323]">{senderAddress || "N/A"}</span>
+          <span className="font-medium text-[#232323] break-all">{senderAddress || "N/A"}</span>
         </div>
 
         {senderZipCode && (
@@ -68,7 +68,7 @@ export function SenderSummaryCard({ data }: SenderSummaryCardProps) {
           <span className="text-[#7B7B7B] w-36 2xl:w-46 flex-shrink-0">
             {translate("customerOrder.summaryCards.email", currentLocale)}
           </span>
-          <span className="font-medium text-[#232323]">{senderEmail || "N/A"}</span>
+          <span className="font-medium text-[#232323] break-all">{senderEmail || "N/A"}</span>
         </div>
       </div>
     </div>
