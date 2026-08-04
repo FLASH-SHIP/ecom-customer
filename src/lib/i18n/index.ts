@@ -89,7 +89,6 @@ export function I18nProvider({
       setLocale(targetLocale);
       setActiveLocale(targetLocale);
       setNextLocaleCookie(targetLocale);
-      window.location.reload();
     }
   };
 
@@ -124,7 +123,6 @@ export function useI18n() {
         if ((SUPPORTED_LOCALES as readonly string[]).includes(newLang)) {
           setActiveLocale(newLang as SupportedLocale);
           setNextLocaleCookie(newLang);
-          window.location.reload();
         }
       },
       langDirection: "ltr" as const,
