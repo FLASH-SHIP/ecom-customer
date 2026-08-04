@@ -125,13 +125,34 @@ export function AddFundModal({
   ).trim();
   const description = (parsedDataInfo?.description || "-").trim();
   const defaultQrUrl = "/assets/images/qr-code/banking.jpg";
-  const rawQrUrl = (parsedDataInfo?.qr_url || parsedDataInfo?.qrUrl || "").trim();
 
-  const [qrSrc, setQrSrc] = useState<string>(rawQrUrl || defaultQrUrl);
+  // Parse all possible QR URL key variants from dataInfo JSON
+  const rawQrUrl = (parsedDataInfo?.qr_url || "").trim();
+
+  // Resolve absolute API URL if relative path is provided
+  const resolvedQrUrl = React.useMemo(() => {
+    if (!rawQrUrl) return defaultQrUrl;
+    if (
+      rawQrUrl.startsWith("http://") ||
+      rawQrUrl.startsWith("https://") ||
+      rawQrUrl.startsWith("data:")
+    ) {
+      return rawQrUrl;
+    }
+    const apiDomain =
+      process.env.NEXT_PUBLIC_API_URL ||
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      "https://dev-api.ecomexpress.vn";
+    const cleanDomain = apiDomain.replace(/\/$/, "");
+    const cleanPath = rawQrUrl.startsWith("/") ? rawQrUrl : `/${rawQrUrl}`;
+    return `${cleanDomain}${cleanPath}`;
+  }, [rawQrUrl]);
+
+  const [qrSrc, setQrSrc] = useState<string>(resolvedQrUrl);
 
   useEffect(() => {
-    setQrSrc(rawQrUrl || defaultQrUrl);
-  }, [rawQrUrl]);
+    setQrSrc(resolvedQrUrl);
+  }, [resolvedQrUrl]);
 
   // Debounce 1s USD -> VND
   useEffect(() => {
@@ -665,7 +686,7 @@ export function AddFundModal({
                   {/* Left Side: Banking Details */}
                   <div className="flex flex-col gap-2.5 flex-1 min-w-0 w-full text-xs">
                     {/* Account Holder */}
-                    <div className="grid grid-cols-12 items-center gap-2">
+                    <div className="grid grid-cols-12 items-center gap-2 leading-relaxed">
                       <span className="col-span-4 text-slate-500 dark:text-slate-400 font-medium">
                         {translate(
                           "customerWallet.addFundModal.accountHolderLabel",
@@ -683,7 +704,7 @@ export function AddFundModal({
                         {translate("customerWallet.addFundModal.bankNameLabel", currentLocale) ||
                           "Bank Name:"}
                       </span>
-                      <span className="col-span-8 font-bold text-[#1B64F2] leading-tight select-all">
+                      <span className="col-span-8 font-bold text-[#1B64F2] select-all">
                         {bankName}
                       </span>
                     </div>

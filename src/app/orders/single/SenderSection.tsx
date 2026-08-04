@@ -72,7 +72,9 @@ export interface SenderSectionProps {
   savedSenders: SavedSender[];
 }
 
-export function SenderSection({
+import React from "react";
+
+export const SenderSection = React.memo(function SenderSection({
   control,
   register,
   errors,
@@ -284,6 +286,7 @@ export function SenderSection({
                   id="senderName"
                   type="text"
                   required
+                  maxLength={100}
                   {...registerParent("senderName")}
                   placeholder={translate(
                     "customerOrder.placeholder.enterSenderName",
@@ -482,4 +485,4 @@ export function SenderSection({
       </div>
     </div>
   );
-}
+});

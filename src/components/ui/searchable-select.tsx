@@ -61,7 +61,11 @@ const OptionItem = React.memo(function OptionItem({
       >
         <Check className={cn("size-3.5 shrink-0", isSelected ? "opacity-100" : "opacity-0")} />
         {opt.image && (
-          <img src={opt.image} alt={opt.label} className="size-7 shrink-0 object-contain" />
+          <img
+            src={opt.image}
+            alt={opt.label}
+            className="size-7 shrink-0 object-contain border-0 border-none outline-none ring-0 shadow-none bg-transparent rounded-none"
+          />
         )}
         {opt.icon && (
           <span className="inline-block w-4 text-center font-mono text-xs text-muted-foreground">
@@ -195,7 +199,7 @@ function SearchableSelect({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "h-9 lg:h-10 xl:h-11 2xl:h-[52px] w-full justify-between font-normal",
+            "h-9 lg:h-10 w-full justify-between font-normal",
             !selectedOption && "text-muted-foreground",
             className,
           )}
@@ -205,7 +209,7 @@ function SearchableSelect({
               <img
                 src={selectedOption.image}
                 alt={selectedOption.label}
-                className="size-7 shrink-0 object-contain"
+                className="size-7 shrink-0 object-contain border-0 border-none outline-none ring-0 shadow-none bg-transparent rounded-none"
               />
             )}
             {selectedOption?.icon && (

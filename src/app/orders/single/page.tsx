@@ -4,11 +4,18 @@ import { trpc } from "@customer/lib/trpc";
 import { useI18n } from "@ecom/shared/@i18n";
 import { translate } from "@flash-ship/ecom-i18n";
 import {
+  validateDetailDescription,
+  validateHSCodeFormat,
   validatePostalCode,
+  validateReceiverAddress1,
+  validateReceiverAddress2,
+  validateReceiverCity,
   validateReceiverEmail,
   validateReceiverName,
   validateReceiverPhone,
   validateReceiverState,
+  validateSellerOrderId,
+  validateSenderPhone,
 } from "@flash-ship/ecom-lib/addressValidator";
 import { ShippingMethod, ShippingOrigin } from "@flash-ship/ecom-types";
 import { Button } from "@flash-ship/ecom-ui/components/button";
@@ -34,11 +41,20 @@ import { useOrderStore } from "./useOrderStore";
 function getOrderFormSchema(locale: string) {
   return z
     .object({
-      shippingMethod: z.nativeEnum(ShippingMethod),
+      shippingMethod: z
+        .enum(["EXPRESS", "EPACKET", ""])
+        .refine(
+          (val) => val === "EXPRESS" || val === "EPACKET",
+          translate("customerOrder.validation.shippingMethodRequired", locale),
+        ),
       shippingOrigin: z.nativeEnum(ShippingOrigin),
       detailDescription: z
         .string()
-        .min(1, translate("customerOrder.validation.detailDescriptionRequired", locale)),
+        .min(1, translate("customerOrder.validation.detailDescriptionRequired", locale))
+        .refine(
+          (val) => validateDetailDescription(val, locale).valid,
+          translate("customerOrder.validation.detailDescriptionMax200", locale),
+        ),
       declaredValue: z
         .string()
         .min(1, translate("customerOrder.validation.declaredValueRequired", locale))
@@ -48,15 +64,24 @@ function getOrderFormSchema(locale: string) {
         ),
       sellerOrderId: z
         .string()
-        .min(1, translate("customerOrder.validation.sellerOrderIdRequired", locale)),
+        .min(1, translate("customerOrder.validation.sellerOrderIdRequired", locale))
+        .refine(
+          (val) => validateSellerOrderId(val, locale).valid,
+          translate("customerOrder.validation.sellerOrderIdMax50", locale),
+        ),
 
       // Sender Info
       senderName: z
         .string()
-        .min(1, translate("customerOrder.validation.senderNameRequired", locale)),
+        .min(1, translate("customerOrder.validation.senderNameRequired", locale))
+        .max(100, translate("customerOrder.validation.senderNameMax", locale)),
       senderPhone: z
         .string()
-        .min(1, translate("customerOrder.validation.senderPhoneRequired", locale)),
+        .min(1, translate("customerOrder.validation.senderPhoneRequired", locale))
+        .refine(
+          (val) => validateSenderPhone(val, locale).valid,
+          translate("customerOrder.validation.senderPhoneInvalid", locale),
+        ),
       senderEmail: z
         .string()
         .email(translate("customerOrder.validation.senderEmailInvalid", locale))
@@ -90,8 +115,8 @@ function getOrderFormSchema(locale: string) {
         .string()
         .optional()
         .refine(
-          (val) => !val || validateReceiverPhone(val).valid,
-          translate("customerOrder.validation.receiverPhoneMax", locale),
+          (val) => !val || validateReceiverPhone(val, locale).valid,
+          translate("customerOrder.validation.receiverPhoneInvalid", locale),
         ),
       receiverEmail: z
         .string()
@@ -103,21 +128,28 @@ function getOrderFormSchema(locale: string) {
       receiverAddress1: z
         .string()
         .min(1, translate("customerOrder.validation.receiverAddress1Required", locale))
-        .max(150, translate("customerOrder.validation.receiverAddress1Max", locale)),
+        .refine(
+          (val) => validateReceiverAddress1(val, locale).valid,
+          translate("customerOrder.validation.receiverAddress1Max50", locale),
+        ),
       receiverAddress2: z
         .string()
         .optional()
         .refine(
-          (val) => !val || val.length <= 150,
-          translate("customerOrder.validation.receiverAddress2Max", locale),
+          (val) => !val || validateReceiverAddress2(val, locale).valid,
+          translate("customerOrder.validation.receiverAddress2Max50", locale),
         ),
       receiverCity: z
         .string()
-        .min(1, translate("customerOrder.validation.receiverCityRequired", locale)),
+        .min(1, translate("customerOrder.validation.receiverCityRequired", locale))
+        .refine(
+          (val) => validateReceiverCity(val, locale).valid,
+          translate("customerOrder.validation.receiverCityMax50", locale),
+        ),
       receiverCityName: z.string().optional(),
       receiverState: z
         .string()
-        .min(1, translate("customerOrder.validation.receiverStateRequired", locale)),
+        .optional(),
       receiverStateName: z.string().optional(),
       receiverZipCode: z
         .string()
@@ -138,7 +170,11 @@ function getOrderFormSchema(locale: string) {
         .string()
         .min(1, translate("customerOrder.validation.packageWeightRequired", locale))
         .refine(
-          (val) => !Number.isNaN(Number(val)) && Number(val) > 0,
+          (val) => /^[0-9]+$/.test(val),
+          translate("customerOrder.validation.packageWeightIntegerOnly", locale),
+        )
+        .refine(
+          (val) => Number(val) > 0,
           translate("customerOrder.validation.packageWeightMin", locale),
         ),
       packageName: z
@@ -183,7 +219,7 @@ function getOrderFormSchema(locale: string) {
         .min(1, translate("customerOrder.validation.productsMin", locale)),
     })
     .superRefine((data, ctx) => {
-      const stateVal = validateReceiverState(data.receiverCountry, data.receiverState);
+      const stateVal = validateReceiverState(data.receiverCountry, data.receiverState || "", locale);
       if (!stateVal.valid) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -240,9 +276,9 @@ export default function CreateSingleOrderPage() {
     formState: { errors },
   } = useForm<OrderFormValues>({
     mode: "onChange",
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
-      shippingMethod: ShippingMethod.EPACKET,
+      shippingMethod: "" as any,
       shippingOrigin: ShippingOrigin.HAN,
       detailDescription: "",
       declaredValue: "",
@@ -352,6 +388,25 @@ export default function CreateSingleOrderPage() {
     setIsHydrated(true);
   }, []);
 
+  // Tự động xóa dữ liệu nháp trong Zustand Store và sessionStorage khi người dùng rời khỏi trang tạo đơn lẻ
+  // Xử lý bao phủ cả 2 trường hợp:
+  // 1. Chuyển trang nội bộ trong ứng dụng (Component Unmount cleanup)
+  // 2. Tải lại trang (F5) hoặc Đóng tab / Đóng trình duyệt (sự kiện 'beforeunload')
+  useEffect(() => {
+    const handleUnload = () => {
+      clearStore();
+    };
+    // Đăng ký sự kiện lắng nghe khi trình duyệt reload hoặc đóng tab
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      // Dọn dẹp listener sự kiện beforeunload khi unmount
+      window.removeEventListener("beforeunload", handleUnload);
+      // Thực thi xóa sạch dữ liệu nháp đơn hàng khi rời khỏi route này
+      clearStore();
+    };
+  }, [clearStore]);
+
   const storeValuesString = JSON.stringify(storeValues);
 
   // Load draft from Zustand store on mount once hydrated
@@ -426,7 +481,7 @@ export default function CreateSingleOrderPage() {
 
     try {
       const res = await trpcContext.client.customer.orders.calculateFreight.query({
-        shippingMethod: formValues.shippingMethod,
+        shippingMethod: formValues.shippingMethod as ShippingMethod,
         country: formValues.receiverCountry,
         declaredWeight: Number(formValues.weight),
         dimensionLength: formValues.length ? Number(formValues.length) : null,
@@ -512,7 +567,7 @@ export default function CreateSingleOrderPage() {
 
     try {
       await createOrderMutation.mutateAsync({
-        shippingMethod,
+        shippingMethod: shippingMethod as ShippingMethod,
         shippingOrigin,
         sellerOrderId: sellerOrderId || null,
         importId: null,

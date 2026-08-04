@@ -25,7 +25,9 @@ export interface ItemListSectionProps {
   errors: FieldErrors<OrderFormValues>;
 }
 
-export function ItemListSection({ control, register, errors }: ItemListSectionProps) {
+import React from "react";
+
+export const ItemListSection = React.memo(function ItemListSection({ control, register, errors }: ItemListSectionProps) {
   const { languageId: currentLocale } = useI18n();
   const controlParent = control as unknown as Control<OrderFormValues>;
   const registerParent = register as unknown as UseFormRegister<OrderFormValues>;
@@ -220,4 +222,4 @@ export function ItemListSection({ control, register, errors }: ItemListSectionPr
       </div>
     </div>
   );
-}
+});
