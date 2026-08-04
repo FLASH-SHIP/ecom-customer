@@ -487,8 +487,7 @@ export const ReceiverSection = React.memo(function ReceiverSection({
 
               <Field>
                 <FieldLabel htmlFor="receiverEmail">
-                  {translate("customerOrder.single.email", currentLocale)}{" "}
-                  <span className="text-destructive">*</span>
+                  {translate("customerOrder.single.email", currentLocale)}
                 </FieldLabel>
                 <Input
                   id="receiverEmail"

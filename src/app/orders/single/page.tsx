@@ -4,6 +4,7 @@ import { trpc } from "@customer/lib/trpc";
 import { useI18n } from "@ecom/shared/@i18n";
 import { translate } from "@flash-ship/ecom-i18n";
 import {
+  isAsciiLatinOnly,
   validateDetailDescription,
   validateHSCodeFormat,
   validatePostalCode,
@@ -38,6 +39,12 @@ import { ReceiverSection } from "./ReceiverSection";
 import { SenderSection } from "./SenderSection";
 import { useOrderStore } from "./useOrderStore";
 
+function parseFloatDimension(val?: string | null) {
+  if (!val) return null;
+  const num = parseFloat(String(val).replace(",", ".").trim());
+  return Number.isNaN(num) || num <= 0 ? null : num;
+}
+
 function getOrderFormSchema(locale: string) {
   return z
     .object({
@@ -64,11 +71,15 @@ function getOrderFormSchema(locale: string) {
         ),
       sellerOrderId: z
         .string()
-        .min(1, translate("customerOrder.validation.sellerOrderIdRequired", locale))
         .refine(
-          (val) => validateSellerOrderId(val, locale).valid,
+          (val) => val.trim().length >= 1,
+          translate("customerOrder.validation.sellerOrderIdRequired", locale),
+        )
+        .refine(
+          (val) => validateSellerOrderId(val.trim(), locale).valid,
           translate("customerOrder.validation.sellerOrderIdMax50", locale),
-        ),
+        )
+        .transform((val) => val.trim()),
 
       // Sender Info
       senderName: z
@@ -163,9 +174,27 @@ function getOrderFormSchema(locale: string) {
         .number({ message: translate("customerOrder.validation.packingTypeIdRequired", locale) })
         .int()
         .positive(),
-      length: z.string().optional(),
-      width: z.string().optional(),
-      height: z.string().optional(),
+      length: z
+        .string()
+        .min(1, translate("customerOrder.validation.packageLengthRequired", locale))
+        .refine((val) => {
+          const num = parseFloat(val.replace(",", ".").trim());
+          return !Number.isNaN(num) && num > 0;
+        }, translate("customerOrder.validation.packageDimensionMin", locale)),
+      width: z
+        .string()
+        .min(1, translate("customerOrder.validation.packageWidthRequired", locale))
+        .refine((val) => {
+          const num = parseFloat(val.replace(",", ".").trim());
+          return !Number.isNaN(num) && num > 0;
+        }, translate("customerOrder.validation.packageDimensionMin", locale)),
+      height: z
+        .string()
+        .min(1, translate("customerOrder.validation.packageHeightRequired", locale))
+        .refine((val) => {
+          const num = parseFloat(val.replace(",", ".").trim());
+          return !Number.isNaN(num) && num > 0;
+        }, translate("customerOrder.validation.packageDimensionMin", locale)),
       weight: z
         .string()
         .min(1, translate("customerOrder.validation.packageWeightRequired", locale))
@@ -179,13 +208,19 @@ function getOrderFormSchema(locale: string) {
         ),
       packageName: z
         .string()
-        .min(1, translate("customerOrder.validation.packageNameRequired", locale)),
+        .min(1, translate("customerOrder.validation.packageNameRequired", locale))
+        .max(50, translate("customerOrder.validation.packageNameMax50", locale)),
       products: z
         .array(
           z.object({
             description: z
               .string()
-              .min(1, translate("customerOrder.validation.productDescriptionRequired", locale)),
+              .min(1, translate("customerOrder.validation.productDescriptionRequired", locale))
+              .max(200, translate("customerOrder.validation.productDescriptionMax200", locale))
+              .refine(
+                (val) => isAsciiLatinOnly(val),
+                translate("customerOrder.validation.productDescriptionAsciiOnly", locale),
+              ),
             quantity: z
               .string()
               .min(1, translate("customerOrder.validation.productQuantityRequired", locale))
@@ -202,7 +237,13 @@ function getOrderFormSchema(locale: string) {
                 translate("customerOrder.validation.productValueMin", locale),
               ),
             hsCodePrefix: z.string(),
-            hsCodeNumber: z.string().optional(),
+            hsCodeNumber: z
+              .string()
+              .min(1, translate("customerOrder.validation.hsCodeRequired", locale))
+              .refine(
+                (val) => validateHSCodeFormat(val, locale).valid,
+                translate("customerOrder.validation.hsCodeInvalidFormat", locale),
+              ),
             originCountry: z
               .string()
               .min(1, translate("customerOrder.validation.productOriginCountryRequired", locale)),
@@ -484,9 +525,9 @@ export default function CreateSingleOrderPage() {
         shippingMethod: formValues.shippingMethod as ShippingMethod,
         country: formValues.receiverCountry,
         declaredWeight: Number(formValues.weight),
-        dimensionLength: formValues.length ? Number(formValues.length) : null,
-        dimensionWidth: formValues.width ? Number(formValues.width) : null,
-        dimensionHeight: formValues.height ? Number(formValues.height) : null,
+        dimensionLength: parseFloatDimension(formValues.length),
+        dimensionWidth: parseFloatDimension(formValues.width),
+        dimensionHeight: parseFloatDimension(formValues.height),
         origin: formValues.shippingOrigin,
       });
 
@@ -569,7 +610,7 @@ export default function CreateSingleOrderPage() {
       await createOrderMutation.mutateAsync({
         shippingMethod: shippingMethod as ShippingMethod,
         shippingOrigin,
-        sellerOrderId: sellerOrderId || null,
+        sellerOrderId: sellerOrderId?.trim() || null,
         importId: null,
 
         senderName,
@@ -594,9 +635,9 @@ export default function CreateSingleOrderPage() {
 
         detailDescription,
         declaredWeight: Number(weight),
-        dimensionLength: length ? Number(length) : null,
-        dimensionWidth: width ? Number(width) : null,
-        dimensionHeight: height ? Number(height) : null,
+        dimensionLength: parseFloatDimension(length),
+        dimensionWidth: parseFloatDimension(width),
+        dimensionHeight: parseFloatDimension(height),
         declaredValue: Number(declaredValue),
         packingTypeId: packingTypeId || null,
         isGetLabel: isGetLabel ? 1 : 0,
@@ -672,9 +713,9 @@ export default function CreateSingleOrderPage() {
           label: packageName,
           packageName: packageName,
           packingTypeId: Number(packingTypeId),
-          length: length ? Number(length) : null,
-          width: width ? Number(width) : null,
-          height: height ? Number(height) : null,
+          length: parseFloatDimension(length),
+          width: parseFloatDimension(width),
+          height: parseFloatDimension(height),
           weight: Number(weight),
         };
         console.log("packagePayload constructed:", packagePayload);

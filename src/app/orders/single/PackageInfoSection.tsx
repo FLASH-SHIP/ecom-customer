@@ -147,9 +147,14 @@ export const PackageInfoSection = React.memo(function PackageInfoSection({
   }, [packingTypesData, watchedPackingTypeId]);
 
   const volumeWeight = useMemo(() => {
-    const l = Number(watchedLength) || 0;
-    const w = Number(watchedWidth) || 0;
-    const h = Number(watchedHeight) || 0;
+    const parseVal = (val?: string) => {
+      if (!val) return 0;
+      const num = parseFloat(val.replace(",", ".").trim());
+      return Number.isNaN(num) || num <= 0 ? 0 : num;
+    };
+    const l = parseVal(watchedLength);
+    const w = parseVal(watchedWidth);
+    const h = parseVal(watchedHeight);
     if (l === 0 || w === 0 || h === 0) return 0;
     return Math.round((l * w * h) / 5);
   }, [watchedLength, watchedWidth, watchedHeight]);
@@ -251,85 +256,114 @@ export const PackageInfoSection = React.memo(function PackageInfoSection({
             {/* Dimensions */}
             <Field>
               <FieldLabel>
-                {translate("customerOrder.single.packageDimensionsCm", currentLocale)}
+                {translate("customerOrder.single.packageDimensionsCm", currentLocale)}{" "}
+                <span className="text-destructive ml-0.5">*</span>
               </FieldLabel>
               <div className="flex items-center gap-2">
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder={translate("customerOrder.placeholder.length", currentLocale)}
-                  {...registerParent("length", {
-                    onChange: (e) => {
-                      e.target.value = e.target.value.replace(/[^0-9.]/g, "");
-                    },
-                  })}
-                  className={cn(errorsParent.length && "border-destructive")}
-                />
-                <span className="text-muted-foreground">×</span>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder={translate("customerOrder.placeholder.width", currentLocale)}
-                  {...registerParent("width", {
-                    onChange: (e) => {
-                      e.target.value = e.target.value.replace(/[^0-9.]/g, "");
-                    },
-                  })}
-                  className={cn(errorsParent.width && "border-destructive")}
-                />
-                <span className="text-muted-foreground">×</span>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder={translate("customerOrder.placeholder.height", currentLocale)}
-                  {...registerParent("height", {
-                    onChange: (e) => {
-                      e.target.value = e.target.value.replace(/[^0-9.]/g, "");
-                    },
-                  })}
-                  className={cn(errorsParent.height && "border-destructive")}
-                />
+                <div className="flex-1 min-w-0">
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder={translate("customerOrder.placeholder.length", currentLocale)}
+                    {...registerParent("length", {
+                      onChange: (e) => {
+                        e.target.value = e.target.value.replace(/[^0-9.,]/g, "");
+                      },
+                    })}
+                    className={cn(errorsParent.length && "border-destructive")}
+                  />
+                </div>
+                <span className="text-muted-foreground shrink-0 select-none">×</span>
+                <div className="flex-1 min-w-0">
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder={translate("customerOrder.placeholder.width", currentLocale)}
+                    {...registerParent("width", {
+                      onChange: (e) => {
+                        e.target.value = e.target.value.replace(/[^0-9.,]/g, "");
+                      },
+                    })}
+                    className={cn(errorsParent.width && "border-destructive")}
+                  />
+                </div>
+                <span className="text-muted-foreground shrink-0 select-none">×</span>
+                <div className="flex-1 min-w-0">
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder={translate("customerOrder.placeholder.height", currentLocale)}
+                    {...registerParent("height", {
+                      onChange: (e) => {
+                        e.target.value = e.target.value.replace(/[^0-9.,]/g, "");
+                      },
+                    })}
+                    className={cn(errorsParent.height && "border-destructive")}
+                  />
+                </div>
               </div>
+              <FieldError errors={[errorsParent.length, errorsParent.width, errorsParent.height]} />
             </Field>
 
             {/* Weight */}
             <Field>
               <FieldLabel htmlFor="package-weight">
-                {translate("customerOrder.single.packageWeightGr", currentLocale)}{" "}
+                {translate("customerOrder.single.packageWeight", currentLocale)}{" "}
                 <span className="text-destructive ml-0.5">*</span>
               </FieldLabel>
-              <div className="flex gap-2">
-                <Input
-                  id="package-weight"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  required
-                  placeholder="0"
-                  {...registerParent("weight", {
-                    onChange: (e) => {
-                      e.target.value = e.target.value.replace(/[^0-9]/g, "");
-                    },
-                  })}
-                  className={cn(
-                    "w-2/3 bg-background/50",
-                    errorsParent.weight && "border-destructive",
-                  )}
-                />
-                <SearchableSelect
-                  value="gram"
-                  options={[{ value: "gram", label: "Gram" }]}
-                  placeholder="Unit"
-                  allowClear={false}
-                  className="w-1/3 bg-background/50 border-input"
-                />
+              <div className="flex items-center gap-2">
+                {/* Child 1: Weight Group (exact width of Length input) */}
+                <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                  <Input
+                    id="package-weight"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9.]*"
+                    required
+                    placeholder="0.00"
+                    {...registerParent("weight", {
+                      onChange: (e) => {
+                        e.target.value = e.target.value.replace(/[^0-9.]/g, "");
+                      },
+                    })}
+                    className={cn(
+                      "flex-1 min-w-0 bg-background/50",
+                      errorsParent.weight && "border-destructive",
+                    )}
+                  />
+                  <SearchableSelect
+                    value="gram"
+                    options={[{ value: "gram", label: "Gr" }]}
+                    placeholder="Unit"
+                    allowClear={false}
+                    className="w-[80px] shrink-0 bg-background/50 border-input px-2 text-xs"
+                  />
+                </div>
+
+                {/* Child 2: Invisible separator matching × */}
+                <span className="text-muted-foreground shrink-0 select-none opacity-0">×</span>
+
+                {/* Child 3: Volume weight display (exact width of Width input) */}
+                <div className="flex-1 min-w-0 h-10 flex items-end">
+                  <span className="text-sm 2xl:text-base font-normal text-[#232323] whitespace-nowrap pl-1">
+                    {translate("customerOrder.single.volumeWeight", currentLocale)}:{" "}
+                    <span className="font-semibold text-[#0F798C]">
+                      {(volumeWeight || 0).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                      gr
+                    </span>
+                  </span>
+                </div>
+
+                {/* Child 4: Invisible separator matching × */}
+                <span className="text-muted-foreground shrink-0 select-none opacity-0">×</span>
+
+                {/* Child 5: Empty spacer (exact width of Height input) */}
+                <div className="flex-1 min-w-0" />
               </div>
               <FieldError errors={[errorsParent.weight]} />
-              {volumeWeight > 0 && (
-                <p className="text-sm text-blue-500 mt-1">
-                  Suggested volume weight: {volumeWeight.toLocaleString()} gr
-                </p>
-              )}
             </Field>
 
             {/* Package Name */}
@@ -342,6 +376,7 @@ export const PackageInfoSection = React.memo(function PackageInfoSection({
                 id="packageName"
                 type="text"
                 required
+                maxLength={50}
                 placeholder={translate("customerOrder.placeholder.enterPackageName", currentLocale)}
                 {...registerParent("packageName")}
                 className={cn(errorsParent.packageName && "border-destructive")}

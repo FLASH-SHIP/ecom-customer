@@ -85,6 +85,7 @@ export const ItemListSection = React.memo(function ItemListSection({ control, re
                       <Input
                         type="text"
                         required
+                        maxLength={200}
                         placeholder={translate(
                           "customerOrder.placeholder.itemDescription",
                           currentLocale,
@@ -149,7 +150,8 @@ export const ItemListSection = React.memo(function ItemListSection({ control, re
                     {/* HS Code */}
                     <Field className="flex flex-col gap-2">
                       <FieldLabel className="text-[#232323] text-sm md:text-base font-medium">
-                        {translate("customerOrder.single.hsCode", currentLocale)}
+                        {translate("customerOrder.single.hsCode", currentLocale)}{" "}
+                        <span className="text-destructive">*</span>
                       </FieldLabel>
                       <div
                         className={cn(
@@ -175,6 +177,8 @@ export const ItemListSection = React.memo(function ItemListSection({ control, re
                         <div className="w-px h-8 bg-[#D9D9D9] shrink-0" />
                         <Input
                           type="text"
+                          required
+                          maxLength={10}
                           placeholder={translate(
                             "customerOrder.placeholder.itemHsCode",
                             currentLocale,

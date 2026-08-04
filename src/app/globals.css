@@ -190,17 +190,19 @@
 .notistack-MuiContent,
 #notistack-snackbar {
   white-space: pre-wrap !important;
-  word-break: break-word !important;
+  word-break: break-all !important;
   overflow-wrap: anywhere !important;
   height: auto !important;
+  max-width: calc(100vw - 2rem) !important;
 }
 
 [role="alert"] p,
 .notistack-MuiContent div,
 #notistack-snackbar {
   white-space: pre-wrap !important;
-  word-break: break-word !important;
+  word-break: break-all !important;
   overflow-wrap: anywhere !important;
+  min-width: 0 !important;
 }
 
 .wallet-payment-method-select img {
