@@ -132,6 +132,7 @@ export const ItemListSection = React.memo(function ItemListSection({ control, re
                       <Input
                         type="number"
                         step="0.01"
+                        max="9999999999.99"
                         required
                         placeholder={translate(
                           "customerOrder.placeholder.itemValue",
