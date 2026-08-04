@@ -68,6 +68,10 @@ function getOrderFormSchema(locale: string) {
         .refine(
           (val) => !Number.isNaN(Number(val)) && Number(val) > 0,
           translate("customerOrder.validation.declaredValueMin", locale),
+        )
+        .refine(
+          (val) => !Number.isNaN(Number(val)) && Number(val) <= 9999999999.99,
+          translate("customerOrder.validation.declaredValueMax", locale),
         ),
       sellerOrderId: z
         .string()
@@ -235,6 +239,10 @@ function getOrderFormSchema(locale: string) {
               .refine(
                 (val) => !Number.isNaN(Number(val)) && Number(val) > 0,
                 translate("customerOrder.validation.productValueMin", locale),
+              )
+              .refine(
+                (val) => !Number.isNaN(Number(val)) && Number(val) <= 9999999999.99,
+                translate("customerOrder.validation.productValueMax", locale),
               ),
             hsCodePrefix: z.string(),
             hsCodeNumber: z
