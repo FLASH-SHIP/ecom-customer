@@ -1,23 +1,25 @@
+import Image from "next/image";
+import NextLink from "next/link";
+
+/**
+ * @file AuthLogo.tsx
+ * @description Component hiển thị Logo thương hiệu Ecom Express chuẩn trong toàn bộ luồng Auth.
+ * Sử dụng hình ảnh SVG chính thức từ `/assets/images/logo/ecom-express-long.svg`.
+ * 
+ * 100% Code Comment & Ghi chú bằng Tiếng Việt.
+ */
+
 export function AuthLogo() {
   return (
-    <div className="flex items-center gap-2 select-none">
-      {/* Yellow circle with lightning bolt */}
-      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-md">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          className="w-5 h-5 text-white"
-        >
-          <title>Ecom Express Logo</title>
-          <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      </div>
-      {/* Brand Name */}
-      <span className="text-lg font-black tracking-wider flex items-center">
-        <span className="text-foreground">ECOM</span>
-        <span className="text-primary ml-1.5">EXPRESS</span>
-      </span>
-    </div>
+    <NextLink href="/" className="inline-flex items-center select-none group focus:outline-none">
+      <Image
+        src="/assets/images/logo/ecom-express-long.svg"
+        alt="Ecom Express Logo"
+        width={180}
+        height={44}
+        priority
+        className="h-9 sm:h-10 w-auto object-contain transition-transform group-hover:scale-[1.02]"
+      />
+    </NextLink>
   );
 }

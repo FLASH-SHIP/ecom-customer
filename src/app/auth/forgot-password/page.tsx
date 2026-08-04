@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * @file ForgotPasswordPage.tsx
+ * @description Màn hình Yêu Cầu Quên Mật Khẩu (Customer Forgot Password Page).
+ * Nhập email tài khoản để nhận đường dẫn/mã khôi phục mật khẩu.
+ * 
+ * 100% Code Comment & Ghi chú bằng Tiếng Việt giúp dễ dàng bảo trì.
+ */
+
 import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
 import { Button } from "@flash-ship/ecom-ui/components/button";
@@ -16,14 +24,26 @@ import { trpc } from "../../../lib/trpc";
 import { zodResolver } from "../../../lib/zodResolver";
 
 type FormValues = {
+  /** Email tài khoản cần khôi phục mật khẩu */
   email: string;
 };
 
+/**
+ * Component trang Quên Mật Khẩu
+ */
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { languageId: currentLocale } = useI18n();
+
+  /** State ghi nhận trạng thái đã gửi yêu cầu thành công */
   const [submitted, setSubmitted] = useState(false);
 
+  /** State kích hoạt hiệu ứng rung (Shake Animation) khi có lỗi */
+  const [isShaking, setIsShaking] = useState(false);
+
+  /**
+   * Zod Schema validate định dạng Email
+   */
   const schema = useMemo(
     () =>
       z.object({
@@ -47,8 +67,13 @@ export default function ForgotPasswordPage() {
 
   const { isSubmitting } = formState;
 
+  /** Mutation tRPC gửi yêu cầu quên mật khẩu */
   const forgotMutation = trpc.customer.auth.forgotPassword.useMutation({
     onSuccess: () => setSubmitted(true),
+    onError: () => {
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 400);
+    },
   });
 
   const handleClose = () => router.push("/auth/login");
@@ -57,14 +82,15 @@ export default function ForgotPasswordPage() {
     forgotMutation.mutate({ email: data.email });
   };
 
+  // Trường hợp đã gửi yêu cầu thành công: Hiển thị màn hình thông báo kiểm tra Hòm thư Email
   if (submitted) {
     return (
       <AuthCard icon={<Lock className="w-4.5 h-4.5" />} onClose={handleClose} showSupport>
-        <div className="text-center flex flex-col items-center gap-3 select-none">
+        <div className="text-center flex flex-col items-center gap-3 select-none py-2">
           <h1 className="text-xl font-bold text-foreground mt-1">
             {translate("customerAuth.forgotPassword.checkEmailTitle", currentLocale)}
           </h1>
-          <p className="text-sm font-semibold text-muted-foreground max-w-[280px] leading-relaxed">
+          <p className="text-xs sm:text-sm font-semibold text-muted-foreground max-w-[290px] leading-relaxed">
             {translate("customerAuth.forgotPassword.checkEmailDesc", currentLocale)}
           </p>
         </div>
@@ -80,57 +106,66 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <AuthCard
-      title={translate("customerAuth.forgotPassword.title", currentLocale)}
-      description={translate("customerAuth.forgotPassword.desc", currentLocale)}
-      icon={<Lock className="w-4.5 h-4.5" />}
-      onClose={handleClose}
-      showSupport
-    >
-      {/* Error banner */}
-      {forgotMutation.error && (
-        <div className="rounded-xl border border-rose-100 dark:border-rose-950/50 bg-rose-50 dark:bg-rose-950/20 px-4 py-3 text-xs font-semibold text-rose-600 dark:text-rose-400">
-          {forgotMutation.error.message}
-        </div>
-      )}
+    <div className={isShaking ? "animate-shake w-full" : "w-full"}>
+      <AuthCard
+        title={translate("customerAuth.forgotPassword.title", currentLocale)}
+        description={translate("customerAuth.forgotPassword.desc", currentLocale)}
+        icon={<Lock className="w-4.5 h-4.5" />}
+        onClose={handleClose}
+        showSupport
+      >
+        {/* Banner thông báo lỗi nếu có */}
+        {forgotMutation.error && (
+          <div
+            role="alert"
+            className="rounded-xl border border-rose-200/60 dark:border-rose-950/50 bg-rose-50/90 dark:bg-rose-950/40 px-4 py-3 text-xs font-semibold text-rose-600 dark:text-rose-400 animate-in fade-in-0 duration-200"
+          >
+            {forgotMutation.error.message}
+          </div>
+        )}
 
-      {/* Email form */}
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <Controller
-          name="email"
-          control={control}
-          render={({ field, fieldState }) => (
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="forgot-email" className="text-xs font-bold text-muted-foreground">
-                {translate("customerAuth.forgotPassword.emailLabel", currentLocale)}
-              </Label>
-              <Input
-                {...field}
-                id="forgot-email"
-                type="email"
-                placeholder={translate(
-                  "customerAuth.forgotPassword.emailPlaceholder",
-                  currentLocale,
+        {/* Form nhập Email nhận link đặt lại mật khẩu */}
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <Controller
+            name="email"
+            control={control}
+            render={({ field, fieldState }) => (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="forgot-email" className="text-xs font-bold text-muted-foreground">
+                  {translate("customerAuth.forgotPassword.emailLabel", currentLocale)}
+                </Label>
+                <Input
+                  {...field}
+                  id="forgot-email"
+                  type="email"
+                  placeholder={translate(
+                    "customerAuth.forgotPassword.emailPlaceholder",
+                    currentLocale,
+                  )}
+                  className="w-full bg-background/50 focus-visible:ring-2 focus-visible:ring-primary/40 transition-all duration-200"
+                  aria-invalid={!!fieldState.error}
+                />
+                {fieldState.error && (
+                  <p className="text-xs text-destructive font-medium">{fieldState.error.message}</p>
                 )}
-                className="w-full bg-background/50"
-                aria-invalid={!!fieldState.error}
-              />
-              {fieldState.error && (
-                <p className="text-xs text-destructive font-medium">{fieldState.error.message}</p>
-              )}
-            </div>
-          )}
-        />
+              </div>
+            )}
+          />
 
-        <Button type="submit" disabled={isSubmitting} className="w-full mt-2">
-          {isSubmitting && (
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
-          )}
-          {isSubmitting
-            ? translate("customerAuth.forgotPassword.buttonLoading", currentLocale)
-            : translate("customerAuth.forgotPassword.buttonLabel", currentLocale)}
-        </Button>
-      </form>
-    </AuthCard>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full mt-2 h-11 text-sm font-semibold rounded-xl transition-all shadow-md active:scale-[0.99] cursor-pointer"
+          >
+            {isSubmitting && (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
+            )}
+            {isSubmitting
+              ? translate("customerAuth.forgotPassword.buttonLoading", currentLocale)
+              : translate("customerAuth.forgotPassword.buttonLabel", currentLocale)}
+          </Button>
+        </form>
+      </AuthCard>
+    </div>
   );
 }

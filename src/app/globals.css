@@ -214,3 +214,24 @@
   max-height: 16px !important;
   object-fit: contain !important;
 }
+
+/* Hiệu ứng rung nhẹ khi báo lỗi form/OTP (Shake Animation) */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* Hiệu ứng nhấp nháy con trỏ trong ô OTP (Caret Blink Animation) */
+@keyframes caret-blink {
+  0%, 70%, 100% { opacity: 1; }
+  20%, 50% { opacity: 0; }
+}
+
+.animate-caret-blink {
+  animation: caret-blink 1.2s ease-in-out infinite;
+}

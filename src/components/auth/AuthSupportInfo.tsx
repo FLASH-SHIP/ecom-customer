@@ -1,25 +1,36 @@
-import { TelegramIcon } from "@flash-ship/ecom-ui/components/icon-component/TelegramIcon";
-import { WhatsappIcon } from "@flash-ship/ecom-ui/components/icon-component/WhatsappIcon";
+"use client";
+
+/**
+ * @file AuthSupportInfo.tsx
+ * @description Component hiển thị hotline hỗ trợ (+84 934 024 337 & +84 852 763 445) nằm phía dưới Card giao diện chuẩn Figma.
+ * 
+ * 100% Code Comment & Ghi chú bằng Tiếng Việt.
+ */
+
+import { Phone, Send } from "lucide-react";
 
 export function AuthSupportInfo() {
   return (
-    <div className="flex items-center justify-center gap-4 border-t border-border pt-4 mt-1 select-none">
+    <div className="flex items-center justify-center gap-4 py-1 select-none">
+      {/* Hotline 1 */}
       <a
-        href="https://t.me/+84943024337"
-        target="_blank"
-        rel="noreferrer"
-        className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground hover:text-foreground transition-colors"
+        href="tel:+84934024337"
+        className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 hover:text-[#008094] transition-colors"
       >
-        <TelegramIcon />
-        <span>+84 943 024 337</span>
+        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <Phone className="w-3 h-3" />
+        </span>
+        <span>+84 934 024 337</span>
       </a>
+
+      {/* Hotline 2 */}
       <a
-        href="https://wa.me/84852763445"
-        target="_blank"
-        rel="noreferrer"
-        className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground hover:text-foreground transition-colors"
+        href="tel:+84852763445"
+        className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 hover:text-[#008094] transition-colors"
       >
-        <WhatsappIcon />
+        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white">
+          <Send className="w-3 h-3" />
+        </span>
         <span>+84 852 763 445</span>
       </a>
     </div>
