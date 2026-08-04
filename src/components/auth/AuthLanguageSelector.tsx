@@ -3,7 +3,8 @@
 /**
  * @file AuthLanguageSelector.tsx
  * @description Component chuyển đổi ngôn ngữ dạng Pill Toggle Switcher (`EN` | `VN`) chuẩn Figma.
- * Hiển thị ảnh lá cờ bằng Next.js Image component thông qua hàm `getIconFlagByLocale`.
+ * Hiển thị ảnh lá cờ bằng Next.js Image component thông qua hàm `getIconFlagByLocale`,
+ * và áp dụng hiệu ứng bóng `shadow-[0_1px_2px_-1px_rgba(0,0,0,0.1),0_1px_3px_0_rgba(0,0,0,0.1)]` khi active chuẩn thiết kế Figma.
  * 
  * 100% Code Comment & Ghi chú bằng Tiếng Việt.
  */
@@ -31,15 +32,22 @@ export function AuthLanguageSelector() {
     return "/assets/icons/flags/flag-us.svg";
   };
 
+  /**
+   * Lớp CSS shadow khi nút ngôn ngữ ở trạng thái Active chuẩn thông số Figma:
+   * Drop shadow 1: X=0, Y=1, Blur=2, Spread=-1
+   * Drop shadow 2: X=0, Y=1, Blur=3, Spread=0
+   */
+  const activeShadowClass = "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-[0_1px_2px_-1px_rgba(0,0,0,0.1),0_1px_3px_0_rgba(0,0,0,0.1)]";
+
   return (
-    <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200/60 dark:border-slate-700/60 select-none">
+    <div className="flex items-center bg-[#F5F5F5] dark:bg-slate-800 !p-[3px] rounded-lg select-none">
       {/* Nút Tiếng Anh (EN) */}
       <button
         type="button"
         onClick={() => changeLanguage("en")}
         className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
           currentLocale === "en"
-            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs"
+            ? activeShadowClass
             : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
         }`}
       >
@@ -59,7 +67,7 @@ export function AuthLanguageSelector() {
         onClick={() => changeLanguage("vi")}
         className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
           currentLocale === "vi"
-            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs"
+            ? activeShadowClass
             : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
         }`}
       >
