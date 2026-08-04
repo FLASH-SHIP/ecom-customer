@@ -95,7 +95,9 @@ export interface ReceiverSectionProps {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export function ReceiverSection({
+import React from "react";
+
+export const ReceiverSection = React.memo(function ReceiverSection({
   control,
   register,
   errors,
@@ -507,4 +509,4 @@ export function ReceiverSection({
       </div>
     </div>
   );
-}
+});

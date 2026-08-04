@@ -64,7 +64,9 @@ export interface PackageInfoSectionProps {
   savedPackages: SavedPackage[];
 }
 
-export function PackageInfoSection({
+import React from "react";
+
+export const PackageInfoSection = React.memo(function PackageInfoSection({
   control,
   register,
   errors,
@@ -249,28 +251,42 @@ export function PackageInfoSection({
             {/* Dimensions */}
             <Field>
               <FieldLabel>
-                {translate("customerOrder.single.packageDimensionsCm", currentLocale)}{" "}
-                <span className="text-destructive ml-0.5">*</span>
+                {translate("customerOrder.single.packageDimensionsCm", currentLocale)}
               </FieldLabel>
               <div className="flex items-center gap-2">
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder={translate("customerOrder.placeholder.length", currentLocale)}
-                  {...registerParent("length")}
+                  {...registerParent("length", {
+                    onChange: (e) => {
+                      e.target.value = e.target.value.replace(/[^0-9.]/g, "");
+                    },
+                  })}
                   className={cn(errorsParent.length && "border-destructive")}
                 />
                 <span className="text-muted-foreground">×</span>
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder={translate("customerOrder.placeholder.width", currentLocale)}
-                  {...registerParent("width")}
+                  {...registerParent("width", {
+                    onChange: (e) => {
+                      e.target.value = e.target.value.replace(/[^0-9.]/g, "");
+                    },
+                  })}
                   className={cn(errorsParent.width && "border-destructive")}
                 />
                 <span className="text-muted-foreground">×</span>
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder={translate("customerOrder.placeholder.height", currentLocale)}
-                  {...registerParent("height")}
+                  {...registerParent("height", {
+                    onChange: (e) => {
+                      e.target.value = e.target.value.replace(/[^0-9.]/g, "");
+                    },
+                  })}
                   className={cn(errorsParent.height && "border-destructive")}
                 />
               </div>
@@ -285,10 +301,16 @@ export function PackageInfoSection({
               <div className="flex gap-2">
                 <Input
                   id="package-weight"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   required
-                  placeholder="0.00"
-                  {...registerParent("weight")}
+                  placeholder="0"
+                  {...registerParent("weight", {
+                    onChange: (e) => {
+                      e.target.value = e.target.value.replace(/[^0-9]/g, "");
+                    },
+                  })}
                   className={cn(
                     "w-2/3 bg-background/50",
                     errorsParent.weight && "border-destructive",
@@ -349,4 +371,4 @@ export function PackageInfoSection({
       </div>
     </div>
   );
-}
+});

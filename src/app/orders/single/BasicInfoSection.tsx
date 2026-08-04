@@ -30,7 +30,9 @@ export interface BasicInfoSectionProps {
   errors: FieldErrors<OrderFormValues>;
 }
 
-export function BasicInfoSection({ control, register, errors }: BasicInfoSectionProps) {
+import React from "react";
+
+export const BasicInfoSection = React.memo(function BasicInfoSection({ control, register, errors }: BasicInfoSectionProps) {
   const { languageId: currentLocale } = useI18n();
 
   return (
@@ -145,4 +147,4 @@ export function BasicInfoSection({ control, register, errors }: BasicInfoSection
       </div>
     </div>
   );
-}
+});

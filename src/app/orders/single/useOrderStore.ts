@@ -12,7 +12,7 @@ interface OrderStoreState {
     appliedRateCardId?: string;
   } | null;
   values: {
-    shippingMethod: "EXPRESS" | "EPACKET";
+    shippingMethod: "EXPRESS" | "EPACKET" | "";
     shippingOrigin: string;
     detailDescription: string;
     declaredValue: string;
@@ -62,7 +62,7 @@ interface OrderStoreState {
 }
 
 const initialValues: OrderStoreState["values"] = {
-  shippingMethod: "EPACKET",
+  shippingMethod: "",
   shippingOrigin: "HAN",
   detailDescription: "",
   declaredValue: "",
