@@ -2,25 +2,21 @@
 
 /**
  * @file AuthSocialLogins.tsx
- * @description Component hàng nút Đăng Nhập Mạng Xã Hội (Google, Facebook) chuẩn y hệt Figma.
- * Tích hợp tự động dịch đa ngôn ngữ cho dòng phân cách "OR CONTINUE WITH" / "HOẶC TIẾP TỤC VỚI".
+ * @description Component hàng nút Đăng Nhập Mạng Xã Hội (Apple, Google, Facebook) chuẩn y hệt Figma.
  * 
  * 100% Code Comment & Ghi chú bằng Tiếng Việt.
  */
 
-import { translate } from "@flash-ship/ecom-i18n";
-import { useI18n } from "@ecom/shared/@i18n";
 import { GoogleIcon } from "@flash-ship/ecom-ui/components/icon-component/GoogleIcon";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 
 export function AuthSocialLogins() {
-  const { languageId: currentLocale } = useI18n();
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
 
   /**
    * Xử lý gọi đăng nhập Social Provider qua NextAuth
-   * @param provider Tên nhà cung cấp (google, facebook)
+   * @param provider Tên nhà cung cấp (google, facebook, apple)
    */
   const handleSocialLogin = async (provider: string) => {
     try {
@@ -37,16 +33,16 @@ export function AuthSocialLogins() {
 
   return (
     <div className="flex flex-col gap-3.5 w-full select-none">
-      {/* Thanh phân cách: OR CONTINUE WITH / HOẶC TIẾP TỤC VỚI */}
+      {/* Thanh phân cách: OR CONTINUE WITH */}
       <div className="flex items-center gap-3 w-full">
         <div className="flex-1 h-[1px] bg-slate-200 dark:bg-slate-800" />
-        <span className="text-xs tracking-wider text-[#737373] dark:text-slate-500 uppercase font-medium">
-          {translate("customerAuth.login.orContinueWith", currentLocale)}
+        <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase">
+          OR CONTINUE WITH
         </span>
         <div className="flex-1 h-[1px] bg-slate-200 dark:bg-slate-800" />
       </div>
 
-      {/* Hàng nút Đăng nhập Mạng Xã Hội chuẩn Figma (Google, Facebook) */}
+      {/* Hàng 3 nút Đăng nhập Mạng Xã Hội chuẩn Figma (Apple, Google, Facebook) */}
       <div className="grid grid-cols-2 gap-2.5 w-full">
         {/* Nút Google */}
         <button

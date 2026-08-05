@@ -25,6 +25,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import { useToast } from "./toast-provider";
 import { trpc } from "../lib/trpc";
 import { CustomerSidebar } from "./CustomerSidebar";
+import { TermsAndConditionsModal } from "./auth/TermsAndConditionsModal";
 
 interface CustomerDashboardLayoutProps {
   children: ReactNode;
@@ -58,10 +59,15 @@ export function CustomerDashboardLayout({ children }: CustomerDashboardLayoutPro
   }, []);
 
   // Fetch real-time customer profile
-  const { data: profile, error: profileError } = trpc.customer.auth.me.useQuery(undefined, {
+  const { data: profile, error: profileError, refetch: refetchProfile } = trpc.customer.auth.me.useQuery(undefined, {
     enabled: status === "authenticated",
     retry: false,
   });
+
+  // Kiểm tra tài khoản đã chấp nhận điều khoản dịch vụ (is_terms_accepted) hay chưa (bao gồm cả luồng SSO Google/Facebook)
+  const isTermsAcceptedPending = Boolean(
+    status === "authenticated" && profile && (profile as any).isTermsAccepted === false
+  );
 
   // LƯU Ý BẢO TRÌ (HEADER WALLET BALANCE):
   // Truy vấn số dư ví thực tế từ Hệ Thống Ví Độc Lập qua endpoint /payment-api/account/info (thông qua TRPC getWalletSummary).
@@ -75,7 +81,7 @@ export function CustomerDashboardLayout({ children }: CustomerDashboardLayoutPro
     ? `$${walletSummary.accountBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     : "$0.00";
 
-  // Handle expired sessions / tokens by signing out and redirecting to login page
+  // Handle expired sessions
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/auth/login");
@@ -295,6 +301,21 @@ export function CustomerDashboardLayout({ children }: CustomerDashboardLayoutPro
         <div className="flex flex-1 flex-col min-w-0 relative">
           <main className="flex flex-1 flex-col p-4 md:p-6">{children}</main>
         </div>
+
+        {/* Modal Bắt Buộc Đồng Ý Điều Khoản Dịch Vụ Cho Cả Luồng SSO (Google/Facebook) */}
+        {isTermsAcceptedPending && profile && (
+          <TermsAndConditionsModal
+            isOpen={isTermsAcceptedPending}
+            customerId={profile.id}
+            onClose={() => {
+              // Nếu người dùng đóng Modal khi chưa đồng ý, tiến hành Đăng xuất để bảo đảm an toàn
+              signOut({ callbackUrl: "/auth/login" });
+            }}
+            onSuccess={() => {
+              refetchProfile();
+            }}
+          />
+        )}
       </div>
     </div>
   );

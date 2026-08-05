@@ -23,6 +23,7 @@ export default auth((req) => {
 
   // NextAuth v5 session check - req.auth contains the validated JWT session
   const isLoggedIn = !!req.auth?.user;
+  const isTermsAccepted = (req.auth?.user as any)?.isTermsAccepted ?? true;
 
   // Protected routes check
   const isProtectedRoute =
@@ -32,18 +33,32 @@ export default auth((req) => {
     normalizedPath.startsWith("orders") ||
     normalizedPath.startsWith("developer");
 
-  if (isProtectedRoute && !isLoggedIn) {
-    const loginUrl = req.nextUrl.clone();
-    loginUrl.pathname = "/auth/login";
-    return NextResponse.redirect(loginUrl);
+  if (isProtectedRoute) {
+    if (!isLoggedIn) {
+      const loginUrl = req.nextUrl.clone();
+      loginUrl.pathname = "/auth/login";
+      return NextResponse.redirect(loginUrl);
+    }
+    // Edge Middleware Security Enforcement:
+    // If terms are not accepted (isTermsAccepted === false), block access to protected routes
+    // and redirect to /auth/login so the TermsAndConditionsModal opens on the Auth Page.
+    if (!isTermsAccepted) {
+      const loginUrl = req.nextUrl.clone();
+      loginUrl.pathname = "/auth/login";
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   if (normalizedPath.startsWith("auth/") || normalizedPath === "auth") {
-    // If accessing auth page but already logged in, redirect to dashboard
+    // If accessing auth page but already logged in:
+    // ONLY redirect to /dashboard if terms ARE accepted (isTermsAccepted === true).
+    // If terms are NOT accepted (isTermsAccepted === false), stay on /auth/login to display TermsAndConditionsModal.
     if (isLoggedIn && !normalizedPath.startsWith("auth/logout")) {
-      const dashboardUrl = req.nextUrl.clone();
-      dashboardUrl.pathname = "/dashboard";
-      return NextResponse.redirect(dashboardUrl);
+      if (isTermsAccepted) {
+        const dashboardUrl = req.nextUrl.clone();
+        dashboardUrl.pathname = "/dashboard";
+        return NextResponse.redirect(dashboardUrl);
+      }
     }
   }
 

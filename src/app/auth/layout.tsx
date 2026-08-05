@@ -18,7 +18,7 @@ export const metadata: Metadata = {
  */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center md:justify-end overflow-x-hidden bg-slate-100 dark:bg-slate-950 py-8 px-4 md:px-12 lg:pr-24 xl:pr-32 selection:bg-[#008094] selection:text-white">
+    <div className="relative min-h-screen w-full flex items-center justify-center md:justify-end overflow-x-hidden bg-slate-100 dark:bg-slate-950 py-8 px-4 md:px-12 lg:pr-24 xl:pr-32 2xl:pr-[300px] selection:bg-[#008094] selection:text-white">
       {/* Hình ảnh nền dùng chung phủ toàn bộ viewport phía sau */}
       <div className="fixed inset-0 z-0 pointer-events-none select-none">
         <Image
@@ -35,7 +35,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       {/* Cụm Container chứa Floating Card bên phải màn hình */}
-      <main className="relative z-10 w-full max-w-[420px] sm:max-w-[440px] flex flex-col gap-3 my-auto animate-in fade-in-0 duration-300">
+      <main className="relative z-10 w-full max-w-[420px] sm:max-w-[440px] xl:max-w-[500px] flex flex-col gap-3 my-auto animate-in fade-in-0 duration-300">
         {children}
       </main>
     </div>

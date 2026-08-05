@@ -3,6 +3,8 @@ import type React from "react";
 import { AuthLanguageSelector } from "./AuthLanguageSelector";
 import { AuthLogo } from "./AuthLogo";
 import { AuthSocialLogins } from "./AuthSocialLogins";
+import NextLink from "next/link";
+import { TelegramIcon, ZaloIcon } from "@flash-ship/ecom-ui/components/icons";
 
 /**
  * Interface Props cấu hình cho AuthCard
@@ -44,39 +46,60 @@ export function AuthCard({
   footer,
 }: AuthCardProps) {
   return (
-    <Card className="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xl rounded-2xl p-6 sm:p-8 flex flex-col gap-5 sm:gap-6 relative">
-      {/* Header Row: Logo ở góc trái & Nút chọn Ngôn ngữ ở góc phải */}
-      {(showLogo || showLanguageSelector) && (
-        <div className="flex items-center justify-between w-full select-none mb-1">
-          {showLogo ? <AuthLogo /> : <div />}
-          {showLanguageSelector && <AuthLanguageSelector />}
-        </div>
-      )}
+    <div className={'flex flex-col gap-4 2xl:gap-6'}>
+      <Card className="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xl rounded-[8px] p-6 sm:p-8 flex flex-col gap-5 sm:gap-6 relative">
+        {/* Header Row: Logo ở góc trái & Nút chọn Ngôn ngữ ở góc phải */}
+        {(showLogo || showLanguageSelector) && (
+          <div className="flex items-center justify-between w-full select-none mb-1">
+            {showLogo ? <AuthLogo /> : <div />}
+            {showLanguageSelector && <AuthLanguageSelector />}
+          </div>
+        )}
 
-      {/* Tiêu đề & Mô tả căn giữa chuẩn Figma */}
-      {(title || description) && (
-        <div className="flex flex-col items-center justify-center text-center gap-1.5 px-2">
-          {title && (
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              {title}
-            </h1>
-          )}
-          {description && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium max-w-[320px] leading-relaxed">
-              {description}
-            </p>
-          )}
-        </div>
-      )}
+        {/* Tiêu đề & Mô tả căn giữa chuẩn Figma */}
+        {(title || description) && (
+          <div className="flex flex-col items-center justify-center text-center">
+            {title && (
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                {title}
+              </h1>
+            )}
+            {description && (
+              <div className="text-base text-[#262626] leading-relaxed">
+                {description}
+              </div>
+            )}
+          </div>
+        )}
 
-      {/* 1. Form nhập dữ liệu */}
-      <div className="flex flex-col gap-4 w-full">{children}</div>
+        {/* 1. Form nhập dữ liệu */}
+        <div className="flex flex-col gap-4 w-full">{children}</div>
 
-      {/* 2. Cụm Đăng Nhập Mạng Xã Hội (Social Logins) */}
-      {showSocials && <AuthSocialLogins />}
+        {/* 2. Cụm Đăng Nhập Mạng Xã Hội (Social Logins) */}
+        {showSocials && <AuthSocialLogins />}
 
-      {/* 3. Dòng chuyển hướng Footer ("Don't have an account? Sign up") ĐẶT CHÍNH XÁC VỊ TRÍ DƯỚI 3 NÚT SOCIAL LOGIN */}
-      {footer && <div className="pt-1 text-center w-full">{footer}</div>}
-    </Card>
+        {/* 3. Dòng chuyển hướng Footer ("Don't have an account? Sign up") ĐẶT CHÍNH XÁC VỊ TRÍ DƯỚI 3 NÚT SOCIAL LOGIN */}
+        {footer && <div className="pt-1 text-center w-full">{footer}</div>}
+      </Card>
+
+      <div className={'flex flex-col sm:flex-row items-center justify-center gap-2.5 text-[#0A0A0A] font-semibold text-sm 2xl:text-base'}>
+        <NextLink
+          href={`https://zalo.me/+84934024337`}
+          title={'contact-zalo'}
+          target={'_blank'}
+          className={'flex items-center gap-1'}
+        >
+          <ZaloIcon /> +84 934 024 337
+        </NextLink>
+        <NextLink
+          href={`https://t.me/+84852763445`}
+          title={'contact-telegram'}
+          target={'_blank'}
+          className={'flex items-center gap-1'}
+        >
+          <TelegramIcon /> +84 852 763 445
+        </NextLink>
+      </div>
+    </div>
   );
 }

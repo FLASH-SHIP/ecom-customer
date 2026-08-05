@@ -16,11 +16,13 @@ import { Input } from "@flash-ship/ecom-ui/components/input";
 import { Label } from "@flash-ship/ecom-ui/components/label";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { AuthCard } from "../../../components/auth/AuthCard";
+import { TermsAndConditionsModal } from "../../../components/auth/TermsAndConditionsModal";
+import { trpc } from "../../../lib/trpc";
 import { zodResolver } from "../../../lib/zodResolver";
 
 /**
@@ -38,6 +40,7 @@ type FormValues = {
  */
 export default function LoginPage() {
   const router = useRouter();
+  const { status, update } = useSession();
   const { languageId: currentLocale } = useI18n();
 
   /** State lưu thông báo lỗi khi đăng nhập thất bại */
@@ -45,6 +48,26 @@ export default function LoginPage() {
 
   /** State quản lý kích hoạt hiệu ứng rung (Shake Animation) khi đăng nhập sai */
   const [isShaking, setIsShaking] = useState<boolean>(false);
+
+  // Truy vấn thông tin profile người dùng hiện tại khi đã đăng nhập qua SSO (Google / Facebook)
+  const { data: profile, refetch: refetchProfile } = trpc.customer.auth.me.useQuery(undefined, {
+    enabled: status === "authenticated",
+    retry: false,
+  });
+
+  const isTermsPending = Boolean(
+    status === "authenticated" && profile && (profile as any).isTermsAccepted === false
+  );
+
+  // Nếu người dùng đã đăng nhập và ĐÃ đồng ý điều khoản ➔ Tự động chuyển hướng vào Dashboard
+  useEffect(() => {
+    if (status === "authenticated" && profile && (profile as any).isTermsAccepted === true) {
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("just_logged_in", "true");
+        window.location.replace("/dashboard");
+      }
+    }
+  }, [status, profile]);
 
   /**
    * Tải trước JavaScript bundle cho trang `/dashboard` ngay khi component mount
@@ -229,6 +252,25 @@ export default function LoginPage() {
           </Button>
         </form>
       </AuthCard>
+
+      {/* Modal Bắt Buộc Đồng Ý Điều Khoản Dịch Vụ Nổi Trên Nền Auth Page chuẩn 100% Ảnh Mẫu */}
+      {isTermsPending && profile && (
+        <TermsAndConditionsModal
+          isOpen={isTermsPending}
+          customerId={profile.id}
+          onClose={() => {
+            signOut({ callbackUrl: "/auth/login" });
+          }}
+          onSuccess={async () => {
+            await refetchProfile();
+            await update({ isTermsAccepted: true });
+            if (typeof window !== "undefined") {
+              sessionStorage.setItem("just_logged_in", "true");
+              window.location.replace("/dashboard");
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -97,7 +97,7 @@ export default function ForgotPasswordPage() {
 
         <NextLink
           href="/auth/login"
-          className="flex w-full items-center justify-center rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 h-11 text-sm font-semibold shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-center mt-3"
+          className="flex w-full items-center justify-center h-10 2xl:h-12 text-sm 2xl:text-base font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 h-11 text-sm font-semibold shadow-sm transition-all hover:shadow-md active:translate-y-0 text-center"
         >
           {translate("customerAuth.forgotPassword.backToLogin", currentLocale)}
         </NextLink>
@@ -113,6 +113,7 @@ export default function ForgotPasswordPage() {
         icon={<Lock className="w-4.5 h-4.5" />}
         onClose={handleClose}
         showSupport
+        showSocials={false}
       >
         {/* Banner thông báo lỗi nếu có */}
         {forgotMutation.error && (
@@ -125,13 +126,13 @@ export default function ForgotPasswordPage() {
         )}
 
         {/* Form nhập Email nhận link đặt lại mật khẩu */}
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 xl:gap-6">
           <Controller
             name="email"
             control={control}
             render={({ field, fieldState }) => (
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="forgot-email" className="text-xs font-bold text-muted-foreground">
+                <Label htmlFor="forgot-email" className="text-sm 2xl:text-base font-medium text-[#0A0A0A]">
                   {translate("customerAuth.forgotPassword.emailLabel", currentLocale)}
                 </Label>
                 <Input
@@ -142,7 +143,7 @@ export default function ForgotPasswordPage() {
                     "customerAuth.forgotPassword.emailPlaceholder",
                     currentLocale,
                   )}
-                  className="w-full bg-background/50 focus-visible:ring-2 focus-visible:ring-primary/40 transition-all duration-200"
+                  className="w-full bg-background/50 focus-visible:ring-2 focus-visible:ring-primary/40 transition-all duration-200 h-10 2xl:h-12 rounded-md text-xs sm:text-sm "
                   aria-invalid={!!fieldState.error}
                 />
                 {fieldState.error && (
@@ -152,18 +153,27 @@ export default function ForgotPasswordPage() {
             )}
           />
 
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full mt-2 h-11 text-sm font-semibold rounded-xl transition-all shadow-md active:scale-[0.99] cursor-pointer"
-          >
-            {isSubmitting && (
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
-            )}
-            {isSubmitting
-              ? translate("customerAuth.forgotPassword.buttonLoading", currentLocale)
-              : translate("customerAuth.forgotPassword.buttonLabel", currentLocale)}
-          </Button>
+          <div className={'flex flex-col sm:flex-row items-center justify-between gap-2.5 lg:gap-4'}>
+            <Button
+              disabled={isSubmitting}
+              className="w-full h-10 2xl:h-12 text-sm 2xl:text-base font-medium bg-white hover:bg-slate-50 text-[#0A0A0A] border border-[#D4D4D4] rounded-md shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] transition-all active:scale-[0.99] cursor-pointer"
+              onClick={() => router.back()}
+            >
+              {translate("customerAuth.forgotPassword.buttonLabelBack", currentLocale)}
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full h-10 2xl:h-12 text-sm 2xl:text-base font-medium rounded-md transition-all active:scale-[0.99] cursor-pointer"
+            >
+              {isSubmitting && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
+              )}
+              {isSubmitting
+                ? translate("customerAuth.forgotPassword.buttonLoading", currentLocale)
+                : translate("customerAuth.forgotPassword.buttonLabelSendResetLink", currentLocale)}
+            </Button>
+          </div>
         </form>
       </AuthCard>
     </div>

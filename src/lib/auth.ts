@@ -104,7 +104,7 @@ const nextAuth: NextAuthResult = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger, session }) {
       const isSocialProvider =
         account?.provider &&
         account.provider !== "credentials" &&
@@ -139,6 +139,7 @@ const nextAuth: NextAuthResult = NextAuth({
               token.accessToken = backendAccessToken;
               token.refreshToken = backendRefreshToken;
               token.tokenVersion = backendUser.tokenVersion ?? 1;
+              token.isTermsAccepted = Boolean(backendUser.isTermsAccepted);
             }
           } else {
             console.error(
@@ -157,7 +158,13 @@ const nextAuth: NextAuthResult = NextAuth({
         token.accessToken = (user as { accessToken?: string }).accessToken;
         token.refreshToken = (user as { refreshToken?: string }).refreshToken;
         token.tokenVersion = (user as { tokenVersion?: number }).tokenVersion ?? 1;
+        token.isTermsAccepted = (user as any).isTermsAccepted ?? true;
       }
+
+      if (trigger === "update" && (session as any)?.isTermsAccepted !== undefined) {
+        token.isTermsAccepted = Boolean((session as any).isTermsAccepted);
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -170,6 +177,7 @@ const nextAuth: NextAuthResult = NextAuth({
       if (token?.refreshToken) {
         (session as any).refreshToken = token.refreshToken;
       }
+      (session.user as any).isTermsAccepted = token.isTermsAccepted ?? true;
       return session;
     },
   },
