@@ -384,7 +384,7 @@ export function TermsAndConditionsModal({
               type="button"
               variant="outline"
               onClick={onClose}
-              className="px-5 h-10 text-xs sm:text-sm font-semibold border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
+              className="px-5 w-30 h-10 text-sm font-medium rounded-md shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] border border-[#D4D4D4] dark:border-slate-700 text-[#0A0A0A] dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
               {translate("customerAuth.termsModal.cancel", currentLocale)}
             </Button>
@@ -393,11 +393,7 @@ export function TermsAndConditionsModal({
               type="button"
               disabled={!isAgreedChecked || acceptTermsMutation.isPending}
               onClick={handleAgree}
-              className={`px-6 h-10 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
-                isAgreedChecked
-                  ? "bg-gradient-to-r from-[#0F798C] to-[#008094] hover:from-[#006677] hover:to-[#006677] text-white shadow-[0_4px_14px_0_rgba(15,121,140,0.39)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
-                  : "bg-[#0F798C] dark:bg-slate-800 text-[#FAFAFA] dark:text-slate-500 cursor-not-allowed"
-              }`}
+              className="px-5 w-30 h-10 text-sm font-medium rounded-md text-white transition-all duration-300 ease-in-out bg-[#008094] hover:bg-[#006677] disabled:bg-[#008094]/35 disabled:text-white/60 disabled:shadow-none disabled:cursor-not-allowed shadow-[0_4px_14px_0_rgba(0,128,148,0.25)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] cursor-pointer"
             >
               {acceptTermsMutation.isPending && (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />

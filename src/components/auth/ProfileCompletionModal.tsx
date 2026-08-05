@@ -342,13 +342,13 @@ export function ProfileCompletionModal({
                   <Label className="text-sm 2xl:text-base font-medium text-[#0A0A0A]">
                     {translate("customerAuth.profileModal.countryLabel", currentLocale)} <span className="text-rose-500">*</span>
                   </Label>
-                  <div className="flex items-center gap-2 px-3.5 h-10 2xl:h-12 bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-md text-[#0A0A0A] text-sm 2xl:text-base select-none">
+                  <div className="flex items-center gap-2 px-3.5 h-10 2xl:h-12 bg-[#F5F5F5] dark:bg-zinc-900 border border-[#E5E5E5] dark:border-zinc-800 rounded-md text-[#0A0A0A] text-sm 2xl:text-base select-none shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]">
                     <Image
                       src="/assets/icons/flags/flag-vn.svg"
                       alt="Vietnam Flag"
                       width={20}
                       height={14}
-                      className="rounded-sm object-cover shrink-0"
+                      className="object-cover shrink-0"
                     />
                     <span className="font-medium truncate">{translate("customerAuth.profileModal.countryVietnam", currentLocale)}</span>
                   </div>

@@ -21,11 +21,12 @@ export default auth((req) => {
   const cleanPathname = pathname;
   const normalizedPath = cleanPathname.startsWith("/") ? cleanPathname.slice(1) : cleanPathname;
 
-  // NextAuth v5 session check - req.auth contains the validated JWT session
+  // Kiểm tra phiên đăng nhập NextAuth v5 - req.auth chứa JWT session đã qua xác thực
   const isLoggedIn = !!req.auth?.user;
-  const isTermsAccepted = (req.auth?.user as any)?.isTermsAccepted ?? true;
+  /** Trạng thái chấp nhận điều khoản dịch vụ (mặc định false nếu chưa xác nhận) */
+  const isTermsAccepted = (req.auth?.user as any)?.isTermsAccepted ?? false;
 
-  // Protected routes check
+  // Danh sách các tuyến đường bắt buộc bảo mật (Protected routes)
   const isProtectedRoute =
     normalizedPath.startsWith("dashboard") ||
     normalizedPath.startsWith("profile") ||
@@ -34,14 +35,17 @@ export default auth((req) => {
     normalizedPath.startsWith("developer");
 
   if (isProtectedRoute) {
+    /** 1. Nếu chưa đăng nhập -> Chuyển hướng về màn hình đăng nhập /auth/login */
     if (!isLoggedIn) {
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = "/auth/login";
       return NextResponse.redirect(loginUrl);
     }
-    // Edge Middleware Security Enforcement:
-    // If terms are not accepted (isTermsAccepted === false), block access to protected routes
-    // and redirect to /auth/login so the TermsAndConditionsModal opens on the Auth Page.
+    /**
+     * 2. Kiểm Tra Bảo Mật Cấp Edge Server:
+     * Nếu chưa chấp nhận điều khoản (isTermsAccepted === false), chặn đứng việc truy cập trang bảo mật
+     * và chuyển hướng về /auth/login để hiển thị Modal xác nhận điều khoản dịch vụ.
+     */
     if (!isTermsAccepted) {
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = "/auth/login";
@@ -50,9 +54,11 @@ export default auth((req) => {
   }
 
   if (normalizedPath.startsWith("auth/") || normalizedPath === "auth") {
-    // If accessing auth page but already logged in:
-    // ONLY redirect to /dashboard if terms ARE accepted (isTermsAccepted === true).
-    // If terms are NOT accepted (isTermsAccepted === false), stay on /auth/login to display TermsAndConditionsModal.
+    /**
+     * Nếu đang truy cập trang Auth nhưng đã đăng nhập:
+     * CHỈ tự động điều hướng vào /dashboard khi ĐÃ chấp nhận điều khoản (isTermsAccepted === true).
+     * Nếu CHƯA chấp nhận điều khoản, cho phép ở lại /auth/login để hiển thị Modal xác nhận.
+     */
     if (isLoggedIn && !normalizedPath.startsWith("auth/logout")) {
       if (isTermsAccepted) {
         const dashboardUrl = req.nextUrl.clone();

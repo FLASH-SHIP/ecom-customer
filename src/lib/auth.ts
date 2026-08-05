@@ -104,24 +104,35 @@ const nextAuth: NextAuthResult = NextAuth({
     }),
   ],
   callbacks: {
+    /**
+     * Callback JWT được gọi khi phiên làm việc được tạo mới hoặc cập nhật.
+     * Xử lý đồng bộ dữ liệu người dùng Đăng nhập Mạng xã hội (Social SSO: Google, Facebook)
+     * với hệ thống Backend API và lưu mã mã hóa phiên JWT.
+     */
     async jwt({ token, user, account, trigger, session }) {
+      /** Cờ kiểm tra nếu yêu cầu đăng nhập đến từ các nhà cung cấp SSO (Google, Facebook) */
       const isSocialProvider =
         account?.provider &&
         account.provider !== "credentials" &&
         (account.provider === "google" || account.provider === "facebook");
 
-      if (isSocialProvider && user?.email) {
+      if (isSocialProvider) {
         try {
           const apiUrl = env.NEXT_PUBLIC_API_URL;
+          /** Tự động tạo email fallback định dạng ID nếu tài khoản Facebook/Google không cung cấp email */
+          const userEmail = user?.email || `${account.providerAccountId}@${account.provider}.com`;
+          const userName = user?.name || userEmail.split("@")[0];
+
+          /** Gọi API Backend đồng bộ thông tin tài khoản Social SSO */
           const res = await fetch(`${apiUrl}/api/v1/customer/auth/social-login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               provider: account.provider,
-              providerId: user.id || account.providerAccountId,
-              email: user.email,
-              name: user.name || user.email,
-              avatarUrl: user.image || undefined,
+              providerId: account.providerAccountId || user?.id,
+              email: userEmail,
+              name: userName,
+              avatarUrl: user?.image || undefined,
             }),
           });
 
@@ -135,10 +146,11 @@ const nextAuth: NextAuthResult = NextAuth({
             if (backendUser) {
               token.id = String(backendUser.id);
               token.email = backendUser.email;
-              token.name = backendUser.name || user.name;
+              token.name = backendUser.name || user?.name;
               token.accessToken = backendAccessToken;
               token.refreshToken = backendRefreshToken;
               token.tokenVersion = backendUser.tokenVersion ?? 1;
+              /** Đồng bộ trạng thái chấp nhận điều khoản dịch vụ (isTermsAccepted) từ Database */
               token.isTermsAccepted = Boolean(backendUser.isTermsAccepted);
             }
           } else {
@@ -154,19 +166,25 @@ const nextAuth: NextAuthResult = NextAuth({
           );
         }
       } else if (user) {
+        /** Xử lý cho đăng nhập thông thường qua Email / Mật khẩu */
         token.id = user.id;
         token.accessToken = (user as { accessToken?: string }).accessToken;
         token.refreshToken = (user as { refreshToken?: string }).refreshToken;
         token.tokenVersion = (user as { tokenVersion?: number }).tokenVersion ?? 1;
-        token.isTermsAccepted = (user as any).isTermsAccepted ?? true;
+        token.isTermsAccepted = (user as any).isTermsAccepted ?? false;
       }
 
+      /** Xử lý sự kiện cập nhật phiên làm việc từ Client (ví dụ sau khi đồng ý điều khoản dịch vụ) */
       if (trigger === "update" && (session as any)?.isTermsAccepted !== undefined) {
         token.isTermsAccepted = Boolean((session as any).isTermsAccepted);
       }
 
       return token;
     },
+    /**
+     * Callback session truyền các thông số mở rộng (id, accessToken, refreshToken, isTermsAccepted)
+     * từ JWT token ra đối tượng session ở Client.
+     */
     async session({ session, token }) {
       if (token?.id) {
         session.user.id = token.id as string;
@@ -177,7 +195,7 @@ const nextAuth: NextAuthResult = NextAuth({
       if (token?.refreshToken) {
         (session as any).refreshToken = token.refreshToken;
       }
-      (session.user as any).isTermsAccepted = token.isTermsAccepted ?? true;
+      (session.user as any).isTermsAccepted = token.isTermsAccepted ?? false;
       return session;
     },
   },
