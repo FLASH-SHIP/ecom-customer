@@ -25,12 +25,17 @@ function handleUnauthorized(error: any) {
     errMsg.includes("invalid token");
 
   if (isUnauthorized && typeof window !== "undefined") {
-    // Clear NextAuth session token cookies instantly from browser
-    document.cookie =
-      "ecom-customer.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie =
-      "__Secure-ecom-customer.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    signOut({ callbackUrl: "/auth/login" });
+    // Thêm cờ __is_signing_out ngăn chặn việc gọi trùng lặp signOut nhiều lần đồng thời gây lặp vô hạn
+    if (!(window as any).__is_signing_out) {
+      (window as any).__is_signing_out = true;
+      document.cookie =
+        "ecom-customer.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie =
+        "__Secure-ecom-customer.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      signOut({ callbackUrl: "/auth/login" }).finally(() => {
+        delete (window as any).__is_signing_out;
+      });
+    }
   }
   return isUnauthorized;
 }
