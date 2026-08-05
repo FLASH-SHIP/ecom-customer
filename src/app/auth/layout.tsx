@@ -22,7 +22,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       {/* Hình ảnh nền dùng chung phủ toàn bộ viewport phía sau */}
       <div className="fixed inset-0 z-0 pointer-events-none select-none">
         <Image
-          src="/assets/images/auth/background2.jpg"
+          src="/assets/images/auth/background.jpg"
           alt="Background Ecom Auth"
           fill
           priority
