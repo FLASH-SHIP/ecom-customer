@@ -23,20 +23,28 @@ export function getCustomerSessionCookieName(useSecureCookies: boolean): string 
   return useSecureCookies ? "__Secure-ecom-customer.session-token" : "ecom-customer.session-token";
 }
 
+const isExplicitHttp =
+  typeof process !== "undefined" &&
+  ((process.env.NEXTAUTH_URL && process.env.NEXTAUTH_URL.startsWith("http://")) ||
+    (process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL.startsWith("http://")));
+
+const useSecureCookies = env.NODE_ENV === "production" && !isExplicitHttp;
+
 const nextAuth: NextAuthResult = NextAuth({
   secret: env.AUTH_SECRET,
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/auth/login",
   },
   cookies: {
     sessionToken: {
-      name: getCustomerSessionCookieName(env.NODE_ENV === "production"),
+      name: getCustomerSessionCookieName(useSecureCookies),
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: env.NODE_ENV === "production",
+        secure: useSecureCookies,
       },
     },
   },
