@@ -157,7 +157,7 @@ export function TermsAndConditionsModal({
             >
               {translate("customerAuth.termsModal.title", currentLocale)}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+            <p className="text-sm text-[#262626] font-semibold">
               {translate("customerAuth.termsModal.subtitle", currentLocale)}
             </p>
           </div>
@@ -193,7 +193,7 @@ export function TermsAndConditionsModal({
                 className={`flex items-center px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   activeTab === "credit"
                     ? "bg-[#E6F4F6] text-[#008094] shadow-[0_2px_10px_rgba(0,128,148,0.12)] border-l-0 md:border-l-4 border-[#008094]"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800"
+                    : "text-[#404040] dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800"
                 }`}
               >
                 {translate("customerAuth.termsModal.tabs.credit", currentLocale)}
@@ -205,7 +205,7 @@ export function TermsAndConditionsModal({
                 className={`flex items-center px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   activeTab === "transportation"
                     ? "bg-[#E6F4F6] text-[#008094] shadow-[0_2px_10px_rgba(0,128,148,0.12)] border-l-0 md:border-l-4 border-[#008094]"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800"
+                    : "text-[#404040] dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800"
                 }`}
               >
                 {translate("customerAuth.termsModal.tabs.transportation", currentLocale)}
@@ -217,7 +217,7 @@ export function TermsAndConditionsModal({
                 className={`flex items-center px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   activeTab === "appendix"
                     ? "bg-[#E6F4F6] text-[#008094] shadow-[0_2px_10px_rgba(0,128,148,0.12)] border-l-0 md:border-l-4 border-[#008094]"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800"
+                    : "text-[#404040] dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800"
                 }`}
               >
                 {translate("customerAuth.termsModal.tabs.appendix", currentLocale)}
@@ -229,7 +229,7 @@ export function TermsAndConditionsModal({
                 className={`flex items-center px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   activeTab === "trade"
                     ? "bg-[#E6F4F6] text-[#008094] shadow-[0_2px_10px_rgba(0,128,148,0.12)] border-l-0 md:border-l-4 border-[#008094]"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800"
+                    : "text-[#404040] dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800"
                 }`}
               >
                 {translate("customerAuth.termsModal.tabs.trade", currentLocale)}
@@ -246,17 +246,17 @@ export function TermsAndConditionsModal({
                 key={activeTab}
                 className="animate-in fade-in-30 slide-in-from-bottom-2 duration-200 space-y-4"
               >
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
+                <span className="text-xs font-medium uppercase tracking-wider text-[#737373]">
                   {typeof currentSection.sectionCode === "string"
                     ? currentSection.sectionCode
                     : currentSection.sectionCode[langKey]}
                 </span>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 border-b border-slate-200 dark:border-slate-800 pb-2">
+                <h3 className="text-lg font-bold text-[#0F172B] border-b border-slate-200 dark:border-slate-800 pb-2">
                   {currentSection.title[langKey]}
                 </h3>
 
                 {currentSection.description && (
-                  <p className="text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400 font-normal">
+                  <p className="text-xs sm:text-sm leading-relaxed text-[#262626] dark:text-slate-400 font-normal">
                     {renderFormattedText(currentSection.description[langKey])}
                   </p>
                 )}
@@ -307,7 +307,7 @@ export function TermsAndConditionsModal({
                                 {letterStr}
                               </span>
                             )}
-                            <span className="flex-1 text-slate-600 dark:text-slate-400">
+                            <span className="flex-1 text-[#262626] dark:text-slate-400">
                               {renderFormattedText(item[langKey])}
                             </span>
                           </li>
@@ -326,7 +326,7 @@ export function TermsAndConditionsModal({
                           className="space-y-2"
                         >
                           {clause.title && (
-                            <h4 className="font-bold text-slate-900 dark:text-slate-100 uppercase mb-1">
+                            <h4 className="font-bold text-[#262626] dark:text-slate-100 uppercase mb-1">
                               {clause.title[langKey]}
                             </h4>
                           )}
@@ -338,7 +338,7 @@ export function TermsAndConditionsModal({
                             }
                           >
                             {clause.content && (
-                              <p className="text-slate-600 dark:text-slate-400">
+                              <p className="text-[#262626] dark:text-slate-400">
                                 {renderFormattedText(clause.content[langKey])}
                               </p>
                             )}
@@ -365,13 +365,13 @@ export function TermsAndConditionsModal({
           {/* Checkbox Đồng Ý Nội Dung Điều Khoản */}
           <label
             htmlFor="terms-agree-checkbox"
-            className="flex items-start gap-3 cursor-pointer select-none text-xs text-slate-600 dark:text-slate-300 max-w-xl"
+            className="flex items-start gap-3 cursor-pointer select-none text-xs text-[#0A0A0A] dark:text-slate-300 max-w-xl"
           >
             <Checkbox
               id="terms-agree-checkbox"
               checked={isAgreedChecked}
               onCheckedChange={(checked) => setIsAgreedChecked(!!checked)}
-              className="mt-0.5 border-slate-300 data-[state=checked]:bg-[#008094] data-[state=checked]:border-[#008094]"
+              className="mt-0.5 w-5 h-5 border-slate-300 data-[state=checked]:bg-[#008094] data-[state=checked]:border-[#008094]"
             />
             <span>
               {translate("customerAuth.termsModal.agreeCheckbox", currentLocale)}
@@ -396,7 +396,7 @@ export function TermsAndConditionsModal({
               className={`px-6 h-10 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
                 isAgreedChecked
                   ? "bg-gradient-to-r from-[#0F798C] to-[#008094] hover:from-[#006677] hover:to-[#006677] text-white shadow-[0_4px_14px_0_rgba(15,121,140,0.39)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
-                  : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                  : "bg-[#0F798C] dark:bg-slate-800 text-[#FAFAFA] dark:text-slate-500 cursor-not-allowed"
               }`}
             >
               {acceptTermsMutation.isPending && (
