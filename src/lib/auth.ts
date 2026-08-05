@@ -95,6 +95,7 @@ const nextAuth: NextAuthResult = NextAuth({
             accessToken,
             refreshToken,
             tokenVersion: user.tokenVersion ?? 1,
+            isTermsAccepted: (user as any).isTermsAccepted ?? true,
           };
         } catch (error) {
           console.error("NextAuth customer authorize error:", error);
@@ -171,7 +172,7 @@ const nextAuth: NextAuthResult = NextAuth({
         token.accessToken = (user as { accessToken?: string }).accessToken;
         token.refreshToken = (user as { refreshToken?: string }).refreshToken;
         token.tokenVersion = (user as { tokenVersion?: number }).tokenVersion ?? 1;
-        token.isTermsAccepted = (user as any).isTermsAccepted ?? false;
+        token.isTermsAccepted = (user as any).isTermsAccepted ?? true;
       }
 
       /** Xử lý sự kiện cập nhật phiên làm việc từ Client (ví dụ sau khi đồng ý điều khoản dịch vụ) */
@@ -195,7 +196,8 @@ const nextAuth: NextAuthResult = NextAuth({
       if (token?.refreshToken) {
         (session as any).refreshToken = token.refreshToken;
       }
-      (session.user as any).isTermsAccepted = token.isTermsAccepted ?? false;
+      (session.user as any).isTermsAccepted =
+        token.isTermsAccepted !== undefined ? Boolean(token.isTermsAccepted) : true;
       return session;
     },
   },

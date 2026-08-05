@@ -23,8 +23,8 @@ export default auth((req) => {
 
   // Kiểm tra phiên đăng nhập NextAuth v5 - req.auth chứa JWT session đã qua xác thực
   const isLoggedIn = !!req.auth?.user;
-  /** Trạng thái chấp nhận điều khoản dịch vụ (mặc định false nếu chưa xác nhận) */
-  const isTermsAccepted = (req.auth?.user as any)?.isTermsAccepted ?? false;
+  /** Trạng thái chấp nhận điều khoản dịch vụ (mặc định true nếu chưa bị đánh dấu false) */
+  const isTermsAccepted = (req.auth?.user as any)?.isTermsAccepted ?? true;
 
   // Danh sách các tuyến đường bắt buộc bảo mật (Protected routes)
   const isProtectedRoute =

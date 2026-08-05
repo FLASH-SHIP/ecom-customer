@@ -81,19 +81,12 @@ export function CustomerDashboardLayout({ children }: CustomerDashboardLayoutPro
     ? `$${walletSummary.accountBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     : "$0.00";
 
-  // Handle expired sessions
+  // Xử lý chuyển hướng khi phiên đăng nhập hết hiệu lực (unauthenticated)
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/auth/login");
-    } else if (status === "authenticated" && (profile === null || profileError)) {
-      if (typeof window !== "undefined") {
-        sessionStorage.clear();
-      }
-      document.cookie = "ecom-customer.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "__Secure-ecom-customer.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      signOut({ callbackUrl: "/auth/login" });
     }
-  }, [status, profile, profileError, router]);
+  }, [status, router]);
 
   // Show welcome toast on successful login (Credentials & SSO)
   useEffect(() => {
