@@ -156,11 +156,11 @@ export default function LoginPage() {
         showLanguageSelector
         showSocials
         footer={
-          <p className="text-center text-xs font-semibold text-slate-500 dark:text-slate-400 select-none">
+          <p className="text-center text-sm 2xl:text-base font-medium text-[#262626] select-none">
             {translate("customerAuth.login.dontHaveAccount", currentLocale)}{" "}
             <NextLink
               href="/auth/register"
-              className="font-bold text-[#008094] hover:underline transition-colors"
+              className="font-medium text-[#4F46E5] hover:underline transition-colors"
             >
               {translate("customerAuth.login.signUp", currentLocale)}
             </NextLink>
@@ -185,7 +185,7 @@ export default function LoginPage() {
             control={control}
             render={({ field, fieldState }) => (
               <div className="flex flex-col gap-1">
-                <Label htmlFor="login-identifier" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <Label htmlFor="login-identifier" className="text-sm 2xl:text-base font-medium text-[#0A0A0A]">
                   {translate("customerAuth.login.emailLabel", currentLocale)}
                 </Label>
                 <Input
@@ -194,7 +194,7 @@ export default function LoginPage() {
                   type="text"
                   autoComplete="username"
                   placeholder={translate("customerAuth.login.emailPlaceholder", currentLocale)}
-                  className="w-full bg-slate-50/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 h-10.5 rounded-xl text-xs sm:text-sm focus-visible:ring-2 focus-visible:ring-[#008094]/30 focus-visible:border-[#008094]"
+                  className="w-full bg-slate-50/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 h-10 2xl:h-12 rounded-md text-sm 2xl:text-base focus-visible:ring-2 focus-visible:ring-[#008094]/30 focus-visible:border-[#008094]"
                   aria-invalid={!!fieldState.error}
                 />
                 {fieldState.error && (
@@ -210,7 +210,7 @@ export default function LoginPage() {
             control={control}
             render={({ field, fieldState }) => (
               <div className="flex flex-col gap-1">
-                <Label htmlFor="login-password" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <Label htmlFor="login-password" className="text-sm 2xl:text-base font-medium text-[#0A0A0A]">
                   {translate("customerAuth.login.passwordLabel", currentLocale)}
                 </Label>
                 <Input
@@ -219,7 +219,7 @@ export default function LoginPage() {
                   type="password"
                   autoComplete="current-password"
                   placeholder={translate("customerAuth.login.passwordPlaceholder", currentLocale)}
-                  className="w-full bg-slate-50/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 h-10.5 rounded-xl text-xs sm:text-sm focus-visible:ring-2 focus-visible:ring-[#008094]/30 focus-visible:border-[#008094]"
+                  className="w-full bg-slate-50/60 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 h-10 2xl:h-12 rounded-md text-sm 2xl:text-base focus-visible:ring-2 focus-visible:ring-[#008094]/30 focus-visible:border-[#008094]"
                   aria-invalid={!!fieldState.error}
                 />
                 {fieldState.error && (
@@ -233,7 +233,7 @@ export default function LoginPage() {
           <div className="flex justify-end -mt-0.5">
             <NextLink
               href="/auth/forgot-password"
-              className="text-xs font-semibold text-[#008094] hover:underline transition-colors select-none"
+              className="text-sm font-medium text-[#4F46E5] hover:underline transition-colors select-none"
             >
               {translate("customerAuth.login.forgotPassword", currentLocale)}
             </NextLink>
@@ -243,7 +243,7 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full mt-1.5 h-11 text-xs sm:text-sm font-bold bg-[#008094] hover:bg-[#006e80] text-white rounded-xl transition-all shadow-md active:scale-[0.99] cursor-pointer"
+            className="w-full h-10 2xl:h-12 text-sm 2xl:text-base font-bold bg-[#008094] hover:bg-[#006e80] text-white rounded-md transition-all shadow-md active:scale-[0.99] cursor-pointer"
           >
             {isSubmitting && (
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />

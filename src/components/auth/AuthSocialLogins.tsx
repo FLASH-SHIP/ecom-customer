@@ -7,11 +7,14 @@
  * 100% Code Comment & Ghi chú bằng Tiếng Việt.
  */
 
+import { translate } from "@flash-ship/ecom-i18n";
+import { useI18n } from "@ecom/shared/@i18n";
 import { GoogleIcon } from "@flash-ship/ecom-ui/components/icon-component/GoogleIcon";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 
 export function AuthSocialLogins() {
+  const { languageId: currentLocale } = useI18n();
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
 
   /**
@@ -36,8 +39,8 @@ export function AuthSocialLogins() {
       {/* Thanh phân cách: OR CONTINUE WITH */}
       <div className="flex items-center gap-3 w-full">
         <div className="flex-1 h-[1px] bg-slate-200 dark:bg-slate-800" />
-        <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase">
-          OR CONTINUE WITH
+        <span className="text-xs text-[#737373] uppercase">
+          {translate("customerAuth.login.orContinueWith", currentLocale)}
         </span>
         <div className="flex-1 h-[1px] bg-slate-200 dark:bg-slate-800" />
       </div>
