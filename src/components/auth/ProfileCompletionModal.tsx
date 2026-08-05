@@ -3,17 +3,7 @@
 /**
  * @file ProfileCompletionModal.tsx
  * @description Modal Hoàn Thiện Hồ Sơ Cá Nhân (Complete Personal Profile Modal)
- * Khôi phục chuẩn 100% tất cả các style CSS tùy chỉnh do bạn thiết kế:
- * - text-[#232323], text-[#262626], text-[#0A0A0A]
- * - rounded-md, h-10 2xl:h-12, text-sm 2xl:text-base, !gap-6
- * - px-5 2xl:px-6 (Header & Body), p-5 2xl:p-6 (Footer)
- * - Header/Footer cố định, body scroll y, rounded-[8px] không border-b header
- * - Lá cờ Việt Nam NextImage SVG (`/assets/icons/flags/flag-vn.svg`)
- * - SearchableSelect cho City & Ward (logic chuẩn 100% với màn order/single SenderSection)
- * - Bỏ auto-select cho Zipcode, DOB (`dd/mm/yyyy`), Gender (bắt buộc user tự chọn/nhập)
- * - Sender address & Contact information viết thường không uppercase
- * - Nút Continue disabled khi chưa đủ thông tin required
- * - Đa ngôn ngữ (i18n) toàn bộ
+ * Khôi phục 100% chuẩn CSS từ bản git commit của bạn (text-sm text-[#262626], py-5 2xl:py-6, disabled:bg-[#0F798C] disabled:text-white, comment Skip button).
  */
 
 import { translate } from "@flash-ship/ecom-i18n";
@@ -103,7 +93,7 @@ export function ProfileCompletionModal({
         .max(30, {
           message: translate("customerAuth.profileModal.validation.usernameMax", currentLocale),
         })
-        .regex(/^[a-z0-9_.]{3,30}$/, {
+        .regex(/^[a-zA-Z0-9_.]{3,30}$/, {
           message: translate("customerAuth.profileModal.validation.usernameInvalid", currentLocale),
         }),
       dob: z
@@ -135,7 +125,7 @@ export function ProfileCompletionModal({
     setValue,
     reset,
     watch,
-    formState: { errors, isValid },
+    formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: "onChange",
@@ -216,18 +206,22 @@ export function ProfileCompletionModal({
     }
   }, [watchedFormWard, wardsData]);
 
-  const isFormFilledAndValid = Boolean(
-    isValid &&
+  // Kiểm tra thời gian thực (real-time) xem form đã nhập đủ và đúng tất cả các trường required hay chưa
+  const isFormFilledAndValid = useMemo(() => {
+    const isFieldsPresent = Boolean(
       watchedValues.senderName?.trim() &&
-      watchedValues.senderPhone?.trim() &&
-      watchedValues.senderAddress?.trim() &&
-      watchedValues.senderCity?.trim() &&
-      watchedValues.senderWard?.trim() &&
-      watchedValues.senderZipCode?.trim() &&
-      watchedValues.username?.trim() &&
-      watchedValues.dob?.trim() &&
-      watchedValues.gender
-  );
+        watchedValues.senderPhone?.trim() &&
+        watchedValues.senderAddress?.trim() &&
+        watchedValues.senderCity?.trim() &&
+        watchedValues.senderWard?.trim() &&
+        watchedValues.senderZipCode?.trim() &&
+        watchedValues.username?.trim() &&
+        watchedValues.dob?.trim() &&
+        (watchedValues.gender === "male" || watchedValues.gender === "female" || watchedValues.gender === "other")
+    );
+    if (!isFieldsPresent) return false;
+    return schema.safeParse(watchedValues).success;
+  }, [watchedValues, schema]);
 
   // Khởi tạo các giá trị ban đầu khi mở Modal
   useEffect(() => {
@@ -428,7 +422,7 @@ export function ProfileCompletionModal({
                         onValueChange={field.onChange}
                         onOptionSelect={(opt) => setSelectedCityLabel(opt.label)}
                         options={provinceOptions}
-                        placeholder={translate("customerAuth.profileModal.selectPlaceholder", currentLocale)}
+                        placeholder={translate("customerAuth.profileModal.selectCityPlaceholder", currentLocale)}
                         searchPlaceholder={translate("customerAuth.profileModal.searchCityPlaceholder", currentLocale)}
                         allowClear
                         maxHeight="250px"
@@ -458,7 +452,7 @@ export function ProfileCompletionModal({
                         onValueChange={field.onChange}
                         onOptionSelect={(opt) => setSelectedWardLabel(opt.label)}
                         options={wardOptions}
-                        placeholder={translate("customerAuth.profileModal.selectPlaceholder", currentLocale)}
+                        placeholder={translate("customerAuth.profileModal.selectWardPlaceholder", currentLocale)}
                         searchPlaceholder={translate("customerAuth.profileModal.searchWardPlaceholder", currentLocale)}
                         disabled={!selectedProvinceCode}
                         allowClear
@@ -602,7 +596,7 @@ export function ProfileCompletionModal({
             <Button
               type="submit"
               disabled={!isFormFilledAndValid || isSubmitting}
-              className="px-7 h-10 2xl:h-12 text-sm 2xl:text-base font-bold bg-[#85BFC3] hover:bg-[#6FAFB3] disabled:bg-[#0F798C] disabled:text-white disabled:shadow-none disabled:cursor-not-allowed text-white rounded-md shadow-md transition-all active:scale-[0.99] cursor-pointer"
+              className="px-7 h-10 2xl:h-12 text-sm 2xl:text-base font-bold bg-[#0F798C] disabled:bg-[#0F798C] disabled:text-white disabled:shadow-none disabled:cursor-not-allowed text-white rounded-md shadow-md transition-all active:scale-[0.99] cursor-pointer"
             >
               {isSubmitting && (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
