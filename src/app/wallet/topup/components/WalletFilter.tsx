@@ -207,7 +207,7 @@ export default function WalletFilter({
           type="button"
           variant="outline"
           onClick={handleClearAll}
-          className="px-4 gap-2 border-[#F5222D] rounded-lg bg-white dark:bg-zinc-900 shadow-xs !text-[#F5222D] font-medium hover:bg-rose-50/60 dark:hover:bg-rose-950/30 cursor-pointer transition-colors h-11"
+          className="px-4 gap-2 border-[#F5222D] rounded-lg bg-white dark:bg-zinc-900 shadow-xs !text-[#F5222D] font-medium hover:bg-rose-50/60 dark:hover:bg-rose-950/30 cursor-pointer transition-colors h-10"
         >
           <X className="h-4 w-4 text-[#F5222D]" />
           <span>{translate("customerWallet.filter.clearAll", currentLocale)}</span>
@@ -223,7 +223,7 @@ export default function WalletFilter({
           variant="outline"
           onClick={onExport}
           disabled={isExporting}
-          className="px-6 gap-2 border-[#DADADA] hover:border-[#22843A] rounded-[10px] bg-white hover:bg-[#EBFAEF] hover:text-[#22843A] shadow-xs text-[#232323] font-medium cursor-pointer transition-all duration-200 disabled:opacity-50 h-11"
+          className="px-6 gap-2 border-[#DADADA] hover:border-[#22843A] rounded-[10px] bg-white hover:bg-[#EBFAEF] hover:text-[#22843A] shadow-xs text-[#232323] font-medium cursor-pointer transition-all duration-200 disabled:opacity-50 h-10"
         >
           {isExporting ? (
             <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#0F798C] border-t-transparent" />

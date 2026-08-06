@@ -35,17 +35,11 @@ export default auth((req) => {
     normalizedPath.startsWith("developer");
 
   if (isProtectedRoute) {
-    /** 1. Nếu chưa đăng nhập -> Chuyển hướng về màn hình đăng nhập /auth/login */
     if (!isLoggedIn) {
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = "/auth/login";
       return NextResponse.redirect(loginUrl);
     }
-    /**
-     * 2. Kiểm Tra Bảo Mật Cấp Edge Server:
-     * Nếu chưa chấp nhận điều khoản (isTermsAccepted === false), chặn đứng việc truy cập trang bảo mật
-     * và chuyển hướng về /auth/login để hiển thị Modal xác nhận điều khoản dịch vụ.
-     */
     if (!isTermsAccepted) {
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = "/auth/login";
@@ -54,11 +48,6 @@ export default auth((req) => {
   }
 
   if (normalizedPath.startsWith("auth/") || normalizedPath === "auth") {
-    /**
-     * Nếu đang truy cập trang Auth nhưng đã đăng nhập:
-     * CHỈ tự động điều hướng vào /dashboard khi ĐÃ chấp nhận điều khoản (isTermsAccepted === true).
-     * Nếu CHƯA chấp nhận điều khoản, cho phép ở lại /auth/login để hiển thị Modal xác nhận.
-     */
     if (isLoggedIn && !normalizedPath.startsWith("auth/logout")) {
       if (isTermsAccepted) {
         const dashboardUrl = req.nextUrl.clone();
