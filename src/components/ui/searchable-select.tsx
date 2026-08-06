@@ -64,7 +64,7 @@ const OptionItem = React.memo(function OptionItem({
           <img
             src={opt.image}
             alt={opt.label}
-            className="size-7 shrink-0 object-contain border-0 border-none outline-none ring-0 shadow-none bg-transparent rounded-none"
+            className="size-5.5 shrink-0 object-cover rounded-full overflow-hidden border-0 border-none outline-none ring-0 shadow-none bg-transparent"
           />
         )}
         {opt.icon && (
@@ -209,7 +209,7 @@ function SearchableSelect({
               <img
                 src={selectedOption.image}
                 alt={selectedOption.label}
-                className="size-7 shrink-0 object-contain border-0 border-none outline-none ring-0 shadow-none bg-transparent rounded-none"
+                className="size-5.5 shrink-0 object-cover rounded-full overflow-hidden border-0 border-none outline-none ring-0 shadow-none bg-transparent"
               />
             )}
             {selectedOption?.icon && (
