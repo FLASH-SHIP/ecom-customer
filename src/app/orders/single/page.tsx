@@ -163,9 +163,7 @@ function getOrderFormSchema(locale: string) {
           translate("customerOrder.validation.receiverCityMax50", locale),
         ),
       receiverCityName: z.string().optional(),
-      receiverState: z
-        .string()
-        .optional(),
+      receiverState: z.string().optional(),
       receiverStateName: z.string().optional(),
       receiverZipCode: z
         .string()
@@ -182,24 +180,33 @@ function getOrderFormSchema(locale: string) {
       length: z
         .string()
         .min(1, translate("customerOrder.validation.packageLengthRequired", locale))
-        .refine((val) => {
-          const num = parseFloat(val.replace(",", ".").trim());
-          return !Number.isNaN(num) && num > 0;
-        }, translate("customerOrder.validation.packageDimensionMin", locale)),
+        .refine(
+          (val) => {
+            const num = parseFloat(val.replace(",", ".").trim());
+            return !Number.isNaN(num) && num > 0;
+          },
+          translate("customerOrder.validation.packageDimensionMin", locale),
+        ),
       width: z
         .string()
         .min(1, translate("customerOrder.validation.packageWidthRequired", locale))
-        .refine((val) => {
-          const num = parseFloat(val.replace(",", ".").trim());
-          return !Number.isNaN(num) && num > 0;
-        }, translate("customerOrder.validation.packageDimensionMin", locale)),
+        .refine(
+          (val) => {
+            const num = parseFloat(val.replace(",", ".").trim());
+            return !Number.isNaN(num) && num > 0;
+          },
+          translate("customerOrder.validation.packageDimensionMin", locale),
+        ),
       height: z
         .string()
         .min(1, translate("customerOrder.validation.packageHeightRequired", locale))
-        .refine((val) => {
-          const num = parseFloat(val.replace(",", ".").trim());
-          return !Number.isNaN(num) && num > 0;
-        }, translate("customerOrder.validation.packageDimensionMin", locale)),
+        .refine(
+          (val) => {
+            const num = parseFloat(val.replace(",", ".").trim());
+            return !Number.isNaN(num) && num > 0;
+          },
+          translate("customerOrder.validation.packageDimensionMin", locale),
+        ),
       weight: z
         .string()
         .min(1, translate("customerOrder.validation.packageWeightRequired", locale))
@@ -269,7 +276,11 @@ function getOrderFormSchema(locale: string) {
         .min(1, translate("customerOrder.validation.productsMin", locale)),
     })
     .superRefine((data, ctx) => {
-      const stateVal = validateReceiverState(data.receiverCountry, data.receiverState || "", locale);
+      const stateVal = validateReceiverState(
+        data.receiverCountry,
+        data.receiverState || "",
+        locale,
+      );
       if (!stateVal.valid) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -650,7 +661,7 @@ export default function CreateSingleOrderPage() {
         dimensionHeight: parseFloatDimension(height),
         declaredValue: Number(declaredValue),
         packingTypeId: packingTypeId || null,
-        isGetLabel: Number(isGetLabel || 0),
+        isGetLabel: isGetLabel ? 1 : 0,
         products: products.map((p: OrderFormValues["products"][number]) => ({
           description: p.description,
           quantity: Number(p.quantity),
@@ -762,11 +773,18 @@ export default function CreateSingleOrderPage() {
       }
 
       clearStore();
-      const labelRes = (createRes as Record<string, unknown>)?.labelResult as { success?: boolean; error?: string; isAmbiguous?: boolean } | null;
+      const labelRes = (createRes as Record<string, unknown>)?.labelResult as {
+        success?: boolean;
+        error?: string;
+        isAmbiguous?: boolean;
+      } | null;
       if (labelRes?.error) {
         toast(`Tạo đơn hàng thành công! Nhãn tem chưa tạo được: ${labelRes.error}`, "warning");
       } else if (labelRes?.isAmbiguous) {
-        toast("Tạo đơn hàng thành công! Địa chỉ không rõ ràng (202), vui lòng chọn lại địa chỉ để tạo tem sau.", "warning");
+        toast(
+          "Tạo đơn hàng thành công! Địa chỉ không rõ ràng (202), vui lòng chọn lại địa chỉ để tạo tem sau.",
+          "warning",
+        );
       } else if (Number(isGetLabel) === 1) {
         toast("Tạo đơn hàng và mua nhãn tem thành công!", "success");
       } else {

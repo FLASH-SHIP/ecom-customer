@@ -32,6 +32,8 @@ export interface ParsedOrder {
   senderEmail: string | null;
   senderAddress: string | null;
   senderCity: string | null;
+  senderState: string | null;
+  senderWard: string | null;
   senderZipCode: string | null;
   senderCountry: string | null;
   receiverName: string;
@@ -44,12 +46,64 @@ export interface ParsedOrder {
   receiverCountry: string;
   receiverZipCode: string;
   detailDescription: string;
-  declaredWeight: number;
+  declaredWeight: number | null;
   dimensionLength: number | null;
   dimensionWidth: number | null;
   dimensionHeight: number | null;
-  declaredValue: number;
+  declaredValue: number | null;
   products: ParsedProduct[];
+}
+
+/**
+ * Normalizes country strings (e.g. "United States", "USA", "Mỹ") to ISO 2-letter codes.
+ */
+export function normalizeCountryCode(countryStr: string | null | undefined): string | null {
+  if (!countryStr) return null;
+  const clean = countryStr.trim().toLowerCase();
+  if (["us", "usa", "united states", "mỹ", "hoa kỳ", "united states of america"].includes(clean))
+    return "US";
+  if (["vn", "viet nam", "vietnam", "việt nam"].includes(clean)) return "VN";
+  if (["gb", "uk", "united kingdom", "great britain", "anh", "nước anh"].includes(clean))
+    return "GB";
+  if (["ca", "canada"].includes(clean)) return "CA";
+  if (["de", "germany", "deutschland", "đức"].includes(clean)) return "DE";
+  if (["au", "australia", "úc"].includes(clean)) return "AU";
+  if (["jp", "japan", "nhật bản", "nhat ban"].includes(clean)) return "JP";
+  if (["kr", "korea", "south korea", "hàn quốc", "han quoc"].includes(clean)) return "KR";
+  return countryStr.trim().toUpperCase();
+}
+
+/**
+ * Normalizes phone number strings by removing extra spaces, dots, dashes, parentheses.
+ */
+export function normalizePhoneNumber(phoneStr: string | null | undefined): string | null {
+  if (!phoneStr) return null;
+  const clean = phoneStr.trim().replace(/[\s\-.()]/g, "");
+  return clean || null;
+}
+
+/**
+ * Normalizes postal zipcode strings (trims, uppercase).
+ */
+export function normalizePostcode(zipStr: string | null | undefined): string | null {
+  if (!zipStr) return null;
+  const clean = zipStr.trim().toUpperCase();
+  return clean || null;
+}
+
+/**
+ * Parses numeric strings with support for Vietnamese decimal comma (e.g., "20,5" -> 20.5).
+ */
+export function parseNumberFlexible(numStr: string | null | undefined): number | null {
+  if (!numStr) return null;
+  let clean = numStr.trim();
+  if (clean.includes(",") && !clean.includes(".")) {
+    clean = clean.replace(",", ".");
+  } else if (clean.includes(".") && clean.includes(",")) {
+    clean = clean.replace(/\./g, "").replace(",", ".");
+  }
+  const parsed = parseFloat(clean);
+  return Number.isNaN(parsed) ? null : parsed;
 }
 
 /**
@@ -68,17 +122,22 @@ export function parseExcelRows(
   rawRows.forEach((row, idx) => {
     const lineNum = idx + 2; // Line 1 is the header row
 
-    // Find column values regardless of case, spaces, or language variants
-    const getVal = (vietnameseTitle: string, englishTitle: string): string => {
+    // Find column values matching any title variant regardless of case, spaces, or newline characters
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Column mapping helper searches multiple header alias variants
+    const getVal = (...titles: string[]): string => {
       for (const [key, val] of Object.entries(row)) {
         const cleanKey = key.trim().toLowerCase().replace(/\s+/g, "");
-        if (
-          cleanKey === vietnameseTitle.toLowerCase().replace(/\s+/g, "") ||
-          cleanKey === englishTitle.toLowerCase().replace(/\s+/g, "") ||
-          key.includes(vietnameseTitle) ||
-          key.includes(englishTitle)
-        ) {
-          return String(val).trim();
+        for (const title of titles) {
+          const cleanTitle = title.trim().toLowerCase().replace(/\s+/g, "");
+          if (
+            cleanKey === cleanTitle ||
+            cleanKey.includes(cleanTitle) ||
+            key.toLowerCase().includes(title.toLowerCase())
+          ) {
+            if (val !== null && val !== undefined) {
+              return String(val).trim();
+            }
+          }
         }
       }
       return "";
@@ -91,7 +150,8 @@ export function parseExcelRows(
     if (allVals.length === 0) return;
 
     const sellerOrderId =
-      getVal("Mã đơn Seller", "sellerOrderId") || `EXCEL-TEMP-${Date.now()}-${idx}`;
+      getVal("Mã đơn Seller", "sellerOrderId", "Seller Order ID") ||
+      `EXCEL-TEMP-${Date.now()}-${idx}`;
 
     // Automatically filter out placeholder sample rows
     if (sellerOrderId === "SO-2026-001" || sellerOrderId === "SO-2026-002") {
@@ -99,24 +159,25 @@ export function parseExcelRows(
       return;
     }
 
-    // Read item details
-    const itemName = getVal("Sản phẩm chi tiết", "itemName");
-    const itemQtyVal = getVal("Số lượng", "itemQty");
-    const itemPriceVal = getVal("Đơn giá", "itemPrice");
-    const itemSku = getVal("SKU", "itemSku");
-    const itemHsCode = getVal("Mã HS Code SP", "itemHsCode");
-    const itemOrigin = getVal("Xuất xứ SP", "itemOrigin");
+    // Read item details with data sanitation
+    const itemName = getVal("Sản phẩm chi tiết", "itemName", "Item Name");
+    const itemQtyVal = getVal("Số lượng", "itemQty", "Item Qty", "quantity");
+    const itemPriceVal = getVal("Đơn giá", "itemPrice", "Item Price", "price");
+    const itemSku = getVal("SKU", "itemSku", "Item SKU");
+    const itemHsCode = getVal("Mã HS Code SP", "itemHsCode", "Item HS Code", "HS Code");
+    const itemOriginRaw = getVal("Xuất xứ SP", "itemOrigin", "Item Origin", "Xuất xứ");
 
     const itemQty = itemQtyVal ? parseInt(itemQtyVal, 10) : 1;
-    const itemPrice = itemPriceVal ? parseFloat(itemPriceVal) : 0;
+    const itemPrice = parseNumberFlexible(itemPriceVal) ?? 0;
+    const itemOrigin = normalizeCountryCode(itemOriginRaw);
 
     const product: ParsedProduct = {
-      description: itemName || "Goods Item",
+      description: itemName || "",
       quantity: Number.isNaN(itemQty) ? 1 : itemQty,
-      value: Number.isNaN(itemPrice) ? 0 : itemPrice,
+      value: itemPrice,
       sku: itemSku || null,
       hsCode: itemHsCode || null,
-      originCountry: itemOrigin || "VN",
+      originCountry: itemOrigin,
       weight: null,
     };
 
@@ -126,42 +187,94 @@ export function parseExcelRows(
       existingOrder.excelRowNumbers.push(lineNum);
       existingOrder.products.push(product);
     } else {
-      const receiverName = getVal("Họ tên người nhận", "receiverName");
-      const receiverPhone = getVal("SĐT nhận", "receiverPhone");
-      const receiverEmail = getVal("Email nhận", "receiverEmail");
-      const receiverAddress1 = getVal("Địa chỉ nhận 1", "receiverAddress1");
-      const receiverAddress2 = getVal("Địa chỉ nhận 2", "receiverAddress2");
-      const receiverCity = getVal("Thành phố nhận", "receiverCity");
-      const receiverState = getVal("Bang/Tỉnh nhận", "receiverState");
-      const receiverCountry = getVal("Quốc gia nhận", "receiverCountry") || "US";
-      const receiverZipCode = getVal("Zip người nhận", "receiverZipCode");
+      const receiverName = getVal("Họ tên người nhận", "receiverName", "Receiver Name");
+      const receiverPhoneRaw = getVal("SĐT nhận", "receiverPhone", "Receiver Phone");
+      const receiverEmail = getVal("Email nhận", "receiverEmail", "Receiver Email");
+      const receiverAddress1 = getVal("Địa chỉ nhận 1", "receiverAddress1", "Receiver Address 1");
+      const receiverAddress2 = getVal("Địa chỉ nhận 2", "receiverAddress2", "Receiver Address 2");
+      const receiverCity = getVal("Thành phố nhận", "receiverCity", "Receiver City");
+      const receiverState = getVal("Bang/Tỉnh nhận", "receiverState", "Receiver State");
+      const receiverCountryRaw = getVal("Quốc gia nhận", "receiverCountry", "Receiver Country");
+      const receiverZipCodeRaw = getVal("Zip người nhận", "receiverZipCode", "Receiver Zip Code");
 
-      const senderName = getVal("Tên người gửi", "senderName");
-      const senderPhone = getVal("SĐT gửi", "senderPhone");
-      const senderEmail = getVal("Email gửi", "senderEmail");
-      const senderAddress = getVal("Địa chỉ gửi", "senderAddress");
-      const senderCity = getVal("Thành phố gửi", "senderCity");
-      const senderZipCode = getVal("Zip người gửi", "senderZipCode");
-      const senderCountry = getVal("Quốc gia gửi", "senderCountry");
+      const senderName = getVal("Tên người gửi", "senderName", "Sender Name");
+      const senderPhoneRaw = getVal("SĐT gửi", "senderPhone", "Sender Phone");
+      const senderEmail = getVal("Email gửi", "senderEmail", "Sender Email");
+      const senderAddress = getVal("Địa chỉ gửi", "senderAddress", "Sender Address");
+      const senderCity = getVal("Thành phố gửi", "senderCity", "Sender City");
+      const senderState = getVal("Bang/Tỉnh gửi", "senderState", "Sender State");
+      const senderWard = getVal("Phường/Xã gửi", "senderWard", "Sender Ward");
+      const senderZipCodeRaw = getVal("Zip người gửi", "senderZipCode", "Sender Zip Code");
+      const senderCountryRaw = getVal("Quốc gia gửi", "senderCountry", "Sender Country");
 
-      const shippingMethodVal = getVal("Dịch vụ", "shippingMethod").toUpperCase();
-      const shippingOriginVal = getVal("Kho gửi", "shippingOrigin").toUpperCase();
+      const shippingMethodVal = getVal(
+        "Dịch vụ",
+        "shippingMethod",
+        "Shipping Method",
+      ).toUpperCase();
+      const shippingOriginVal = getVal(
+        "Kho gửi",
+        "shippingOrigin",
+        "Shipping Origin",
+      ).toUpperCase();
       const shippingOrigin: ShippingOrigin =
         shippingOriginVal === "SGN" ? ShippingOrigin.SGN : ShippingOrigin.HAN;
-      const packagingCode = getVal("Loại đóng gói", "packagingCode") || "cardboard_box";
-      const detailDescription =
-        getVal("Mô tả hàng hóa", "detailDescription") || "Ecom Shipping Box";
-      const weightVal = getVal("Trọng lượng", "declaredWeight");
-      const lengthVal = getVal("Chiều dài", "dimensionLength");
-      const widthVal = getVal("Chiều rộng", "dimensionWidth");
-      const heightVal = getVal("Chiều cao", "dimensionHeight");
-      const declaredValueVal = getVal("Trị giá hàng", "declaredValue");
+      const packagingCode =
+        getVal("Loại đóng gói", "packagingCode", "Package Packaging Code") || "cardboard_box";
+      const detailDescription = getVal(
+        "Mô tả kiện hàng",
+        "Mô tả hàng hóa",
+        "Package Description",
+        "detailDescription",
+      );
+      const weightVal = getVal(
+        "Cân nặng kiện hàng",
+        "Cân nặng",
+        "Trọng lượng",
+        "Package Weight",
+        "declaredWeight",
+      );
+      const lengthVal = getVal(
+        "Dài kiện hàng",
+        "Chiều dài",
+        "Package Length",
+        "dimensionLength",
+        "length",
+      );
+      const widthVal = getVal(
+        "Rộng kiện hàng",
+        "Chiều rộng",
+        "Package Width",
+        "dimensionWidth",
+        "width",
+      );
+      const heightVal = getVal(
+        "Cao kiện hàng",
+        "Chiều cao",
+        "Package Height",
+        "dimensionHeight",
+        "height",
+      );
+      const declaredValueVal = getVal(
+        "Khai giá kiện hàng",
+        "Trị giá hàng",
+        "Khai giá",
+        "Package Declared Value",
+        "declaredValue",
+      );
 
-      const declaredWeight = weightVal ? parseInt(weightVal, 10) : 500;
-      const dimensionLength = lengthVal ? parseFloat(lengthVal) : null;
-      const dimensionWidth = widthVal ? parseFloat(widthVal) : null;
-      const dimensionHeight = heightVal ? parseFloat(heightVal) : null;
-      const declaredValue = declaredValueVal ? parseFloat(declaredValueVal) : 10;
+      const declaredWeight = parseNumberFlexible(weightVal);
+      const dimensionLength = parseNumberFlexible(lengthVal);
+      const dimensionWidth = parseNumberFlexible(widthVal);
+      const dimensionHeight = parseNumberFlexible(heightVal);
+      const declaredValue = parseNumberFlexible(declaredValueVal);
+
+      const receiverPhone = normalizePhoneNumber(receiverPhoneRaw) || receiverPhoneRaw;
+      const senderPhone = normalizePhoneNumber(senderPhoneRaw) || senderPhoneRaw;
+      const receiverZipCode = normalizePostcode(receiverZipCodeRaw) || receiverZipCodeRaw;
+      const senderZipCode = normalizePostcode(senderZipCodeRaw) || senderZipCodeRaw;
+      const receiverCountry = normalizeCountryCode(receiverCountryRaw) || receiverCountryRaw;
+      const senderCountry = normalizeCountryCode(senderCountryRaw) || senderCountryRaw;
 
       const shippingMethod: ShippingMethod =
         shippingMethodVal === "EPACKET" ? ShippingMethod.EPACKET : ShippingMethod.EXPRESS;
@@ -177,6 +290,8 @@ export function parseExcelRows(
         senderEmail: senderEmail || null,
         senderAddress: senderAddress || null,
         senderCity: senderCity || null,
+        senderState: senderState || null,
+        senderWard: senderWard || null,
         senderZipCode: senderZipCode || null,
         senderCountry: senderCountry || null,
         receiverName,
@@ -189,14 +304,15 @@ export function parseExcelRows(
         receiverCountry,
         receiverZipCode,
         detailDescription,
-        declaredWeight: Number.isNaN(declaredWeight) ? 500 : declaredWeight,
+        declaredWeight: declaredWeight && !Number.isNaN(declaredWeight) ? declaredWeight : null,
         dimensionLength:
-          dimensionLength === null || Number.isNaN(dimensionLength) ? null : dimensionLength,
+          dimensionLength !== null && !Number.isNaN(dimensionLength) ? dimensionLength : null,
         dimensionWidth:
-          dimensionWidth === null || Number.isNaN(dimensionWidth) ? null : dimensionWidth,
+          dimensionWidth !== null && !Number.isNaN(dimensionWidth) ? dimensionWidth : null,
         dimensionHeight:
-          dimensionHeight === null || Number.isNaN(dimensionHeight) ? null : dimensionHeight,
-        declaredValue: Number.isNaN(declaredValue) ? 10 : declaredValue,
+          dimensionHeight !== null && !Number.isNaN(dimensionHeight) ? dimensionHeight : null,
+        declaredValue:
+          declaredValue !== null && !Number.isNaN(declaredValue) ? declaredValue : null,
         products: [product],
       });
     }
@@ -232,7 +348,7 @@ export async function exportErrorsToExcel(
   XLSX.utils.book_append_sheet(workbook, worksheet, "Validation Errors");
 
   // Autofit column widths
-  const maxColWidth = [{ wch: 12 }, { wch: 20 }, { wch: 25 }, { wch: 60 }];
+  const maxColWidth = [{ wch: 12 }, { wch: 25 }, { wch: 25 }, { wch: 65 }];
   worksheet["!cols"] = maxColWidth;
 
   XLSX.writeFile(workbook, `Import_Errors_${fileName}_Session_${sessionId || Date.now()}.xlsx`);

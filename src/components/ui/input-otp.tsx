@@ -9,11 +9,10 @@
  * 100% Code Comment & Ghi chú bằng Tiếng Việt giúp dễ dàng bảo trì.
  */
 
+import { cn } from "@flash-ship/ecom-ui/lib/utils";
 import { OTPInput, OTPInputContext, type SlotProps } from "input-otp";
 import { Minus } from "lucide-react";
 import * as React from "react";
-
-import { cn } from "@flash-ship/ecom-ui/lib/utils";
 
 /**
  * Component InputOTP chính wrap từ thư viện `input-otp`
@@ -98,10 +97,10 @@ const InputOTPSeparator = React.forwardRef<
   React.ComponentRef<"div">,
   React.ComponentPropsWithoutRef<"div">
 >(({ ...props }, ref) => (
-  <div ref={ref} role="separator" {...props}>
+  <div ref={ref} aria-hidden="true" {...props}>
     <Minus className="size-4 text-slate-400" />
   </div>
 ));
 InputOTPSeparator.displayName = "InputOTPSeparator";
 
-export { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator };
+export { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot };
