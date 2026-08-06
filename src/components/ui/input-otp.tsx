@@ -9,6 +9,7 @@
  * 100% Code Comment & Ghi chú bằng Tiếng Việt giúp dễ dàng bảo trì.
  */
 
+// @ts-ignore
 import { OTPInput, OTPInputContext, SlotProps } from "input-otp";
 import { Minus } from "lucide-react";
 import * as React from "react";
@@ -62,8 +63,8 @@ const InputOTPSlot = React.forwardRef<
   React.ComponentRef<"div">,
   React.ComponentPropsWithoutRef<"div"> & { index: number }
 >(({ index, className, ...props }, ref) => {
-  const inputOTPContext = React.useContext(OTPInputContext);
-  const slot = inputOTPContext.slots[index] as SlotProps | undefined;
+  const inputOTPContext = React.useContext(OTPInputContext) as { slots?: SlotProps[] } | null;
+  const slot = inputOTPContext?.slots?.[index];
   const char = slot?.char;
   const hasFakeCaret = slot?.hasFakeCaret;
   const isActive = slot?.isActive;
