@@ -1,14 +1,10 @@
 "use client";
 
-import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import {
-  getShippingMethodLabel,
-  getShippingOriginLabel,
   SHIPPING_METHOD_OPTIONS,
   SHIPPING_ORIGIN_OPTIONS,
-  ShippingMethod,
-  ShippingOrigin,
 } from "@flash-ship/ecom-types";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@flash-ship/ecom-ui/components/field";
 import { Input } from "@flash-ship/ecom-ui/components/input";
@@ -46,7 +42,7 @@ export const BasicInfoSection = React.memo(function BasicInfoSection({ control, 
 
       {/* Body */}
       <div className="p-4 flex flex-col gap-4 bg-[#FDFFFF]">
-        <FieldGroup className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <FieldGroup className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Shipping Origin */}
           <Field>
             <FieldLabel>
@@ -139,6 +135,47 @@ export const BasicInfoSection = React.memo(function BasicInfoSection({ control, 
               )}
             />
             <FieldError errors={[errors.sellerOrderId]} />
+          </Field>
+
+          {/* Label Option */}
+          <Field>
+            <FieldLabel>
+              {translate("customerOrder.single.labelOption", currentLocale)}{" "}
+              <span className="text-destructive">*</span>
+            </FieldLabel>
+            <Controller
+              name="isGetLabel"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  value={field.value !== undefined ? String(field.value) : "0"}
+                  onValueChange={(val) => field.onChange(Number(val))}
+                >
+                  <SelectTrigger
+                    className={cn(
+                      "w-full bg-background/50 border-input",
+                      errors.isGetLabel && "border-destructive focus:ring-destructive",
+                    )}
+                  >
+                    <SelectValue
+                      placeholder={translate(
+                        "customerOrder.placeholder.selectLabelOption",
+                        currentLocale,
+                      )}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">
+                      {translate("customerOrder.single.getLabelLater", currentLocale)}
+                    </SelectItem>
+                    <SelectItem value="1">
+                      {translate("customerOrder.single.getLabelNow", currentLocale)}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <FieldError errors={[errors.isGetLabel]} />
           </Field>
 
           {/* Hidden inputs for auto-calculated values */}

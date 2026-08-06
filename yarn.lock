@@ -49,7 +49,7 @@ __metadata:
   dependencies:
     "@flash-ship/ecom-i18n": "portal:../ecom-shared-packages/packages/i18n"
     "@flash-ship/ecom-lib": "portal:../ecom-shared-packages/packages/lib"
-    "@flash-ship/ecom-trpc-types": "portal:../ecom-api/packages/trpc"
+    "@flash-ship/ecom-trpc-types": "portal:../ecom-shared-packages/packages/trpc-types"
     "@flash-ship/ecom-ui": "portal:../ecom-shared-packages/packages/ui"
     "@hookform/resolvers": "npm:^5.2.2"
     "@radix-ui/react-avatar": "npm:^1.1.0"
@@ -82,6 +82,7 @@ __metadata:
     date-fns: "npm:^4.4.0"
     dayjs: "npm:^1.11.21"
     exceljs: "npm:^4.4.0"
+    input-otp: "npm:^1.4.2"
     lodash: "npm:^4.18.1"
     lucide-react: "npm:^0.500.0"
     next: "npm:16.2.6"
@@ -178,9 +179,9 @@ __metadata:
   languageName: node
   linkType: soft
 
-"@flash-ship/ecom-trpc-types@portal:../ecom-api/packages/trpc::locator=%40ecom%2Fcustomer%40workspace%3A.":
+"@flash-ship/ecom-trpc-types@portal:../ecom-shared-packages/packages/trpc-types::locator=%40ecom%2Fcustomer%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@flash-ship/ecom-trpc-types@portal:../ecom-api/packages/trpc::locator=%40ecom%2Fcustomer%40workspace%3A."
+  resolution: "@flash-ship/ecom-trpc-types@portal:../ecom-shared-packages/packages/trpc-types::locator=%40ecom%2Fcustomer%40workspace%3A."
   dependencies:
     "@trpc/server": "npm:^11.1.0"
     exceljs: "npm:^4.4.0"
@@ -2774,6 +2775,16 @@ __metadata:
   version: 2.0.4
   resolution: "inherits@npm:2.0.4"
   checksum: 10c0/4e531f648b29039fb7426fb94075e6545faa1eb9fe83c29f0b6d9e7263aceb4289d2d4557db0d428188eeb449cc7c5e77b0a0b2c4e248ff2a65933a0dee49ef2
+  languageName: node
+  linkType: hard
+
+"input-otp@npm:^1.4.2":
+  version: 1.4.2
+  resolution: "input-otp@npm:1.4.2"
+  peerDependencies:
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc
+  checksum: 10c0/d3a3216a75ed832993f3f2852edd7a85c5bae30ea6d251182119120488bbf9fed7cfdd91819bcee6daff57b3cfcbca94fd16d6a7c92cee4d806c0d4fa6ff1128
   languageName: node
   linkType: hard
 
