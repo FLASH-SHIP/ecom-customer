@@ -18,13 +18,13 @@ import {
   validateSellerOrderId,
   validateSenderPhone,
 } from "@flash-ship/ecom-lib/addressValidator";
-import { ShippingMethod, ShippingOrigin } from "@flash-ship/ecom-types";
+import { type ShippingMethod, ShippingOrigin } from "@flash-ship/ecom-types";
 import { Button } from "@flash-ship/ecom-ui/components/button";
 import { Checkbox } from "@flash-ship/ecom-ui/components/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "../../../components/toast-provider";
 import { BasicInfoSummaryCard } from "../components/BasicInfoSummaryCard";
@@ -55,6 +55,7 @@ function getOrderFormSchema(locale: string) {
           translate("customerOrder.validation.shippingMethodRequired", locale),
         ),
       shippingOrigin: z.nativeEnum(ShippingOrigin),
+      isGetLabel: z.number().int().default(0),
       detailDescription: z
         .string()
         .min(1, translate("customerOrder.validation.detailDescriptionRequired", locale))
@@ -325,9 +326,9 @@ export default function CreateSingleOrderPage() {
     formState: { errors },
   } = useForm<OrderFormValues>({
     mode: "onChange",
-    resolver: zodResolver(formSchema) as any,
+    resolver: zodResolver(formSchema) as unknown as Resolver<OrderFormValues>,
     defaultValues: {
-      shippingMethod: "" as any,
+      shippingMethod: "" as ShippingMethod,
       shippingOrigin: ShippingOrigin.HAN,
       detailDescription: "",
       declaredValue: "",
@@ -611,11 +612,12 @@ export default function CreateSingleOrderPage() {
       declaredValue,
       packingTypeId,
       packageName,
+      isGetLabel,
       products,
     } = formValues;
 
     try {
-      await createOrderMutation.mutateAsync({
+      const createRes = await createOrderMutation.mutateAsync({
         shippingMethod: shippingMethod as ShippingMethod,
         shippingOrigin,
         sellerOrderId: sellerOrderId?.trim() || null,
@@ -648,7 +650,7 @@ export default function CreateSingleOrderPage() {
         dimensionHeight: parseFloatDimension(height),
         declaredValue: Number(declaredValue),
         packingTypeId: packingTypeId || null,
-        isGetLabel: isGetLabel ? 1 : 0,
+        isGetLabel: Number(isGetLabel || 0),
         products: products.map((p: OrderFormValues["products"][number]) => ({
           description: p.description,
           quantity: Number(p.quantity),
@@ -760,7 +762,16 @@ export default function CreateSingleOrderPage() {
       }
 
       clearStore();
-      toast(translate("customerOrder.validation.createOrderSuccess", currentLocale), "success");
+      const labelRes = (createRes as Record<string, unknown>)?.labelResult as { success?: boolean; error?: string; isAmbiguous?: boolean } | null;
+      if (labelRes?.error) {
+        toast(`Tạo đơn hàng thành công! Nhãn tem chưa tạo được: ${labelRes.error}`, "warning");
+      } else if (labelRes?.isAmbiguous) {
+        toast("Tạo đơn hàng thành công! Địa chỉ không rõ ràng (202), vui lòng chọn lại địa chỉ để tạo tem sau.", "warning");
+      } else if (Number(isGetLabel) === 1) {
+        toast("Tạo đơn hàng và mua nhãn tem thành công!", "success");
+      } else {
+        toast(translate("customerOrder.validation.createOrderSuccess", currentLocale), "success");
+      }
       // Refresh context cache and navigate back to list
       trpcContext.customer.orders.list.invalidate();
       router.push("/orders");
