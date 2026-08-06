@@ -69,7 +69,9 @@ const PAYMENT_METHOD_MAP: Record<string, { name: string; logo?: React.ReactNode 
 export default function MyWallet() {
   const { languageId: currentLocale } = useI18n();
 
-  const { data: walletSummary, isLoading } = trpc.customer.topup.getWalletSummary.useQuery();
+  const { data: walletSummary, isLoading } = trpc.customer.topup.getWalletSummary.useQuery(undefined, {
+    staleTime: 10_000,
+  });
 
   const formattedBalance = walletSummary
     ? `$${walletSummary.accountBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
