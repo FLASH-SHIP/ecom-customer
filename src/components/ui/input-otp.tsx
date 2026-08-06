@@ -9,8 +9,7 @@
  * 100% Code Comment & Ghi chú bằng Tiếng Việt giúp dễ dàng bảo trì.
  */
 
-// @ts-ignore
-import { OTPInput, OTPInputContext, SlotProps } from "input-otp";
+import { OTPInput, OTPInputContext, type SlotProps } from "input-otp";
 import { Minus } from "lucide-react";
 import * as React from "react";
 
