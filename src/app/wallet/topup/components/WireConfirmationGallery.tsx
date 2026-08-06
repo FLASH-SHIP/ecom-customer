@@ -52,7 +52,7 @@ export function WireConfirmationGallery({
             className="relative w-10 h-10 rounded-md overflow-hidden border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900 cursor-pointer group hover:opacity-90 transition-all focus:outline-none"
           >
             <img src={images[3]} alt="More images" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-extrabold text-lg">
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs 2xl:text-sm">
               +{remainingCount}
             </div>
           </button>
