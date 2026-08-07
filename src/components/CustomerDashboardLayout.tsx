@@ -2,28 +2,14 @@
 
 import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
-import { ThemeToggle } from "@ecom/shared/components/ThemeToggle";
-import { Button } from "@flash-ship/ecom-ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@flash-ship/ecom-ui/components/dropdown-menu";
 import { SidebarToggleIcon } from "@flash-ship/ecom-ui/components/icon-component/SidebarToggleIcon";
-import { UserAvatarIcon } from "@flash-ship/ecom-ui/components/icon-component/UserAvatarIcon";
-import { WalletSolidIcon } from "@flash-ship/ecom-ui/components/icon-component/WalletSolidIcon";
-import { MenuIcon } from "@flash-ship/ecom-ui/components/icons";
 import { cn } from "@flash-ship/ecom-ui/lib/utils";
-import { Bell, ChevronDown, LogOut, PanelLeft, User as UserIcon } from "lucide-react";
-import NextImage from "next/image";
-import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { type ReactNode, useEffect, useState } from "react";
 import { useToast } from "./toast-provider";
 import { trpc } from "../lib/trpc";
+import { CustomerHeader } from "./CustomerHeader";
 import { CustomerSidebar } from "./CustomerSidebar";
 import { TermsAndConditionsModal } from "./auth/TermsAndConditionsModal";
 
@@ -124,118 +110,17 @@ export function CustomerDashboardLayout({ children }: CustomerDashboardLayoutPro
   return (
     <div className="flex flex-col w-full min-h-screen bg-background">
       {/* Toolbar Header */}
-      <header className="sticky top-0 z-30 flex h-[72px] shrink-0 items-center justify-between border-b border-border bg-background px-6">
-        {/* Left Branding & Toggle */}
-        <div className="flex items-center gap-4">
-          <NextLink href="/dashboard" className="flex items-center">
-            {/* Desktop Long Logo */}
-            <NextImage
-              src="/assets/images/logo/ecom-express-long.svg"
-              alt="EcomExpress"
-              width={198}
-              height={38}
-              priority
-              className="hidden lg:block h-9.5 w-auto object-contain"
-            />
-            {/* Mobile Short Logo */}
-            <NextImage
-              src="/assets/images/logo/ecom-express-short.svg"
-              alt="EcomExpress"
-              width={30}
-              height={36}
-              priority
-              className="block lg:hidden h-9.5 w-auto object-contain"
-            />
-          </NextLink>
-
-          <div className={"hidden lg:block"}>
-            <Button
-              variant="ghost"
-              size="icon"
-              type="button"
-              onClick={() => (isMobile ? setMobileOpen(!mobileOpen) : setSidebarOpen(!sidebarOpen))}
-              className="flex lg:hidden cursor-pointer size-9 rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-              title="Toggle sidebar"
-            >
-              <PanelLeft className="h-[18px] w-[18px]" strokeWidth={1.8} />
-            </Button>
-          </div>
-        </div>
-
-        {/* Right Tools (Theme, Wallet, Notification, Account Dropdown) */}
-        <div className="flex items-center gap-3">
-          {/*<div className={"hidden lg:block"}>
-            <ThemeToggle storageKey="customer-theme" />
-          </div>*/}
-
-          {/* Wallet (Số dư ví tài khoản khả dụng từ hệ thống ví độc lập) */}
-          <NextLink
-            href="/wallet"
-            className="hidden lg:flex items-center gap-2 rounded-md bg-[#CFFEF9] dark:bg-teal-950/40 px-3 py-[7px] text-sm font-semibold text-[#0F798C] dark:text-teal-200 border border-transparent dark:border-teal-800/30 hover:opacity-90 transition-opacity cursor-pointer"
-          >
-            <WalletSolidIcon />
-            <span>{formattedHeaderBalance}</span>
-          </NextLink>
-
-          {/* Notification */}
-          <div className={"hidden lg:block"}>
-            <button
-              type="button"
-              className="relative flex size-9 items-center justify-center rounded-md bg-[#CFFEF9] dark:bg-teal-950/40 text-[#0F798C] dark:text-teal-200 border border-transparent dark:border-teal-800/30 hover:opacity-90 transition-opacity cursor-pointer"
-            >
-              <Bell className="size-4 shrink-0" strokeWidth={2} />
-              <span className="absolute top-1.5 right-1.5 flex h-2 w-2 rounded-full bg-red-500 ring-2 ring-background dark:ring-teal-950" />
-            </button>
-          </div>
-
-          {/* User Account Dropdown */}
-          <div className={"hidden lg:block"}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 rounded-md bg-[#CFFEF9] dark:bg-teal-950/40 px-3 py-[7px] text-sm font-semibold text-[#0F798C] dark:text-teal-200 border border-transparent dark:border-teal-800/30 hover:opacity-90 transition-opacity focus:outline-none cursor-pointer text-left"
-                >
-                  <UserAvatarIcon />
-                  <span className="truncate max-w-[120px] text-sys-primary dark:text-teal-200 font-medium">
-                    {displayName}
-                  </span>
-                  <ChevronDown className="size-3.5 text-[#0F798C] dark:text-teal-200 shrink-0" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 mt-1 z-[9999]">
-                <DropdownMenuItem asChild>
-                  <NextLink
-                    href="/profile/change-password"
-                    className="flex items-center gap-2 cursor-pointer w-full text-sm"
-                  >
-                    <UserIcon className="h-4 w-4" />
-                    {translate("customerDashboard.changePassword", currentLocale)}
-                  </NextLink>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="text-destructive focus:text-destructive cursor-pointer text-sm"
-                >
-                  <LogOut className="h-4 w-4" />
-                  {translate("customerDashboard.logout", currentLocale)}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            className="border border-sys-border rounded-md flex items-center justify-center lg:hidden cursor-pointer h-9 w-9 text-muted-foreground hover:text-foreground"
-          >
-            <MenuIcon />
-          </Button>
-        </div>
-      </header>
+      <CustomerHeader
+        isMobile={isMobile}
+        sidebarOpen={sidebarOpen}
+        mobileOpen={mobileOpen}
+        onToggleSidebar={() => (isMobile ? setMobileOpen(!mobileOpen) : setSidebarOpen(!sidebarOpen))}
+        onOpenMobile={() => setMobileOpen(true)}
+        formattedHeaderBalance={formattedHeaderBalance}
+        displayName={displayName}
+        onLogout={handleLogout}
+        currentLocale={currentLocale}
+      />
 
       {/* Main body (Sidebar + Content) */}
       <div className="flex flex-1 w-full relative">
