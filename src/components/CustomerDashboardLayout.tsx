@@ -3,6 +3,7 @@
 import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
 import { SidebarToggleIcon } from "@flash-ship/ecom-ui/components/icon-component/SidebarToggleIcon";
+import { ArrowLeftCircleIcon } from "@flash-ship/ecom-ui/components/icon-component/ArrowLeftCircleIcon";
 import { cn } from "@flash-ship/ecom-ui/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -139,12 +140,17 @@ export function CustomerDashboardLayout({ children }: CustomerDashboardLayoutPro
               type="button"
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className={cn(
-                "absolute top-6 z-50 transition-all duration-300 ease-out focus:outline-none hover:scale-105 active:scale-95 cursor-pointer",
+                "rounded-full bg-white p-[1.5px] shadow-[0_2px_4px_-2px_rgba(0,0,0,0.1),0_4px_6px_-1px_rgba(0,0,0,0.1)] flex items-center justify-center absolute top-6 z-50 transition-all duration-300 ease-out focus:outline-none hover:scale-105 active:scale-95 cursor-pointer",
                 sidebarOpen ? "left-[calc(var(--sidebar-width)-12px)]" : "left-[60px]",
               )}
               title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
             >
-              <SidebarToggleIcon isOpen={sidebarOpen} className="size-6 drop-shadow-sm" />
+              <ArrowLeftCircleIcon
+                className={cn(
+                  "size-6 transition-all duration-300 text-[#A3A3A3] hover:text-[#0F798C]",
+                  !sidebarOpen && "rotate-180"
+                )}
+              />
             </button>
           </aside>
         )}
