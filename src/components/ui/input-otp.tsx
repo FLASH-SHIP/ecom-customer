@@ -9,11 +9,10 @@
  * 100% Code Comment & Ghi chú bằng Tiếng Việt giúp dễ dàng bảo trì.
  */
 
-import { OTPInput, OTPInputContext, SlotProps } from "input-otp";
+import { cn } from "@flash-ship/ecom-ui/lib/utils";
+import { OTPInput, OTPInputContext, type SlotProps } from "input-otp";
 import { Minus } from "lucide-react";
 import * as React from "react";
-
-import { cn } from "@flash-ship/ecom-ui/lib/utils";
 
 /**
  * Component InputOTP chính wrap từ thư viện `input-otp`
@@ -62,8 +61,8 @@ const InputOTPSlot = React.forwardRef<
   React.ComponentRef<"div">,
   React.ComponentPropsWithoutRef<"div"> & { index: number }
 >(({ index, className, ...props }, ref) => {
-  const inputOTPContext = React.useContext(OTPInputContext);
-  const slot = inputOTPContext.slots[index] as SlotProps | undefined;
+  const inputOTPContext = React.useContext(OTPInputContext) as { slots?: SlotProps[] } | null;
+  const slot = inputOTPContext?.slots?.[index];
   const char = slot?.char;
   const hasFakeCaret = slot?.hasFakeCaret;
   const isActive = slot?.isActive;
@@ -98,10 +97,10 @@ const InputOTPSeparator = React.forwardRef<
   React.ComponentRef<"div">,
   React.ComponentPropsWithoutRef<"div">
 >(({ ...props }, ref) => (
-  <div ref={ref} role="separator" {...props}>
+  <div ref={ref} aria-hidden="true" {...props}>
     <Minus className="size-4 text-slate-400" />
   </div>
 ));
 InputOTPSeparator.displayName = "InputOTPSeparator";
 
-export { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator };
+export { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot };

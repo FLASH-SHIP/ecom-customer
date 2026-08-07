@@ -1,12 +1,13 @@
 "use client";
 
 import { trpc } from "@customer/lib/trpc";
-import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
+import { translate } from "@flash-ship/ecom-i18n";
+import { resolveMediaUrl } from "@flash-ship/ecom-lib/media";
 import { Button } from "@flash-ship/ecom-ui/components/button";
 import { Card, CardContent } from "@flash-ship/ecom-ui/components/card";
 import { format } from "date-fns";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { Printer } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { BasicInfoSummaryCard } from "../components/BasicInfoSummaryCard";
@@ -22,11 +23,7 @@ export default function CustomerOrderDetailPage() {
   const id = params?.id as string;
 
   // Fetch details
-  const {
-    data: order,
-    isLoading,
-    refetch,
-  } = trpc.customer.orders.get.useQuery({ id }, { enabled: !!id });
+  const { data: order, isLoading } = trpc.customer.orders.get.useQuery({ id }, { enabled: !!id });
 
   if (isLoading) {
     return (
@@ -69,6 +66,15 @@ export default function CustomerOrderDetailPage() {
         <h1 className="text-2xl font-bold text-foreground">
           {translate("customerOrder.detail.title", currentLocale)} - {order.orderCode}
         </h1>
+        {order.labelUrl && (
+          <Button
+            onClick={() => window.open(resolveMediaUrl(order.labelUrl), "_blank")}
+            className="bg-[#0F798C] hover:bg-[#0F798C]/90 text-white font-semibold text-xs py-2 px-4 rounded-lg cursor-pointer flex items-center gap-2"
+          >
+            <Printer className="h-4 w-4" />
+            {currentLocale === "vi" ? "In nhãn / Tải PDF" : "Print Label / PDF"}
+          </Button>
+        )}
       </div>
 
       {/* Main 3-Column Grid */}

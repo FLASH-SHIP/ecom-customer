@@ -1,7 +1,8 @@
 import { trpc } from "@customer/lib/trpc";
-import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
 import { useBeforeUnload } from "@ecom/shared/hooks/useBeforeUnload";
+import { translate } from "@flash-ship/ecom-i18n";
+import { GET_LABEL_OPTION } from "@flash-ship/ecom-types";
 import { useRef, useState } from "react";
 import { useToast } from "../../../../components/toast-provider";
 import {
@@ -147,8 +148,10 @@ export function useOrderImport(refetchHistory: () => void) {
             );
           }
 
+          let sampleDetected = false;
           // Parse raw rows and filter placeholder sample rows
           const parsedOrders = parseExcelRows(rawRows, currentLocale, () => {
+            sampleDetected = true;
             toast(
               currentLocale === "vi"
                 ? "Hệ thống đã tự động lọc bỏ các đơn hàng mẫu (SO-2026-001, SO-2026-002) ra khỏi file."
@@ -158,6 +161,13 @@ export function useOrderImport(refetchHistory: () => void) {
           });
 
           if (parsedOrders.length === 0) {
+            if (sampleDetected) {
+              throw new Error(
+                currentLocale === "vi"
+                  ? "Tệp tải lên chỉ chứa các đơn hàng mẫu (SO-2026-001, SO-2026-002). Vui lòng thay đổi Mã đơn Seller (Seller Order ID) thành mã đơn thực tế của bạn trước khi import."
+                  : "The uploaded file only contains sample orders (SO-2026-001, SO-2026-002). Please replace 'Seller Order ID' with your actual order IDs before importing.",
+              );
+            }
             throw new Error(
               currentLocale === "vi"
                 ? "Không tìm thấy đơn hàng hợp lệ để import!"
@@ -198,7 +208,12 @@ export function useOrderImport(refetchHistory: () => void) {
               return await importBatchMutation.mutateAsync({
                 importId: sessId,
                 batchIndex,
-                orders: batch.map((o) => ({ ...o, isGetLabel: buyLabel ? 1 : 0 })),
+                orders: batch.map((o) => ({
+                  ...o,
+                  isGetLabel: buyLabel
+                    ? GET_LABEL_OPTION.GET_LABEL_NOW
+                    : GET_LABEL_OPTION.GET_LABEL_LATER,
+                })),
               });
             } catch (error) {
               if (retries > 1) {
@@ -261,8 +276,30 @@ export function useOrderImport(refetchHistory: () => void) {
           refetchHistory();
         } catch (err) {
           setImportStatus("idle");
-          const msg = err instanceof Error ? err.message : String(err);
-          toast(msg, "error");
+          let displayMsg =
+            currentLocale === "vi"
+              ? "Có lỗi xảy ra khi xử lý tệp import!"
+              : "An error occurred while processing the import file!";
+
+          if (err instanceof Error) {
+            const rawMsg = err.message;
+            if (
+              rawMsg.includes("Kiểu dữ liệu không hợp lệ") ||
+              rawMsg.includes("invalid_type") ||
+              rawMsg.includes("BAD_REQUEST")
+            ) {
+              displayMsg =
+                currentLocale === "vi"
+                  ? "Dữ liệu trong tệp không đúng định dạng yêu cầu. Vui lòng kiểm tra lại cấu trúc file Excel."
+                  : "The file data format is invalid. Please check your Excel file structure.";
+            } else if (rawMsg.length > 150) {
+              displayMsg = `${rawMsg.substring(0, 150)}...`;
+            } else {
+              displayMsg = rawMsg;
+            }
+          }
+
+          toast(displayMsg, "error");
 
           // Fail-safe cleanup: Update database session status to failed
           if (createdSessionId) {

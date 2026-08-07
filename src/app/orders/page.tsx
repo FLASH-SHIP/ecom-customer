@@ -1,14 +1,14 @@
 "use client";
 
 import TagOrderStatus from "@customer/app/orders/components/TagOrderStatus";
-import { OrderStatus } from "@customer/app/orders/constants/enums";
 import { getRawStatusesForGroup } from "@customer/app/orders/constants/constants";
-import { PaginationBase } from "@flash-ship/ecom-ui";
-import { TableBase } from "@flash-ship/ecom-ui";
+import { OrderStatus } from "@customer/app/orders/constants/enums";
 import { trpc } from "@customer/lib/trpc";
-import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
+import { translate } from "@flash-ship/ecom-i18n";
+import { resolveMediaUrl } from "@flash-ship/ecom-lib/media";
 import { getShippingMethodLabel, getShippingOriginLabel } from "@flash-ship/ecom-types";
+import { PaginationBase, TableBase } from "@flash-ship/ecom-ui";
 import { Badge } from "@flash-ship/ecom-ui/components/badge";
 import { Button } from "@flash-ship/ecom-ui/components/button";
 import { Card } from "@flash-ship/ecom-ui/components/card";
@@ -27,6 +27,7 @@ import {
 } from "@flash-ship/ecom-ui/components/dropdown-menu";
 import { ThreeDotsVerticalIcon } from "@flash-ship/ecom-ui/components/icons";
 import { format, subDays } from "date-fns";
+import { Printer } from "lucide-react";
 import NextLink from "next/link";
 import { useState } from "react";
 import { OrderFilterBar } from "./components/OrderFilterBar";
@@ -54,7 +55,8 @@ export default function CustomerOrdersPage() {
   // Fetch orders list
   const { data: listData, isLoading } = trpc.customer.orders.list.useQuery({
     search: search.trim() || undefined,
-    status: statusFilter && statusFilter !== "ALL" ? getRawStatusesForGroup(statusFilter) : undefined,
+    status:
+      statusFilter && statusFilter !== "ALL" ? getRawStatusesForGroup(statusFilter) : undefined,
     fromDate: dateFrom,
     toDate: dateTo,
     shippingMethod:
@@ -79,7 +81,8 @@ export default function CustomerOrdersPage() {
   const handleExport = () => {
     exportExcelMutation.mutate({
       search: search.trim() || undefined,
-      status: statusFilter && statusFilter !== "ALL" ? getRawStatusesForGroup(statusFilter) : undefined,
+      status:
+        statusFilter && statusFilter !== "ALL" ? getRawStatusesForGroup(statusFilter) : undefined,
       fromDate: dateFrom,
       toDate: dateTo,
       shippingMethod:
@@ -215,9 +218,39 @@ export default function CustomerOrdersPage() {
       width: 180,
       sortable: true,
       sortKey: "ecomTrackingNumber",
-      cell: (order: OrderType) => (
-        <span className={"font-medium text-foreground"}>{order?.ecomTrackingNumber}</span>
-      ),
+      cell: (order: OrderType) => {
+        const trackingNum = order?.ecomTrackingNumber || order?.trackingNumber;
+        const labelUrl = order?.labelUrl;
+
+        if (!trackingNum && !labelUrl) {
+          return <span className="text-xs font-mono text-muted-foreground">—</span>;
+        }
+
+        if (labelUrl) {
+          return (
+            <button
+              type="button"
+              className="text-xs font-mono font-semibold text-[#0F798C] hover:underline cursor-pointer flex items-center gap-1 bg-transparent border-0 p-0 text-left"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(resolveMediaUrl(labelUrl), "_blank");
+              }}
+              title={
+                currentLocale === "vi"
+                  ? "Click để in nhãn / Tải PDF"
+                  : "Click to print label / download PDF"
+              }
+            >
+              <Printer className="h-3.5 w-3.5 shrink-0 text-[#0F798C]" />
+              <span>{trackingNum || (currentLocale === "vi" ? "Xem nhãn" : "View Label")}</span>
+            </button>
+          );
+        }
+
+        return (
+          <span className="text-xs font-mono font-semibold text-foreground/80">{trackingNum}</span>
+        );
+      },
     },
     {
       header: translate("customerOrder.table.action", currentLocale),
@@ -241,15 +274,26 @@ export default function CustomerOrdersPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-36 bg-white dark:bg-zinc-900 border border-border shadow-md rounded-lg p-1 z-30"
+              className="w-40 bg-white dark:bg-zinc-900 border border-border shadow-md rounded-lg p-1 z-30"
             >
+              {order?.labelUrl && (
+                <DropdownMenuItem
+                  className="px-3 py-2 text-sm font-medium text-primary hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md cursor-pointer flex items-center gap-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(resolveMediaUrl(order.labelUrl), "_blank");
+                  }}
+                >
+                  <Printer className="h-4 w-4" />
+                  {currentLocale === "vi" ? "In nhãn" : "Print Label"}
+                </DropdownMenuItem>
+              )}
               {order?.status === OrderStatus.PENDING_LABEL && (
                 <DropdownMenuItem
                   disabled={true}
                   className="px-3 py-2 text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md"
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Handle Get Label action
                   }}
                 >
                   {translate("customerOrder.getLabels", currentLocale)}
@@ -364,9 +408,20 @@ export default function CustomerOrdersPage() {
           ) : (
             <>
               <DialogHeader>
-                <DialogTitle className="text-xl font-bold text-foreground">
-                  Order Details: {orderDetails.orderCode}
-                </DialogTitle>
+                <div className="flex items-center justify-between gap-4">
+                  <DialogTitle className="text-xl font-bold text-foreground">
+                    Order Details: {orderDetails.orderCode}
+                  </DialogTitle>
+                  {orderDetails.labelUrl && (
+                    <Button
+                      onClick={() => window.open(resolveMediaUrl(orderDetails.labelUrl), "_blank")}
+                      className="bg-[#0F798C] hover:bg-[#0F798C]/90 text-white font-semibold text-xs py-1.5 px-3 rounded-lg cursor-pointer flex items-center gap-1.5 shrink-0"
+                    >
+                      <Printer className="h-4 w-4" />
+                      {currentLocale === "vi" ? "In nhãn / Tải PDF" : "Print Label / PDF"}
+                    </Button>
+                  )}
+                </div>
                 <DialogDescription>
                   Detailed tracking history, scan checkpoints, and order information.
                 </DialogDescription>
