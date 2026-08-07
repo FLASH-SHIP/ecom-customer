@@ -1,13 +1,15 @@
 "use client";
 
-import { DatePicker } from "@flash-ship/ecom-ui";
-import { trpc } from "@customer/lib/trpc";
-import { translate } from "@flash-ship/ecom-i18n";
-import { useI18n } from "@ecom/shared/@i18n";
 import { useToast } from "@customer/components/toast-provider";
+import { trpc } from "@customer/lib/trpc";
+import { useI18n } from "@ecom/shared/@i18n";
+import { translate } from "@flash-ship/ecom-i18n";
+import { DatePicker } from "@flash-ship/ecom-ui";
 import { Button } from "@flash-ship/ecom-ui/components/button";
 import { Input } from "@flash-ship/ecom-ui/components/input";
+import { Label } from "@flash-ship/ecom-ui/components/label";
 import { BaseModal, BaseModalContent } from "@flash-ship/ecom-ui/components/modals/base-modal";
+import { NumberInput } from "@flash-ship/ecom-ui/components/NumberInput";
 import {
   AlertCircle,
   Check,
@@ -52,7 +54,7 @@ export function AddFundModal({
   open,
   onOpenChange,
   selectedPaymentMethod,
-  methodId = "",
+  methodId: _methodId = "",
   methodName = "",
   methodLogo,
   onBack,
@@ -189,13 +191,13 @@ export function AddFundModal({
     return () => clearTimeout(timer);
   }, [wireAmountVnd, exchangeRate, activeInput]);
 
-  // Reset modal state & errors whenever modal opens or payment method changes
+  // Reset modal state & errors whenever modal opens
   useEffect(() => {
     if (open) {
       setErrorMessage(null);
       setFieldErrors({});
     }
-  }, [open, selectedPaymentMethod]);
+  }, [open]);
 
   // Real-time validation helper for Wire Date
   const handleWireDateChange = (val: string) => {
@@ -245,14 +247,6 @@ export function AddFundModal({
     }
   };
 
-  // Handle USD Input Change
-  const handleUsdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setActiveInput("usd");
-    setWireAmountUsd(val);
-    validateWireAmountRealtime(val);
-  };
-
   // Handle VND Input Change
   const handleVndChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -287,16 +281,16 @@ export function AddFundModal({
   }, [uploadedFiles, currentLocale]);
 
   // Check scroll position
-  const checkScrollPosition = () => {
+  const checkScrollPosition = React.useCallback(() => {
     if (!scrollContainerRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
     setCanScrollLeft(scrollLeft > 2);
     setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 2);
-  };
+  }, []);
 
   useEffect(() => {
     checkScrollPosition();
-  }, [uploadedFiles]);
+  }, [checkScrollPosition]);
 
   const handleScrollLeft = () => {
     scrollContainerRef.current?.scrollBy({ left: -220, behavior: "smooth" });
@@ -545,9 +539,9 @@ export function AddFundModal({
 
       onSubmit?.();
       onOpenChange(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errText =
-        err?.message ||
+        (err as Error)?.message ||
         translate("customerWallet.addFundModal.createError", currentLocale) ||
         "Tạo yêu cầu nạp tiền thất bại!";
       setErrorMessage(errText);
@@ -828,11 +822,11 @@ export function AddFundModal({
                 <div className="flex flex-col gap-3">
                   {/* Full Width Row: Wire date */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       {translate("customerWallet.addFundModal.wireDateLabel", currentLocale) ||
                         "Wire date"}{" "}
                       <span className="text-rose-500">*</span>
-                    </label>
+                    </span>
                     <DatePicker
                       value={wireDate}
                       onChange={handleWireDateChange}
@@ -869,32 +863,28 @@ export function AddFundModal({
                   {/* 2-Column Row: Wire amount (USD) & Wire amount (VND) */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      <Label htmlFor="add-fund-wire-amount-usd" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                         {translate(
                           "customerWallet.addFundModal.wireAmountUsdLabel",
                           currentLocale,
                         ) || "Wire amount (USD)"}{" "}
                         <span className="text-rose-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">
-                          $
-                        </span>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0.01"
-                          placeholder="0.00"
-                          value={wireAmountUsd}
-                          onFocus={() => setActiveInput("usd")}
-                          onChange={(e) => {
-                            setActiveInput("usd");
-                            setWireAmountUsd(e.target.value);
-                            setFieldErrors((prev) => ({ ...prev, wireAmount: undefined }));
-                          }}
-                          className="pl-7 h-11 rounded-lg border-slate-300 dark:border-zinc-700 font-medium"
-                        />
-                      </div>
+                      </Label>
+                      <NumberInput
+                        id="add-fund-wire-amount-usd"
+                        precision={2}
+                        min={0.01}
+                        placeholder="0.00"
+                        prefix="$"
+                        value={wireAmountUsd}
+                        onFocus={() => setActiveInput("usd")}
+                        onChange={(_num, rawStr) => {
+                          setActiveInput("usd");
+                          setWireAmountUsd(rawStr);
+                          setFieldErrors((prev) => ({ ...prev, wireAmount: undefined }));
+                        }}
+                        className="h-11 rounded-lg border-slate-300 dark:border-zinc-700 font-medium"
+                      />
                       {fieldErrors.wireAmount && (
                         <span className="text-xs text-rose-500 font-medium flex items-center gap-1 mt-0.5">
                           <AlertCircle className="w-3.5 h-3.5 shrink-0" />
@@ -904,15 +894,16 @@ export function AddFundModal({
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      <Label htmlFor="add-fund-wire-amount-vnd" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                         {translate(
                           "customerWallet.addFundModal.wireAmountVndLabel",
                           currentLocale,
                         ) || "Wire amount (VND)"}{" "}
                         <span className="text-rose-500">*</span>
-                      </label>
+                      </Label>
                       <div className="relative">
                         <Input
+                          id="add-fund-wire-amount-vnd"
                           type="text"
                           value={wireAmountVnd}
                           onFocus={() => setActiveInput("vnd")}
@@ -931,11 +922,11 @@ export function AddFundModal({
                 /* Non-Bank Form: 2-Column Wire Date & Wire Amount (USD) */
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       {translate("customerWallet.addFundModal.wireDateLabel", currentLocale) ||
                         "Wire date"}{" "}
                       <span className="text-rose-500">*</span>
-                    </label>
+                    </Label>
                     <DatePicker
                       value={wireDate}
                       onChange={handleWireDateChange}
@@ -952,30 +943,26 @@ export function AddFundModal({
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    <Label htmlFor="add-fund-wire-amount-usd-nb" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       {translate("customerWallet.addFundModal.wireAmountLabel", currentLocale) ||
                         "Wire amount"}{" "}
                       <span className="text-rose-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">
-                        $
-                      </span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        placeholder="0.00"
-                        value={wireAmountUsd}
-                        onFocus={() => setActiveInput("usd")}
-                        onChange={(e) => {
-                          setActiveInput("usd");
-                          setWireAmountUsd(e.target.value);
-                          setFieldErrors((prev) => ({ ...prev, wireAmount: undefined }));
-                        }}
-                        className="pl-7 h-11 rounded-lg border-slate-300 dark:border-zinc-700 font-medium"
-                      />
-                    </div>
+                    </Label>
+                    <NumberInput
+                      id="add-fund-wire-amount-usd-nb"
+                      precision={2}
+                      min={0.01}
+                      placeholder="0.00"
+                      prefix="$"
+                      value={wireAmountUsd}
+                      onFocus={() => setActiveInput("usd")}
+                      onChange={(_num, rawStr) => {
+                        setActiveInput("usd");
+                        setWireAmountUsd(rawStr);
+                        setFieldErrors((prev) => ({ ...prev, wireAmount: undefined }));
+                      }}
+                      className="h-11 rounded-lg border-slate-300 dark:border-zinc-700 font-medium"
+                    />
                     {fieldErrors.wireAmount && (
                       <span className="text-xs text-rose-500 font-medium flex items-center gap-1 mt-0.5">
                         <AlertCircle className="w-3.5 h-3.5 shrink-0" />
@@ -989,7 +976,7 @@ export function AddFundModal({
               {/* Wire Transfer Confirmation Image Upload Section */}
               <div className="flex flex-col gap-2 mt-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     {translate("customerWallet.addFundModal.uploadLabel", currentLocale) ||
                       "Wire transfer confirmation image"}{" "}
                     <span className="text-rose-500">*</span>{" "}
@@ -997,16 +984,17 @@ export function AddFundModal({
                       {translate("customerWallet.addFundModal.uploadNote", currentLocale) ||
                         "(Maximum 10 images, each image not exceeding 5MB)"}
                     </span>
-                  </label>
+                  </span>
                 </div>
 
                 {uploadedFiles.length === 0 ? (
                   /* State 1: Big Drag & Drop Zone Box when 0 files uploaded */
-                  <div
+                  <button
+                    type="button"
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
-                    className="rounded-2xl border-2 border-dashed border-sky-400/80 bg-slate-50/50 dark:bg-zinc-900/30 hover:bg-slate-100/50 dark:hover:bg-zinc-900/50 p-6 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all text-center"
+                    className="w-full rounded-2xl border-2 border-dashed border-sky-400/80 bg-slate-50/50 dark:bg-zinc-900/30 hover:bg-slate-100/50 dark:hover:bg-zinc-900/50 p-6 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all text-center"
                   >
                     <div className="w-12 h-12 rounded-xl bg-slate-200/60 dark:bg-zinc-800 flex items-center justify-center mb-1 text-slate-400">
                       <ImageIcon className="w-7 h-7" />
@@ -1029,10 +1017,11 @@ export function AddFundModal({
                       {translate("customerWallet.addFundModal.requiredFormat", currentLocale) ||
                         "Required to upload:*png, *jpg, *jpeg"}
                     </span>
-                  </div>
+                  </button>
                 ) : (
                   /* State 2: Uploaded List View with Horizontal Scroll & Floating Arrows */
-                  <div
+                  <section
+                    aria-label="Upload dropzone"
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={handleDrop}
                     className="relative rounded-2xl border-2 border-dashed border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30 p-3 min-h-[120px] flex items-center"
@@ -1107,7 +1096,7 @@ export function AddFundModal({
                         <ChevronRight className="w-5 h-5" />
                       </button>
                     )}
-                  </div>
+                  </section>
                 )}
 
                 {fieldErrors.wireImages && (

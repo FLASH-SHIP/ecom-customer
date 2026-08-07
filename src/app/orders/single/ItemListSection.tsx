@@ -1,7 +1,7 @@
 "use client";
 
-import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { Button } from "@flash-ship/ecom-ui/components/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@flash-ship/ecom-ui/components/field";
 import { TrashIcon } from "@flash-ship/ecom-ui/components/icons";
@@ -14,8 +14,9 @@ import {
   SelectValue,
 } from "@flash-ship/ecom-ui/components/select";
 import { cn } from "@flash-ship/ecom-ui/lib/utils";
-import { Plus, Trash2 } from "lucide-react";
-import type { Control, FieldErrors, FieldValues, UseFormRegister } from "react-hook-form";
+import { Plus } from "lucide-react";
+import React from "react";
+import type { Control, FieldErrors, UseFormRegister } from "react-hook-form";
 import { Controller, useFieldArray } from "react-hook-form";
 import type { OrderFormValues } from "./page";
 
@@ -25,13 +26,13 @@ export interface ItemListSectionProps {
   errors: FieldErrors<OrderFormValues>;
 }
 
-import React from "react";
-
-export const ItemListSection = React.memo(function ItemListSection({ control, register, errors }: ItemListSectionProps) {
+export const ItemListSection = React.memo(function ItemListSection({
+  control,
+  register,
+  errors,
+}: ItemListSectionProps) {
   const { languageId: currentLocale } = useI18n();
   const controlParent = control as unknown as Control<OrderFormValues>;
-  const registerParent = register as unknown as UseFormRegister<OrderFormValues>;
-  const errorsParent = errors as unknown as FieldErrors<OrderFormValues>;
 
   const { fields, append, remove } = useFieldArray({
     control: controlParent,
@@ -132,7 +133,7 @@ export const ItemListSection = React.memo(function ItemListSection({ control, re
                       <Input
                         type="number"
                         step="0.01"
-                        max="9999999999.99"
+                        max="999999"
                         required
                         placeholder={translate(
                           "customerOrder.placeholder.itemValue",

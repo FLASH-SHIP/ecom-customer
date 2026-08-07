@@ -18,7 +18,12 @@ import {
   validateSellerOrderId,
   validateSenderPhone,
 } from "@flash-ship/ecom-lib/addressValidator";
-import { type ShippingMethod, ShippingOrigin } from "@flash-ship/ecom-types";
+import {
+  GET_LABEL_OPTION,
+  MAX_DECLARED_VALUE_USD,
+  type ShippingMethod,
+  ShippingOrigin,
+} from "@flash-ship/ecom-types";
 import { Button } from "@flash-ship/ecom-ui/components/button";
 import { Checkbox } from "@flash-ship/ecom-ui/components/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -71,7 +76,7 @@ function getOrderFormSchema(locale: string) {
           translate("customerOrder.validation.declaredValueMin", locale),
         )
         .refine(
-          (val) => !Number.isNaN(Number(val)) && Number(val) <= 9999999999.99,
+          (val) => !Number.isNaN(Number(val)) && Number(val) <= MAX_DECLARED_VALUE_USD,
           translate("customerOrder.validation.declaredValueMax", locale),
         ),
       sellerOrderId: z
@@ -249,7 +254,7 @@ function getOrderFormSchema(locale: string) {
                 translate("customerOrder.validation.productValueMin", locale),
               )
               .refine(
-                (val) => !Number.isNaN(Number(val)) && Number(val) <= 9999999999.99,
+                (val) => !Number.isNaN(Number(val)) && Number(val) <= MAX_DECLARED_VALUE_USD,
                 translate("customerOrder.validation.productValueMax", locale),
               ),
             hsCodePrefix: z.string(),
@@ -661,7 +666,7 @@ export default function CreateSingleOrderPage() {
         dimensionHeight: parseFloatDimension(height),
         declaredValue: Number(declaredValue),
         packingTypeId: packingTypeId || null,
-        isGetLabel: isGetLabel ? 1 : 0,
+        isGetLabel: isGetLabel ? GET_LABEL_OPTION.GET_LABEL_NOW : GET_LABEL_OPTION.GET_LABEL_LATER,
         products: products.map((p: OrderFormValues["products"][number]) => ({
           description: p.description,
           quantity: Number(p.quantity),
@@ -785,7 +790,7 @@ export default function CreateSingleOrderPage() {
           "Tạo đơn hàng thành công! Địa chỉ không rõ ràng (202), vui lòng chọn lại địa chỉ để tạo tem sau.",
           "warning",
         );
-      } else if (Number(isGetLabel) === 1) {
+      } else if (isGetLabel) {
         toast("Tạo đơn hàng và mua nhãn tem thành công!", "success");
       } else {
         toast(translate("customerOrder.validation.createOrderSuccess", currentLocale), "success");
