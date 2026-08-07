@@ -2,6 +2,7 @@ import { trpc } from "@customer/lib/trpc";
 import { useI18n } from "@ecom/shared/@i18n";
 import { useBeforeUnload } from "@ecom/shared/hooks/useBeforeUnload";
 import { translate } from "@flash-ship/ecom-i18n";
+import { GET_LABEL_OPTION } from "@flash-ship/ecom-types";
 import { useRef, useState } from "react";
 import { useToast } from "../../../../components/toast-provider";
 import {
@@ -207,7 +208,12 @@ export function useOrderImport(refetchHistory: () => void) {
               return await importBatchMutation.mutateAsync({
                 importId: sessId,
                 batchIndex,
-                orders: batch.map((o) => ({ ...o, isGetLabel: buyLabel ? 1 : 0 })),
+                orders: batch.map((o) => ({
+                  ...o,
+                  isGetLabel: buyLabel
+                    ? GET_LABEL_OPTION.GET_LABEL_NOW
+                    : GET_LABEL_OPTION.GET_LABEL_LATER,
+                })),
               });
             } catch (error) {
               if (retries > 1) {

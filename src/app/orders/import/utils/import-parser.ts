@@ -12,6 +12,7 @@ export interface OrderImportError {
 }
 
 export interface ParsedProduct {
+  excelLineNumber?: number;
   description: string;
   quantity: number;
   value: number;
@@ -23,8 +24,8 @@ export interface ParsedProduct {
 
 export interface ParsedOrder {
   excelRowNumbers: number[];
-  shippingMethod: ShippingMethod;
-  shippingOrigin: ShippingOrigin;
+  shippingMethod: ShippingMethod | string;
+  shippingOrigin: ShippingOrigin | string;
   sellerOrderId: string;
   packagingCode: string;
   senderName: string | null;
@@ -55,7 +56,7 @@ export interface ParsedOrder {
 }
 
 /**
- * Normalizes country strings (e.g. "United States", "USA", "Mỹ") to ISO 2-letter codes.
+ * Normalizes country strings (e.g. "United States", "USA", "Mỹ", "Pháp") to ISO 2-letter codes.
  */
 export function normalizeCountryCode(countryStr: string | null | undefined): string | null {
   if (!countryStr) return null;
@@ -70,6 +71,12 @@ export function normalizeCountryCode(countryStr: string | null | undefined): str
   if (["au", "australia", "úc"].includes(clean)) return "AU";
   if (["jp", "japan", "nhật bản", "nhat ban"].includes(clean)) return "JP";
   if (["kr", "korea", "south korea", "hàn quốc", "han quoc"].includes(clean)) return "KR";
+  if (["fr", "france", "pháp"].includes(clean)) return "FR";
+  if (["it", "italy", "ý"].includes(clean)) return "IT";
+  if (["nl", "netherlands", "hà lan"].includes(clean)) return "NL";
+  if (["es", "spain", "tây ban nha"].includes(clean)) return "ES";
+  if (["se", "sweden", "thụy điển"].includes(clean)) return "SE";
+  if (["tw", "taiwan", "đài loan"].includes(clean)) return "TW";
   return countryStr.trim().toUpperCase();
 }
 
@@ -92,11 +99,14 @@ export function normalizePostcode(zipStr: string | null | undefined): string | n
 }
 
 /**
- * Parses numeric strings with support for Vietnamese decimal comma (e.g., "20,5" -> 20.5).
+ * Parses numeric strings with support for Vietnamese decimal comma (e.g., "20,5" -> 20.5)
+ * and strips common currency symbols ($ € £ ¥) and measurement units (kg, g, lbs, cm, mm).
  */
 export function parseNumberFlexible(numStr: string | null | undefined): number | null {
   if (!numStr) return null;
   let clean = numStr.trim();
+  // Strip currency symbols and measurement units
+  clean = clean.replace(/[$€£¥]/g, "").replace(/\s*(kg|g|lbs|cm|mm)$/i, "").trim();
   if (clean.includes(",") && !clean.includes(".")) {
     clean = clean.replace(",", ".");
   } else if (clean.includes(".") && clean.includes(",")) {
@@ -172,6 +182,7 @@ export function parseExcelRows(
     const itemOrigin = normalizeCountryCode(itemOriginRaw);
 
     const product: ParsedProduct = {
+      excelLineNumber: lineNum,
       description: itemName || "",
       quantity: Number.isNaN(itemQty) ? 1 : itemQty,
       value: itemPrice,
@@ -217,8 +228,22 @@ export function parseExcelRows(
         "shippingOrigin",
         "Shipping Origin",
       ).toUpperCase();
-      const shippingOrigin: ShippingOrigin =
-        shippingOriginVal === "SGN" ? ShippingOrigin.SGN : ShippingOrigin.HAN;
+
+      // Strict enum validation: do not default blank or invalid values silently
+      let shippingMethod: ShippingMethod | string = shippingMethodVal;
+      if (shippingMethodVal === "EPACKET") {
+        shippingMethod = ShippingMethod.EPACKET;
+      } else if (shippingMethodVal === "EXPRESS") {
+        shippingMethod = ShippingMethod.EXPRESS;
+      }
+
+      let shippingOrigin: ShippingOrigin | string = shippingOriginVal;
+      if (shippingOriginVal === "SGN") {
+        shippingOrigin = ShippingOrigin.SGN;
+      } else if (shippingOriginVal === "HAN" || !shippingOriginVal) {
+        shippingOrigin = ShippingOrigin.HAN; // Default to HAN if blank
+      }
+
       const packagingCode =
         getVal("Loại đóng gói", "packagingCode", "Package Packaging Code") || "cardboard_box";
       const detailDescription = getVal(
@@ -275,9 +300,6 @@ export function parseExcelRows(
       const senderZipCode = normalizePostcode(senderZipCodeRaw) || senderZipCodeRaw;
       const receiverCountry = normalizeCountryCode(receiverCountryRaw) || receiverCountryRaw;
       const senderCountry = normalizeCountryCode(senderCountryRaw) || senderCountryRaw;
-
-      const shippingMethod: ShippingMethod =
-        shippingMethodVal === "EPACKET" ? ShippingMethod.EPACKET : ShippingMethod.EXPRESS;
 
       ordersMap.set(sellerOrderId, {
         excelRowNumbers: [lineNum],
