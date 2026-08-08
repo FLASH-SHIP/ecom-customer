@@ -2,8 +2,8 @@
 
 import { SearchableSelect } from "@customer/components/ui/searchable-select";
 import { trpc } from "@customer/lib/trpc";
-import { translate } from "@flash-ship/ecom-i18n";
 import { useI18n } from "@ecom/shared/@i18n";
+import { translate } from "@flash-ship/ecom-i18n";
 import { Checkbox } from "@flash-ship/ecom-ui/components/checkbox";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@flash-ship/ecom-ui/components/field";
 import { Input } from "@flash-ship/ecom-ui/components/input";
@@ -15,12 +15,11 @@ import {
   SelectValue,
 } from "@flash-ship/ecom-ui/components/select";
 import { cn } from "@flash-ship/ecom-ui/lib/utils";
-import { useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   type Control,
   Controller,
   type FieldErrors,
-  type FieldValues,
   type UseFormRegister,
   type UseFormSetValue,
   type UseFormWatch,
@@ -64,8 +63,6 @@ export interface PackageInfoSectionProps {
   savedPackages: SavedPackage[];
 }
 
-import React from "react";
-
 export const PackageInfoSection = React.memo(function PackageInfoSection({
   control,
   register,
@@ -87,6 +84,42 @@ export const PackageInfoSection = React.memo(function PackageInfoSection({
 
   const { data: packingTypesData } = trpc.customer.orders.listPackingTypes.useQuery();
 
+  const handleSelectSavedPackage = useCallback(
+    (value: string) => {
+      if (value === "new") {
+        setSelectedPackageId(null);
+        setValueParent("packageName", "");
+        setValueParent("packingTypeId", packingTypesData?.items[0]?.id ?? 0);
+        setValueParent("length", "");
+        setValueParent("width", "");
+        setValueParent("height", "");
+        setValueParent("weight", "");
+        setSavePackageSetting(false);
+        return;
+      }
+
+      const id = Number(value);
+      const pkg = savedPackages.find((p) => p.id === id);
+      if (!pkg) return;
+
+      setSelectedPackageId(id);
+      setValueParent("packageName", pkg.packageName);
+      setValueParent("packingTypeId", pkg.packingTypeId ?? 0);
+      setValueParent("length", pkg.length !== null ? String(pkg.length) : "");
+      setValueParent("width", pkg.width !== null ? String(pkg.width) : "");
+      setValueParent("height", pkg.height !== null ? String(pkg.height) : "");
+      setValueParent("weight", String(pkg.weight));
+      setSavePackageSetting(false);
+    },
+    [
+      packingTypesData?.items,
+      savedPackages,
+      setSavePackageSetting,
+      setSelectedPackageId,
+      setValueParent,
+    ],
+  );
+
   // Auto-select the default package on first load
   const autoSelectedRef = useRef(false);
   useEffect(() => {
@@ -96,8 +129,7 @@ export const PackageInfoSection = React.memo(function PackageInfoSection({
       handleSelectSavedPackage(defaultPkg.id.toString());
     }
     autoSelectedRef.current = true;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savedPackages]);
+  }, [savedPackages, handleSelectSavedPackage]);
 
   // Set default packing type for new package form if empty
   const watchedPackingTypeId = watchParent("packingTypeId");
@@ -107,44 +139,30 @@ export const PackageInfoSection = React.memo(function PackageInfoSection({
     }
   }, [watchedPackingTypeId, packingTypesData, setValueParent]);
 
-  const handleSelectSavedPackage = (value: string) => {
-    if (value === "new") {
-      setSelectedPackageId(null);
-      setValueParent("packageName", "");
-      setValueParent("packingTypeId", packingTypesData?.items[0]?.id ?? 0);
-      setValueParent("length", "");
-      setValueParent("width", "");
-      setValueParent("height", "");
-      setValueParent("weight", "");
-      setSavePackageSetting(false);
-      return;
-    }
-
-    const id = Number(value);
-    const pkg = savedPackages.find((p) => p.id === id);
-    if (!pkg) return;
-
-    setSelectedPackageId(id);
-    setValueParent("packageName", pkg.packageName);
-    setValueParent("packingTypeId", pkg.packingTypeId ?? 0);
-    setValueParent("length", pkg.length !== null ? String(pkg.length) : "");
-    setValueParent("width", pkg.width !== null ? String(pkg.width) : "");
-    setValueParent("height", pkg.height !== null ? String(pkg.height) : "");
-    setValueParent("weight", String(pkg.weight));
-    setSavePackageSetting(false);
-  };
-
   const isNewPackage = selectedPackageId === null;
 
-  const watchedPackageName = watchParent("packageName");
+  const watchedMethod = watch("shippingMethod");
+  const watchedCountry = watch("receiverCountry");
+
+  const { data: limitData } = trpc.customer.orders.getShippingLimit.useQuery(
+    {
+      shippingMethod: watchedMethod as "EXPRESS" | "EPACKET",
+      country: watchedCountry || "US",
+    },
+    {
+      enabled: !!watchedMethod && !!watchedCountry && watchedCountry.length >= 2,
+      staleTime: 60000,
+    },
+  );
+
+  const defaultMaxKg = watchedMethod === "EXPRESS" ? 20.0 : 5.0;
+  const maxWeightGrams = limitData?.maxWeightGrams ?? defaultMaxKg * 1000;
+  const maxWeightKg = limitData?.maxWeightKg ?? defaultMaxKg;
+
   const watchedLength = watchParent("length");
   const watchedWidth = watchParent("width");
   const watchedHeight = watchParent("height");
   const watchedWeight = watchParent("weight");
-
-  const selectedPt = useMemo(() => {
-    return packingTypesData?.items.find((item) => item.id === watchedPackingTypeId);
-  }, [packingTypesData, watchedPackingTypeId]);
 
   const volumeWeight = useMemo(() => {
     const parseVal = (val?: string) => {
@@ -364,6 +382,32 @@ export const PackageInfoSection = React.memo(function PackageInfoSection({
                 <div className="flex-1 min-w-0" />
               </div>
               <FieldError errors={[errorsParent.weight]} />
+              {(() => {
+                const method = watch("shippingMethod");
+                const rawWeight = Number(watchedWeight) || 0;
+                const chargeableGrams = Math.max(rawWeight, volumeWeight);
+                if (method === "EPACKET" && chargeableGrams > maxWeightGrams) {
+                  const chargeableKg = (chargeableGrams / 1000).toFixed(2);
+                  return (
+                    <div className="mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded border border-amber-300 bg-amber-50 text-amber-900 text-xs dark:bg-amber-950/40 dark:text-amber-200 shadow-sm">
+                      <div className="flex items-start gap-1.5">
+                        <span className="font-semibold shrink-0">⚠️ Cảnh báo ePacket:</span>
+                        <span>
+                          Trọng lượng tính cước hiện tại là <strong>{chargeableKg} kg</strong> (Vượt quá hạn mức <strong>{maxWeightKg.toFixed(1)} kg</strong> của Bảng giá ePacket áp dụng).
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setValue("shippingMethod", "EXPRESS", { shouldValidate: true })}
+                        className="shrink-0 self-start sm:self-auto px-2.5 py-1 text-xs font-semibold rounded bg-amber-600 text-white hover:bg-amber-700 transition-colors cursor-pointer"
+                      >
+                        ⚡ Chuyển sang Express
+                      </button>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </Field>
 
             {/* Package Name */}
