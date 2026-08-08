@@ -89,23 +89,23 @@ export function CustomerHeader({
         <div className={'w-[1px] h-[30px] bg-[#E5E5E5]'}></div>
 
         {/*Languages*/}
-        <AuthLanguageSelector />
+        {/*<AuthLanguageSelector />*/}
 
         {/*Divider*/}
-        <div className={'w-[1px] h-[30px] bg-[#E5E5E5]'}></div>
+        {/*<div className={'w-[1px] h-[30px] bg-[#E5E5E5]'}></div>*/}
 
         {/* Notification */}
-        <div className="hidden lg:block">
-          <button
-            type="button"
-            className="w-10 h-10 relative flex items-center justify-center rounded-md bg-white hover:bg-[#FAFAFA] hover:border hover:border-[#D4D4D4] hover:shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] hover:opacity-90 transition-opacity transition duration-500 cursor-pointer"
-          >
-            <BellIcon />
-          </button>
-        </div>
+        {/*<div className="hidden lg:block">*/}
+        {/*  <button*/}
+        {/*    type="button"*/}
+        {/*    className="w-10 h-10 relative flex items-center justify-center rounded-md bg-white hover:bg-[#FAFAFA] hover:border hover:border-[#D4D4D4] hover:shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] hover:opacity-90 transition-opacity transition duration-500 cursor-pointer"*/}
+        {/*  >*/}
+        {/*    <BellIcon />*/}
+        {/*  </button>*/}
+        {/*</div>*/}
 
         {/* User Account Dropdown */}
-        {/*<div className="hidden lg:block">
+        <div className="hidden lg:block">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -139,7 +139,7 @@ export function CustomerHeader({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>*/}
+        </div>
 
         <Button
           variant="ghost"
