@@ -90,10 +90,11 @@ const nextAuth: NextAuthResult = NextAuth({
           });
 
           if (!res.ok) return null;
-          const json: CustomerAuthResponse = await res.json();
-          const user = json?.data?.user || json?.data?.customer;
-          const accessToken = json?.data?.accessToken;
-          const refreshToken = json?.data?.refreshToken;
+          const rawJson = await res.json();
+          const data = rawJson?.data || rawJson;
+          const user = data?.user || data?.customer;
+          const accessToken = data?.accessToken;
+          const refreshToken = data?.refreshToken;
           if (!user) return null;
 
           return {
