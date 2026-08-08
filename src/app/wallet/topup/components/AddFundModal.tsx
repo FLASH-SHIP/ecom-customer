@@ -112,14 +112,31 @@ export function AddFundModal({
     }
   }, [selectedPaymentMethod?.dataInfo]);
 
-  // Dynamic payment info fields
+  // Dynamic payment info fields (support localized account_holder and bank_name based on currentLocale)
   const accountEmail = (parsedDataInfo?.email || "").trim();
-  const accountHolder = (
-    parsedDataInfo?.account_holder ||
-    parsedDataInfo?.accountHolder ||
-    "-"
-  ).trim();
-  const bankName = (parsedDataInfo?.bank_name || parsedDataInfo?.bankName || "-").trim();
+
+  const accountHolder = React.useMemo(() => {
+    if (currentLocale === "en") {
+      return (
+        parsedDataInfo?.account_holder_en || "-"
+      ).trim();
+    }
+    return (
+      parsedDataInfo?.account_holder_vi || "-"
+    ).trim();
+  }, [parsedDataInfo, currentLocale]);
+
+  const bankName = React.useMemo(() => {
+    if (currentLocale === "en") {
+      return (
+        parsedDataInfo?.bank_name_en || "-"
+      ).trim();
+    }
+    return (
+      parsedDataInfo?.bank_name_vi || "-"
+    ).trim();
+  }, [parsedDataInfo, currentLocale]);
+
   const accountNumber = (
     parsedDataInfo?.account_number ||
     parsedDataInfo?.accountNumber ||

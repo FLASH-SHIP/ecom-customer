@@ -47,8 +47,11 @@ export default auth((req) => {
     }
   }
 
+  const searchParams = req.nextUrl.searchParams;
+  const isSignedOut = searchParams.has("signedout") || searchParams.has("error") || searchParams.has("signedOut");
+
   if (normalizedPath.startsWith("auth/") || normalizedPath === "auth") {
-    if (isLoggedIn && !normalizedPath.startsWith("auth/logout")) {
+    if (isLoggedIn && !normalizedPath.startsWith("auth/logout") && !isSignedOut) {
       if (isTermsAccepted) {
         const dashboardUrl = req.nextUrl.clone();
         dashboardUrl.pathname = "/dashboard";
