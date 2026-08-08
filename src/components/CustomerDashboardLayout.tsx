@@ -21,7 +21,7 @@ interface CustomerDashboardLayoutProps {
 export function CustomerDashboardLayout({ children }: CustomerDashboardLayoutProps) {
   const _pathname = usePathname();
   const router = useRouter();
-  const { status } = useSession();
+  const { status, update: updateSession } = useSession();
   const { languageId: currentLocale } = useI18n();
   const { toast } = useToast();
 
@@ -71,9 +71,27 @@ export function CustomerDashboardLayout({ children }: CustomerDashboardLayoutPro
   // Xử lý chuyển hướng khi phiên đăng nhập hết hiệu lực (unauthenticated)
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.replace("/auth/login");
+      router.replace("/auth/login?signedout=true");
     }
   }, [status, router]);
+
+  // Xử lý khi API backend báo lỗi 401 Unauthorized (ví dụ JWT token hết hạn/bị thu hồi) hoặc khi tài khoản bị khóa (profile === null)
+  useEffect(() => {
+    if (status === "authenticated" && profile === null) {
+      if (typeof window !== "undefined" && !(window as any).__is_signing_out) {
+        (window as any).__is_signing_out = true;
+        signOut({ callbackUrl: "/auth/login?signedout=true" });
+      }
+    } else if (profileError) {
+      const errCode = (profileError as any)?.shape?.code ?? (profileError as any)?.data?.code;
+      if (errCode === "UNAUTHORIZED" || errCode === -32001) {
+        if (typeof window !== "undefined" && !(window as any).__is_signing_out) {
+          (window as any).__is_signing_out = true;
+          signOut({ callbackUrl: "/auth/login?signedout=true" });
+        }
+      }
+    }
+  }, [status, profile, profileError]);
 
   // Show welcome toast on successful login (Credentials & SSO)
   useEffect(() => {
@@ -195,8 +213,9 @@ export function CustomerDashboardLayout({ children }: CustomerDashboardLayoutPro
               // Nếu người dùng đóng Modal khi chưa đồng ý, tiến hành Đăng xuất để bảo đảm an toàn
               signOut({ callbackUrl: "/auth/login" });
             }}
-            onSuccess={() => {
-              refetchProfile();
+            onSuccess={async () => {
+              await refetchProfile();
+              await updateSession({ isTermsAccepted: true });
             }}
           />
         )}

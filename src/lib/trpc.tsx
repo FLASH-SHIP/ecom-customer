@@ -11,6 +11,26 @@ import superjson from "superjson";
 
 export const trpc = createTRPCReact<AppRouter>();
 
+function clearAllAuthCookies() {
+  if (typeof document === "undefined") return;
+  const cookies = document.cookie.split(";");
+  for (const cookie of cookies) {
+    const eqPos = cookie.indexOf("=");
+    const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+    if (
+      name.includes("session-token") ||
+      name.includes("next-auth") ||
+      name.includes("__Secure-") ||
+      name.includes("__Host-")
+    ) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      if (window.location.hostname) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+      }
+    }
+  }
+}
+
 function handleUnauthorized(error: any) {
   const errCode =
     error?.shape?.code ?? error?.data?.code ?? error?.status ?? error?.data?.httpStatus;
@@ -28,11 +48,8 @@ function handleUnauthorized(error: any) {
     // Thêm cờ __is_signing_out ngăn chặn việc gọi trùng lặp signOut nhiều lần đồng thời gây lặp vô hạn
     if (!(window as any).__is_signing_out) {
       (window as any).__is_signing_out = true;
-      document.cookie =
-        "ecom-customer.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie =
-        "__Secure-ecom-customer.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      signOut({ callbackUrl: "/auth/login" }).finally(() => {
+      clearAllAuthCookies();
+      signOut({ callbackUrl: "/auth/login?signedout=true" }).finally(() => {
         delete (window as any).__is_signing_out;
       });
     }

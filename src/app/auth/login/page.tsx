@@ -59,12 +59,15 @@ export default function LoginPage() {
     status === "authenticated" && profile && (profile as any).isTermsAccepted === false
   );
 
-  // Nếu người dùng đã đăng nhập và ĐÃ đồng ý điều khoản ➔ Tự động chuyển hướng vào Dashboard
+  // Nếu người dùng đã đăng nhập và ĐÃ đồng ý điều khoản ➔ Tự động chuyển hướng vào Dashboard (trừ trường hợp vừa bị đăng xuất)
   useEffect(() => {
     if (status === "authenticated" && profile && (profile as any).isTermsAccepted === true) {
       if (typeof window !== "undefined") {
-        sessionStorage.setItem("just_logged_in", "true");
-        window.location.replace("/dashboard");
+        const search = window.location.search;
+        if (!search.includes("signedout") && !search.includes("signedOut") && !search.includes("error")) {
+          sessionStorage.setItem("just_logged_in", "true");
+          window.location.replace("/dashboard");
+        }
       }
     }
   }, [status, profile]);
